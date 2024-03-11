@@ -1,0 +1,46 @@
+{
+  "role": {
+    "type": "role",
+    "src": {
+      "from": "cdm",
+      "content": "role.json"
+    }
+  },
+  "space": {
+    "type": "space",
+    "src": {
+      "from": "cdm",
+      "content": "space.json"
+    }
+  },
+  "page": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm",
+      "content": "page.json"
+    }
+  },
+  "card-highestforecast": {
+    "type": "card",
+    "src": {
+      "from": "cards/highestforecast",
+      "package": "cards.highestforecast.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "app-report": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm",
+      "content": "app.btprcreport.json"
+    }
+  },
+  "app-alerts": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm",
+      "content": "app.managealerts.json"
+    }
+  }
+}

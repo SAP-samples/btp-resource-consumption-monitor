@@ -1,0 +1,35 @@
+{
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.JOBSCHEDULER",
+      "description": "Job Scheduler Scope",
+      "grant-as-authority-to-apps": [
+        "$XSSERVICENAME(btprc-scheduler)"
+      ]
+    },
+    {
+      "name": "$XSAPPNAME.Viewer",
+      "description": "Viewer"
+    }
+  ],
+  "attributes": [],
+  "role-templates": [
+    {
+      "name": "Viewer",
+      "description": "Role to access the application",
+      "scope-references": [
+        "$XSAPPNAME.Viewer"
+      ],
+      "attribute-references": []
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "BTPResouceConsumption Viewer",
+      "description": "View the BTP Global Account credits report",
+      "role-template-references": [
+        "$XSAPPNAME.Viewer"
+      ]
+    }
+  ]
+}

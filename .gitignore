@@ -1,0 +1,52 @@
+# CAP ResourceConsumption
+_out
+*.db
+*.sqlite
+connection.properties
+default-*.json
+.cdsrc-private.json
+gen/
+node_modules/
+target/
+
+# Web IDE, App Studio
+.che/
+.gen/
+
+# MTA
+*_mta_build_tmp
+*.mtar
+mta_archives/
+
+# Other
+.DS_Store
+*.orig
+*.log
+
+*.iml
+*.flattened-pom.xml
+
+# IDEs
+# .vscode
+# .idea
+
+# @cap-js/cds-typer
+@cds-models
+.vscode
+
+node_modules/
+dist/
+.scp/
+.env
+Makefile*.mta
+mta_archives
+mta-*
+resources
+archive.zip
+.*_mta_build_tmp
+
+__contents/
+package/
+package.zip
+temp
+*.bkp

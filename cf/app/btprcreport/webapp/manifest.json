@@ -1,0 +1,282 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "btprcreport",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.2"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:lrop",
+      "version": "1.12.1",
+      "toolsId": "53990507-0806-4438-834c-48b7794a2eff"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/presentation/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/metadata.xml",
+          "odataVersion": "4.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "services-display": {
+          "semanticObject": "services",
+          "action": "display",
+          "title": "{{appTitle}}",
+          "subTitle": "{{appSubTitle}}",
+          "icon": "sap-icon://list",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          },
+          "indicatorDataSource": {
+            "dataSource": "mainService",
+            "path": "getTileInfo()",
+            "refresh": 600
+          }
+        }
+      }
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "sap.btp.resourceconsumption"
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.platform.cf": {
+    "ui5VersionNumber": "1.121.1"
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.121.1",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ushell": {},
+        "sap.fe.templates": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "btprcreport.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "@i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      }
+    },
+    "resources": {
+      "css": []
+    },
+    "routing": {
+      "routes": [
+        {
+          "pattern": ":?query:",
+          "name": "BTPServicesList",
+          "target": "BTPServicesList"
+        },
+        {
+          "pattern": "BTPServices({key}):?query:",
+          "name": "BTPServicesObjectPage",
+          "target": "BTPServicesObjectPage"
+        },
+        {
+          "pattern": "BTPServices({key})/commercialMetrics({key2}):?query:",
+          "name": "CommercialMetricsObjectPage",
+          "target": "CommercialMetricsObjectPage"
+        },
+        {
+          "pattern": "BTPServices({key})/technicalMetrics({key2}):?query:",
+          "name": "TechnicalMetricsObjectPage",
+          "target": "TechnicalMetricsObjectPage"
+        }
+      ],
+      "targets": {
+        "BTPServicesList": {
+          "type": "Component",
+          "id": "BTPServicesList",
+          "name": "sap.fe.templates.ListReport",
+          "options": {
+            "settings": {
+              "contextPath": "/BTPServices",
+              "initialLoad": true,
+              "variantManagement": "Page",
+              "controlConfiguration": {
+                "@com.sap.vocabularies.UI.v1.SelectionFields": {
+                  "filterFields": {
+                    "retrieved": {
+                      "settings": {
+                        "defaultValues": [
+                          {
+                            "operator": "TODAY"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "@com.sap.vocabularies.UI.v1.LineItem": {
+                  "actions": {
+                    "DataActions": {
+                      "text": "Data Management",
+                      "menu": [
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_downloadMeasuresForToday",
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_downloadMeasuresForPastMonths",
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_deleteAllData"
+                      ]
+                    },
+                    "ForecastActions": {
+                      "text": "Forecast Management",
+                      "menu": [
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_calculateCommercialForecasts",
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_resetForecastSettings"
+                      ]
+                    }
+                  }
+                }
+              },
+              "navigation": {
+                "BTPServices": {
+                  "detail": {
+                    "route": "BTPServicesObjectPage"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BTPServicesObjectPage": {
+          "type": "Component",
+          "id": "BTPServicesObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/BTPServices",
+              "sectionLayout": "Tabs",
+              "controlConfiguration": {
+                "commercialMetrics/@com.sap.vocabularies.UI.v1.LineItem#ServiceEmbeddedMetricsTable": {
+                  "tableSettings": {
+                    "type": "ResponsiveTable"
+                  }
+                },
+                "history/@com.sap.vocabularies.UI.v1.LineItem#ServiceEmbeddedHistory": {
+                  "tableSettings": {
+                    "type": "GridTable"
+                  }
+                }
+              },
+              "navigation": {
+                "commercialMetrics": {
+                  "detail": {
+                    "route": "CommercialMetricsObjectPage"
+                  }
+                },
+                "technicalMetrics": {
+                  "detail": {
+                    "route": "TechnicalMetricsObjectPage"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "CommercialMetricsObjectPage": {
+          "type": "Component",
+          "id": "CommercialMetricsObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "sectionLayout": "Tabs",
+              "contextPath": "/BTPServices/commercialMetrics",
+              "controlConfiguration": {
+                "@com.sap.vocabularies.UI.v1.FieldGroup#Tags": {
+                  "fields": {
+                    "DataField::tagStrings": {
+                      "formatOptions": {
+                        "textMaxCharactersDisplay": 40,
+                        "textLinesEdit": 3,
+                        "textExpandBehaviorDisplay": "InPlace"
+                      }
+                    }
+                  }
+                },
+                "history/@com.sap.vocabularies.UI.v1.LineItem#ServiceEmbeddedHistory": {
+                  "tableSettings": {
+                    "type": "GridTable"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "TechnicalMetricsObjectPage": {
+          "type": "Component",
+          "id": "TechnicalMetricsObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "sectionLayout": "Tabs",
+              "contextPath": "/BTPServices/technicalMetrics",
+              "controlConfiguration": {
+                "history/@com.sap.vocabularies.UI.v1.LineItem#ServiceEmbeddedHistory": {
+                  "tableSettings": {
+                    "type": "GridTable"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [],
+    "archeType": "transactional"
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "managealerts",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:lrop",
+      "version": "1.12.1",
+      "toolsId": "a72f8aa0-1253-440a-b740-e164abe2bebd"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/manage-alerts/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/metadata.xml",
+          "odataVersion": "4.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "alerts-manage": {
+          "semanticObject": "alerts",
+          "action": "manage",
+          "title": "{{appTitle}}",
+          "subTitle": "{{appSubTitle}}",
+          "icon": "sap-icon://bell",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "sap.btp.resourceconsumption"
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.platform.cf": {
+    "ui5VersionNumber": "1.121.1"
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.121.1",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ushell": {},
+        "sap.fe.templates": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "managealerts.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "@i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      }
+    },
+    "resources": {
+      "css": []
+    },
+    "routing": {
+      "config": {},
+      "routes": [
+        {
+          "pattern": ":?query:",
+          "name": "AlertsList",
+          "target": "AlertsList"
+        },
+        {
+          "pattern": "Alerts({key}):?query:",
+          "name": "AlertsObjectPage",
+          "target": "AlertsObjectPage"
+        }
+      ],
+      "targets": {
+        "AlertsList": {
+          "type": "Component",
+          "id": "AlertsList",
+          "name": "sap.fe.templates.ListReport",
+          "options": {
+            "settings": {
+              "contextPath": "/Alerts",
+              "initialLoad": true,
+              "variantManagement": "Page",
+              "navigation": {
+                "Alerts": {
+                  "detail": {
+                    "route": "AlertsObjectPage"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "AlertsObjectPage": {
+          "type": "Component",
+          "id": "AlertsObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/Alerts",
+              "controlConfiguration": {
+                "thresholds/@com.sap.vocabularies.UI.v1.LineItem": {
+                  "tableSettings": {
+                    "creationMode": {
+                      "name": "Inline",
+                      "createAtEnd": true
+                    }
+                  }
+                }
+              },
+              "navigation": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [],
+    "archeType": "transactional"
+  }
+}

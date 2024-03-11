@@ -1,0 +1,14 @@
+{
+  "name": "btpresourceconsumption.cpkg",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node scripts/pull.js && node scripts/build.js",
+    "validate": "node scripts/validate.js"
+  },
+  "dependencies": {
+    "@ui5/cli": "^3"
+  },
+  "devDependencies": {
+    "sap-workzone-cpkg-tools": "git+https://git@github.com/SAP-samples/workzone-content-package-templates.git"
+  }
+}

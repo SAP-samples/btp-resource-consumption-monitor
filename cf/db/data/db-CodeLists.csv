@@ -1,0 +1,30 @@
+list,code,description
+AggregationLevels,GlobalAccount,Alert for the entire Global Account
+AggregationLevels,SubAccount,Alert for 1 or more Sub Accounts
+AggregationLevels,Directory,Alert for 1 or more Directories
+AggregationLevels,Datacenter,Alert for 1 or more Datacenters
+AlertTypes,Commercial,Alert on Commercial Measurement values
+AlertTypes,Technical,Alert on Technical Measurement values
+ServiceScopes,Service,Alert on Measurement values on Service level (combined Metrics)
+ServiceScopes,Metric,Alert on Measurement values on individual Metric level
+ThresholdProperties,measure_cost,Actual/current Cost (for Commercial measures)
+ThresholdProperties,measure_usage,Actual/current Usage (for Commercial/Technical measures)
+ThresholdProperties,measure_actualUsage,Actual/current Actual Usage (for Commercial measures)
+ThresholdProperties,measure_chargedBlocks,Actual/current Charged Blocks (for Commercial measures)
+ThresholdProperties,forecast_cost,Forecasted Cost (for Commercial measures)
+ThresholdProperties,forecast_usage,Forecasted Usage (for Commercial measures)
+ThresholdProperties,forecast_actualUsage,Forecasted Actual Usage (for Commercial measures)
+ThresholdProperties,forecast_chargedBlocks,Forecasted Charged Blocks (for Commercial measures)
+ThresholdProperties,forecastPct,Forecasted Cost as % (for Commercial measures)
+ThresholdProperties,max_cost,Max Cost over the past periods (for Commercial measures)
+ThresholdOperators,>,Greater Than
+ThresholdOperators,<,Lower Than
+ThresholdOperators,>=,Greater or Equal To
+ThresholdOperators,<=,Lower or Equal To
+ThresholdOperators,<>,Not Equal To
+ThresholdOperators,=,Equal To
+AlertIncludeModes,Include,"Only include the items which are listed"
+AlertIncludeModes,Exclude,"Include all the items, except those listed"
+ForecastMethods,Excluded,Excluded
+ForecastMethods,TimeLinear,TimeLinear
+ForecastMethods,TimeDegressive,TimeDegressive

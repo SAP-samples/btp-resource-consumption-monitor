@@ -1,0 +1,16 @@
+{
+  "_version": "3.1.0",
+  "identification": {
+    "id": "main_space",
+    "title": "{{space_title}}",
+    "entityType": "space"
+  },
+  "payload": {
+    "contentNodes": [
+      {
+        "type": "workpage",
+        "id": "main_page"
+      }
+    ]
+  }
+}

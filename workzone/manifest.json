@@ -1,0 +1,48 @@
+{
+	"sap.package": {
+		"id": "btprc.cpkg",
+		"packageVersion": {
+			"version": "1.0.1",
+			"upgradeNotification": "all"
+		},
+		"i18n": "i18n/i18n.properties",
+		"title": "{{package_title}}",
+		"subTitle": "",
+		"shortTitle": "",
+		"info": "",
+		"description": "{{package_description}}",
+		"tags": {
+			"keywords": []
+		},
+		"products": "",
+		"vendor": {
+			"id": "",
+			"name": "SAP BTP GCoE"
+		},
+		"categories": "",
+		"scope": "external",
+		"license": {
+			"text": "",
+			"url": ""
+		},
+		"homepage": {
+			"text": "",
+			"url": "https://sap.com"
+		},
+		"support": {
+			"url": "https://support.sap.com"
+		},
+		"contents": [
+			"__BUILD__"
+		],
+		"documentation": {
+			"url": ""
+		},
+		"consumption": [],
+		"dependencies": {
+			"products": [],
+			"services": []
+		},
+		"destinations": []
+	}
+}

@@ -1,0 +1,72 @@
+{
+  "name": "btp-resource-consumption",
+  "version": "1.0.0",
+  "description": "BTP usage and resource consumption dashboard",
+  "repository": "https://github.com/SAP-samples/btp-resource-consumption-monitor",
+  "license": "Apache-2.0",
+  "private": true,
+  "dependencies": {
+    "@sap-cloud-sdk/connectivity": "^3.12.0",
+    "@sap-cloud-sdk/openapi": "^3.12.0",
+    "@sap/cds": "^7.7",
+    "@sap/cds-hana": "^2.0.0",
+    "@sap/xssec": "^3.6",
+    "express": "^4",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@cap-js/cds-typer": "^0.16",
+    "@cap-js/sqlite": "^1",
+    "@sap-cloud-sdk/openapi-generator": "^3.12.0",
+    "@sap/cds-dk": "^7.7",
+    "@sap/ux-specification": "^1.120.5",
+    "@types/node": "^20.11.24",
+    "@types/uuid": "^9.0.8",
+    "rimraf": "^5.0.5"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "build:cf": "npm run build:clean && npm run build:cds && npm run build:models && npm run build:ts && npm run build:copy_models",
+    "build:clean": "rimraf @cds-models resources mta_archives gen",
+    "build:cf-sqlite": "npm run build:cds && npm run build:models && npm run build:ts && npm run build:copy_models && npm run build:db",
+    "build:cds": "cds build --production",
+    "build:models": "npx cds-typer '*' --outputDirectory @cds-models",
+    "build:ts": "tsc",
+    "build:copy_models": "cp -r @cds-models gen/srv",
+    "build:db": "cds deploy -2 sqlite:gen/srv/db.sqlite",
+    "build:workzone": "npm run build --prefix workzone",
+    "undeploy": "cf undeploy btp-resource-consumption --delete-services --delete-service-keys --delete-service-brokers"
+  },
+  "cds": {
+    "fiori": {
+      "bypass_draft": true
+    },
+    "requires": {
+      "[production]": {
+        "auth": "xsuaa",
+        "db": {
+          "kind": "hana"
+        }
+      },
+      "[hybrid]": {
+        "auth": "dummy",
+        "db": {
+          "kind": "sqlite",
+          "url": "db.sqlite"
+        }
+      },
+      "db": {
+        "kind": "sqlite",
+        "url": "db.sqlite"
+      },
+      "auth": "dummy"
+    }
+  },
+  "imports": {
+    "#cds-models/*": "./@cds-models/*/index.js"
+  },
+  "sapux": [
+    "app/btprcreport",
+    "app/managealerts"
+  ]
+}

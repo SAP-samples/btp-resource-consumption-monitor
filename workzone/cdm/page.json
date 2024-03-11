@@ -1,0 +1,69 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "main_page",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": ""
+    },
+    "rows": [
+      {
+        "id": "row-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "col-11",
+            "columnConfig": {
+              "columnWidth": 12
+            },
+            "cells": [
+              {
+                "id": "cell-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "widg-1111",
+                    "viz": {
+                      "appId": "cards.highestforecast.app",
+                      "vizId": "cards.highestforecast.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "col-21",
+            "columnConfig": {
+              "columnWidth": 12
+            },
+            "cells": [
+              {
+                "id": "cell-211",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "widg-2111",
+                    "viz": {
+                      "appId": "saas_approuter_btprcreport",
+                      "vizId": "tile"
+                    }
+                  },
+                  {
+                    "id": "widg-2112",
+                    "viz": {
+                      "appId": "saas_approuter_managealerts",
+                      "vizId": "tile"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

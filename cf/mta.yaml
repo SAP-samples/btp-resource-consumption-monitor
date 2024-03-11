@@ -1,0 +1,228 @@
+_schema-version: "3.1"
+ID: btp-resource-consumption
+version: 1.0.0
+description: BTP usage and resource consumption dashboard
+parameters:
+  enable-parallel-deployments: true
+  deploy_mode: html5-repo
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm run build:cf
+
+modules:
+  - name: BTPResourceConsumption-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      disk-quota: 512M
+      memory: 256M
+    build-parameters:
+      builder: npm
+      ignore:
+        - node_modules/
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: btprc-auth
+      - name: btprc-dest
+      - name: btprc-db
+      - name: btprc-log
+      - name: btprc-uas
+      # - name: btprc-uas-ups
+
+  - name: BTPResourceConsumption-db-deployer
+    type: hdb
+    path: gen/db
+    build-parameters:
+      builder: npm
+      ignore:
+        - node_modules/
+    parameters:
+      buildpack: nodejs_buildpack
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: btprc-db
+
+  - name: btprc-dest-content
+    type: com.sap.application.content
+    requires:
+      - name: btprc-dest
+        parameters:
+          content-target: true
+      - name: srv-api
+      - name: btprc-auth
+      - name: btprc-notif
+      - name: btprc-repo-host
+      - name: btprc-scheduler
+    parameters:
+      content:
+        subaccount:
+          destinations:
+            - Name: btprc-srv
+              Authentication: OAuth2UserTokenExchange
+              TokenServiceInstanceName: btprc-auth
+              TokenServiceKeyName: btprc-auth-key
+              URL: ~{srv-api/srv-url}
+              sap.cloud.service: sap.btp.resourceconsumption
+              HTML5.DynamicDestination: true
+              WebIDEEnabled: true
+              WebIDEUsage: odata_gen
+          existing_destinations_policy: update
+        instance:
+          destinations:
+            - Name: btprc-srv-api
+              Authentication: OAuth2UserTokenExchange
+              TokenServiceInstanceName: btprc-auth
+              TokenServiceKeyName: btprc-auth-key
+              URL: ~{srv-api/srv-url}
+              sap.cloud.service: sap.btp.resourceconsumption
+            - Name: btprc-repo-host
+              ServiceInstanceName: btprc-repo-host
+              ServiceKeyName: btprc-repo-host-key
+              sap.cloud.service: sap.btp.resourceconsumption
+            - Name: btprc-auth
+              Authentication: OAuth2UserTokenExchange
+              ServiceInstanceName: btprc-auth
+              ServiceKeyName: btprc-auth-key
+              sap.cloud.service: sap.btp.resourceconsumption
+            - Name: btprc-notif
+              Authentication: OAuth2ClientCredentials
+              ServiceInstanceName: btprc-notif
+              ServiceKeyName: btprc-notif-key
+            - Name: btprc-scheduler
+              Authentication: OAuth2ClientCredentials
+              ServiceInstanceName: btprc-scheduler
+              ServiceKeyName: btprc-scheduler-key
+          existing_destinations_policy: update
+    build-parameters:
+      no-source: true
+
+  - name: btprc-app-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: btprc-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - name: btprcreport
+          target-path: resources/
+          artifacts:
+            - btprcreport.zip
+        - name: managealerts
+          target-path: resources/
+          artifacts:
+            - managealerts.zip
+
+  - name: btprcreport
+    type: html5
+    path: app/btprcreport
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+  - name: managealerts
+    type: html5
+    path: app/managealerts
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+resources:
+  - name: btprc-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+      config:
+        schema: BTPResourceConsumption_${space}
+      service-keys:
+        - name: btprc-db-key
+
+  - name: btprc-scheduler
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: jobscheduler
+      service-plan: standard
+      config:
+        enable-xsuaa-support: true
+      service-keys:
+        - name: btprc-scheduler-key
+
+  - name: btprc-notif
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: alert-notification
+      service-plan: standard
+      service-keys:
+        - name: btprc-notif-key
+
+  - name: btprc-uas
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: uas
+      service-plan: reporting-ga-admin
+      service-keys:
+        - name: btprc-uas-key
+  # - name: btprc-uas-ups
+  #   type: org.cloudfoundry.existing-service
+
+  - name: btprc-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: btprc-${space}
+        tenant-mode: dedicated
+      service-keys:
+        - name: btprc-auth-key
+
+  - name: btprc-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+
+  - name: btprc-dest
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: destination
+      service-plan: lite
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: ui5
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://ui5.sap.com
+            existing_destinations_policy: update
+        version: 1.0.0
+      service-keys:
+        - name: btprc-dest-key
+
+  - name: btprc-log
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-plan: standard

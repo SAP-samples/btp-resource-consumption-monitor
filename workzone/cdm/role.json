@@ -1,0 +1,27 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "access_role",
+    "title": "{{role_title}}",
+    "description": "{{role_description}}",
+    "entityType": "role"
+  },
+  "payload": {
+    "spaces": [
+      {
+        "id": "main_space"
+      }
+    ],
+    "apps": [
+      {
+        "id": "cards.highestforecast.app"
+      },
+      {
+        "id": "saas_approuter_btprcreport"
+      },
+      {
+        "id": "saas_approuter_managealerts"
+      }
+    ]
+  }
+}
