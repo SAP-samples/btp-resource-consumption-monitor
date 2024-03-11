@@ -101,7 +101,7 @@ The application can be connected to a different Global Account to monitor that c
 To do so:
 - Manually create an instance of the `Usage Data Management Service` service of plan `reporting-ga-admin` in the other Global Account. Create a `Service Key` on that service instance, and copy its contents.
 - In the Global Account where the application is deployed, create a new `User Provided Service` in which you paste the service key contents.
-- Adapt the `mta.yaml` on lines 35, 36 and 180, 187 to swap the bound standard service instance for the user-provided instance.
+- Adapt the `mta.yaml` on lines 35, 36 and 176, 183 to swap the bound standard service instance for the user-provided instance.
 
 ## Known Issues
 No known issues.
