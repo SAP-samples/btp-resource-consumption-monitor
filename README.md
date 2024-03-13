@@ -9,7 +9,7 @@ Application to monitor and alert on commercial and technical consumption of BTP 
 ![Screenshot of a service page](./service.png)
 
 **Disclaimer:**
-This tool is provided as-is and is not covered by SAP Support.
+This tool is provided as-is and is not covered by SAP Support. This is not a replacement of the official billing documents you receive from SAP. The information provided by this tool is purely indicative.
 
 ## Requirements
 
@@ -95,6 +95,9 @@ Open your browser to http://localhost:4004 where you will find the following `We
 ## Architecture
 ![BTP Architecture](./btprc-architecture.png)
 
+## Recurring Jobs
+The application creates multiple jobs via the Job Scheduling Service: daily jobs to retrieve the consumption information for that day and monthly jobs to retrieve consumption information from past months. In its default configuration, the daily job will run every 3 hours. Typically the Usage Data Management API provides new data points around 6am UTC but this can vary.
+
 ## Switching Global Accounts
 The application can be connected to a different Global Account to monitor that consumption instead of the Global Account where the application is deployed in (default).
 
@@ -104,7 +107,8 @@ To do so:
 - Adapt the `mta.yaml` on lines 35, 36 and 176, 183 to swap the bound standard service instance for the user-provided instance.
 
 ## Known Issues
-No known issues.
+- **Dynamic Tile**: In case the dynamic tile of the Report application does not show your forecasted CPEA credit for this month (but shows 3 dots instead), you will need to manually create a system mapping. In the `Work Zone Site Manager`, navigate to the `Settings` menu and go to `Alias Mapping`. Add a new alias with the following settings: Aliases = `sid(BTPRC.CPKG)` and Runtime Destination = `btprc-srv`.
+
 
 ## How to obtain support
 [Create an issue](https://github.com/SAP-samples/btp-resource-consumption-monitor/issues) in this repository if you find a bug or have questions about the content.
