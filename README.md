@@ -4,9 +4,10 @@
 
 ## Description
 
-Application to monitor and alert on commercial and technical consumption of BTP services.
+Application to monitor and alert on commercial and technical consumption of BTP services. See also [SAP Blog: Prototype: Keep Track of those BTP Credits](https://community.sap.com/t5/technology-blogs-by-sap/prototype-keep-track-of-those-btp-credits/ba-p/13626545).
 
 ![Screenshot of a service page](./service.png)
+
 
 **Disclaimer:**
 This tool is provided as-is and is not covered by SAP Support. This is not a replacement of the official billing documents you receive from SAP. The information provided by this tool is purely indicative.
@@ -95,8 +96,34 @@ Open your browser to http://localhost:4004 where you will find the following `We
 ## Architecture
 ![BTP Architecture](./btprc-architecture.png)
 
-## Recurring Jobs
-The application creates multiple jobs via the Job Scheduling Service: daily jobs to retrieve the consumption information for that day and monthly jobs to retrieve consumption information from past months. In its default configuration, the daily job will run every 3 hours. Typically the Usage Data Management API provides new data points around 6am UTC but this can vary.
+## Initial Data and Recurring Jobs
+When started for the first time, the application creates multiple jobs in the Job Scheduling Service:
+- `Default_UpdateDailyUsage`: a recurring job to retrieve the consumption information for that day. In its default configuration, this job will run every 3 hours (*/3 UTC). Typically, the Usage Data Management API provides new data points around 6am UTC but this can vary.
+- `Default_UpdateMonthlyUsage`: a recurring job to retrieve the consumption information from the past month. In its default configuration, this job will run every 1st day of the month, at 1:00 AM and 3:00 AM UTC. It runs twice, in case the first run is not successful.
+- `Default_UpdateHistoricUsage`: a one-time job which runs after creation of the job. It is used to retrieve the consumption information of that day + the past months (default: from October 2023, see [settings.ts](/cf/srv/settings.ts#L10)). This makes sure that after deploying the application you immediately have some information in the dashboards before the scheduled jobs run.
+
+The initial data that this last job retrieves can be refreshed/extended from the UI: in the application open the `Data Management` menu and click on `Load historic data`. Here you can specify how far back you want to retrieve the consumption information.
+
+The other menu option (`Load consumption for current month`) is exactly the same as what the first job runs every 3 hours, so it is not needed to be used and is mainly intented for testing purposes.
+
+You can freely edit/change the created jobs, or create other jobs. When the application (re)starts it will re-create the jobs if they don't exist already, but it won't overwrite them if they do exist.
+
+*Note:* Jobs have a default expected completion time of 15 seconds. Depending on the query, the application and/or API can take longer to process a request. In that case, the job monitor will classify the run as failed even though it ran successfully.
+
+## Forecasting Configuration
+Each commercial metric of a service has a `Forecasting Configuration`. The following settings are available:
+- `Excluded`: the metric will not be forecasted/propagated. The current consumption for today is what is expected for the entire month. This should be used for 'stable services'.
+    - examples: SAP Integration Suite tenants, SAP Business Application Studio users, ...
+- `Time Linear`: the metric will be forecasted with a linear trend, based on time. The consumption will be divided by the current day in the month and multiplied by 30 to come to a full month's consumption. This should be used for services that have a steady consumption throughout the month.
+    - examples: SAP HANA Cloud capacity units, Cloud Foundry GB memory, ...
+- `Time Degressive`: the metric will be forecasted with a degressive/progressive trend, based on time. This is a variant of the linear approach, but you can give a `degression factor` to specify the decrease/increase in consumption through the month. This should be used for services that have a free allowance and charges only apply above this allowance (progressive), or for services that have a baseline consumption + some small uptake throughout the month (degressive)
+    - Degression factor values:
+        - < 1: the usage of the remaining days will be lower than the usage of the past days (degressive)
+        - = 1: the usage of the remaining days will be similar to the usage of the past days (linear)
+        - \> 1: the usage of the remaining days will be higher than the usage of the past days (progressive)
+    - examples: SAP Integration Suite transactions (has free allowance), Mobile Services users (most users' first access will be early in the month), ...
+
+The forecasting settings can be all reset to the default value (see [settings.ts](/cf/srv/settings.ts#L14)) from the UI: menu `Forecast Management: Revert all forecast settings to default`.
 
 ## Switching Global Accounts
 The application can be connected to a different Global Account to monitor that consumption instead of the Global Account where the application is deployed in (default).
