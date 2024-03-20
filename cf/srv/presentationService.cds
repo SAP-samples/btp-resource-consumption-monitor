@@ -4,11 +4,12 @@ using types from '../db/types';
 @requires: ['Viewer']
 service PresentationService {
 
-    entity BTPAccountMeasures           as
+    entity BTPAccountMeasures             as
         projection on db.CommercialMeasures {
             key toMetric.toService.reportYearMonth,
             key toMetric.toService.retrieved,
             key toMetric.toService.interval,
+                level,
                 name,
                 currency,
                 sum(
@@ -37,9 +38,11 @@ service PresentationService {
                 ) as forecast_chargedBlocks : Decimal(20, 2),
         }
         where
-                level               = 'GlobalAccount'
-            and toMetric.metricName = '_combined_'
+            //     level               = 'GlobalAccount'
+            // and toMetric.metricName = '_combined_'
+            toMetric.metricName = '_combined_'
         group by
+            level,
             name,
             currency,
             toMetric.toService.reportYearMonth,
@@ -47,7 +50,7 @@ service PresentationService {
             toMetric.toService.interval;
 
     @cds.redirection.target
-    entity BTPServices                  as
+    entity BTPServices                    as
         projection on db.BTPServices {
             *,
             count(
@@ -103,7 +106,7 @@ service PresentationService {
 
 
     @cds.redirection.target
-    entity CommercialMetrics            as
+    entity CommercialMetrics              as
         projection on db.CommercialMetrics {
             *,
             // Filters to display data on breakdown levels:
@@ -155,7 +158,7 @@ service PresentationService {
 
 
     @cds.redirection.target
-    entity CommercialMeasures           as
+    entity CommercialMeasures             as
         projection on db.CommercialMeasures {
             *,
             toMetric.toService.retrieved as retrieved, // Used in Chart
@@ -163,7 +166,7 @@ service PresentationService {
             toMetric.metricName          as metricName, // Used in Chart
         };
 
-    entity TechnicalMetrics             as
+    entity TechnicalMetrics               as
         projection on db.TechnicalMetrics {
             *,
             // Filters to display data on breakdown levels:
@@ -177,7 +180,7 @@ service PresentationService {
         };
 
     @cds.redirection.target
-    entity TechnicalMeasures            as
+    entity TechnicalMeasures              as
         projection on db.TechnicalMeasures {
             *,
             toMetric.toService.retrieved as retrieved, // Used in Chart
@@ -186,15 +189,15 @@ service PresentationService {
         };
 
     @readonly
-    entity CodeLists                    as projection on db.CodeLists;
+    entity CodeLists                      as projection on db.CodeLists;
 
-    entity CL_ForecastMethods           as projection on CodeLists[list = 'ForecastMethods'];
-    entity ForecastSettings             as projection on db.ForecastSettings;
+    entity CL_ForecastMethods             as projection on CodeLists[list = 'ForecastMethods'];
+    entity ForecastSettings               as projection on db.ForecastSettings;
     // Services used in Selection Field value helps
-    entity unique_serviceName           as select distinct key serviceName from db.BTPServices;
-    entity unique_reportYearMonth       as select distinct key reportYearMonth from db.BTPServices;
-    entity unique_interval              as select distinct key interval from db.BTPServices;
-    entity unique_metricName            as select distinct key metricName from db.CommercialMetrics; //not used
+    entity unique_serviceName             as select distinct key serviceName from db.BTPServices;
+    entity unique_reportYearMonth         as select distinct key reportYearMonth from db.BTPServices;
+    entity unique_interval                as select distinct key interval from db.BTPServices;
+    entity unique_metricName              as select distinct key metricName from db.CommercialMetrics; //not used
 
 
     function getLatestBTPAccountMeasure() returns BTPAccountMeasures;
@@ -223,11 +226,16 @@ service PresentationService {
      * For Work Zone cards
      */
     @readonly
-    entity Card_HighestForecastServices as
+    entity Card_HighestForecastServices   as
         projection on BTPServices {
             *
         }
         where
                 retrieved = CURRENT_DATE
             and interval  = 'Daily';
+
+    entity Card_TodaysCostByGlobalAccount as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'GlobalAccount'];
+    entity Card_TodaysCostBySubAccount    as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'SubAccount'];
+    entity Card_TodaysCostByDirectory     as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'Directory'];
+    entity Card_TodaysCostByDatacenter    as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'Datacenter'];
 }
