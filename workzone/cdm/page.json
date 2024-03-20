@@ -35,24 +35,24 @@
             ]
           },
           {
-            "id": "col-21",
+            "id": "col-12",
             "columnConfig": {
               "columnWidth": 12
             },
             "cells": [
               {
-                "id": "cell-211",
+                "id": "cell-121",
                 "cellConfig": {},
                 "widgets": [
                   {
-                    "id": "widg-2111",
+                    "id": "widg-1211",
                     "viz": {
                       "appId": "saas_approuter_btprcreport",
                       "vizId": "tile"
                     }
                   },
                   {
-                    "id": "widg-2112",
+                    "id": "widg-1212",
                     "viz": {
                       "appId": "saas_approuter_managealerts",
                       "vizId": "tile"
