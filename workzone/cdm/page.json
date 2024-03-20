@@ -63,6 +63,54 @@
             ]
           }
         ]
+      },
+      {
+        "id": "row-2",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "col-21",
+            "columnConfig": {
+              "columnWidth": 8
+            },
+            "cells": [
+              {
+                "id": "cell-211",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "widg-2111",
+                    "viz": {
+                      "appId": "cards.forecastbreakdown.app",
+                      "vizId": "cards.forecastbreakdown.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "col-22",
+            "columnConfig": {
+              "columnWidth": 16
+            },
+            "cells": [
+              {
+                "id": "cell-221",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "widg-2211",
+                    "viz": {
+                      "appId": "cards.dailyforecast.app",
+                      "vizId": "cards.dailyforecast.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }

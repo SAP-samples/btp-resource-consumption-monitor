@@ -17,6 +17,12 @@
         "id": "cards.highestforecast.app"
       },
       {
+        "id": "cards.dailyforecast.app"
+      },
+      {
+        "id": "cards.forecastbreakdown.app"
+      },
+      {
         "id": "saas_approuter_btprcreport"
       },
       {

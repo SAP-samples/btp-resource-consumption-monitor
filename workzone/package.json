@@ -1,6 +1,6 @@
 {
   "name": "btpresourceconsumption.cpkg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "build": "node scripts/pull.js && node scripts/build.js",
     "validate": "node scripts/validate.js"
