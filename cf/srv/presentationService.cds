@@ -234,8 +234,5 @@ service PresentationService {
                 retrieved = CURRENT_DATE
             and interval  = 'Daily';
 
-    entity Card_TodaysCostByGlobalAccount as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'GlobalAccount'];
-    entity Card_TodaysCostBySubAccount    as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'SubAccount'];
-    entity Card_TodaysCostByDirectory     as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'Directory'];
-    entity Card_TodaysCostByDatacenter    as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and level = 'Datacenter'];
+    entity Card_TodaysMeasuresByLevel    as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and name <> ''];
 }
