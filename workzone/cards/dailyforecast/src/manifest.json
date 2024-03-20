@@ -1,0 +1,144 @@
+{
+    "_version": "1.15.0",
+    "sap.app": {
+        "id": "cards.dailyforecast",
+        "type": "card",
+        "i18n": "i18n/i18n.properties",
+        "title": "{{title}}",
+        "description": "{{description}}",
+        "applicationVersion": {
+            "version": "1.0.0"
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "deviceTypes": {
+            "desktop": true,
+            "phone": true,
+            "tablet": true
+        },
+        "icons": {
+            "icon": "sap-icon://line-chart"
+        }
+    },
+    "sap.card": {
+        "type": "Analytical",
+        "designtime": "dt/configuration",
+        "header": {
+            "type": "Numeric",
+            "data": {
+                "request": {
+                    "url": "{{destinations.btprc-srv}}/odata/v4/presentation/getLatestBTPAccountMeasure()",
+                    "withCredentials": true,
+                    "parameters": {}
+                },
+                "path": "/" 
+            },
+            "title": "{{title}}",
+            "details": "{reportYearMonth}",
+            "mainIndicator": {
+                "number": "{forecast_cost}",
+                "unit": "{currency}",
+                "state": "Good"
+            },
+            "sideIndicators": [
+                {
+                    "title": "Cost",
+                    "number": "{measure_cost}",
+                    "unit": " {currency}"
+                },
+                {
+                    "title": "Forecast",
+                    "number": "{forecast_cost}",
+                    "unit": " {currency}"
+                }
+            ],
+            "actions": []
+        },
+        "content": {
+            "data": {
+                "request": {
+                    "url": "{{destinations.btprc-srv}}/odata/v4/presentation/BTPAccountMeasures",
+                    "withCredentials": true,
+                    "parameters": {
+                        "$filter": "interval eq 'Daily' and level eq 'GlobalAccount'",
+                        "$orderby": "retrieved"
+                    }
+                },
+                "path": "/value"
+            },
+            "chartType": "combination",
+            "chartProperties": {
+                "title": {
+                    "visible": false
+                },
+                "legend": {
+                    "visible": true
+                },
+                "plotArea": {
+                    "dataLabel": {
+                        "visible": false
+                    },
+                    "colorPalette": [
+                        "teal",
+                        "darkblue"
+                    ]
+                },
+                "categoryAxis": {
+                    "title": {
+                        "visible": false
+                    }
+                },
+                "valueAxis": {
+                    "title": {
+                        "visible": false
+                    }
+                }
+            },
+            "dimensions": [
+                {
+                    "name": "Day",
+                    "value": "{retrieved}"
+                }
+            ],
+            "measures": [
+                {
+                    "name": "Cost",
+                    "value": "{measure_cost}"
+                },
+                {
+                    "name": "Forecast",
+                    "value": "{forecast_cost}"
+                }
+            ],
+            "feeds": [
+                {
+                    "uid": "valueAxis",
+                    "type": "Measure",
+                    "values": [
+                        "Cost",
+                        "Forecast"
+                    ]
+                },
+                {
+                    "uid": "categoryAxis",
+                    "type": "Dimension",
+                    "values": [
+                        "Day"
+                    ]
+                }
+            ]
+        },
+        "configuration": {
+            "destinations": {
+                "btprc-srv": {
+                    "name": "btprc-srv",
+                    "defaultUrl": "/odata/v4/presentation/BTPAccountMeasures"
+                }
+            }
+        }
+    },
+    "sap.platform.mobilecards": {
+        "compatible": false
+    }
+}

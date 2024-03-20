@@ -29,6 +29,24 @@
       "build": "npm i && npm run-script build"
     }
   },
+  "card-dailyforecast": {
+    "type": "card",
+    "src": {
+      "from": "cards/dailyforecast",
+      "package": "cards.dailyforecast.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-forecastbreakdown": {
+    "type": "card",
+    "src": {
+      "from": "cards/forecastbreakdown",
+      "package": "cards.forecastbreakdown.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
   "app-report": {
     "type": "businessapp",
     "src": {

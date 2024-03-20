@@ -1,0 +1,134 @@
+{
+    "_version": "1.15.0",
+    "sap.app": {
+        "id": "cards.forecastbreakdown",
+        "type": "card",
+        "i18n": "i18n/i18n.properties",
+        "title": "{{title}}",
+        "description": "{{description}}",
+        "applicationVersion": {
+            "version": "1.0.0"
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "deviceTypes": {
+            "desktop": true,
+            "phone": true,
+            "tablet": true
+        },
+        "icons": {
+            "icon": "sap-icon://line-chart"
+        }
+    },
+    "sap.card": {
+        "type": "Analytical",
+        "designtime": "dt/configuration",
+        "header": {
+            "type": "Default",
+            "title": "{{title}}",
+            "subTitle": "Today's forecast by {filters>/level/value}",
+            "icon": {
+                "src": "sap-icon://donut-chart"
+            }
+        },
+        "content": {
+            "data": {
+                "request": {
+                    "url": "{{destinations.btprc-srv}}/odata/v4/presentation/Card_TodaysMeasuresByLevel",
+                    "withCredentials": true,
+                    "parameters": {
+                        "$filter": "level eq '{filters>/level/selectedItem/key}'",
+                        "$orderby": "forecast_cost desc"
+                    }
+                },
+                "path": "/value"
+            },
+            "chartType": "donut",
+            "chartProperties": {
+                "title": {
+                    "visible": false
+                },
+                "legend": {
+                    "visible": true
+                },
+                "plotArea": {
+                    "dataLabel": {
+                        "visible": true,
+                        "showTotal": true
+                    }
+                }
+            },
+            "dimensions": [
+                {
+                    "name": "Name",
+                    "value": "{name}"
+                }
+            ],
+            "measures": [
+                {
+                    "name": "Forecast",
+                    "value": "{forecast_cost}"
+                }
+            ],
+            "feeds": [
+                {
+                    "uid": "size",
+                    "type": "Measure",
+                    "values": [
+                        "Forecast"
+                    ]
+                },
+                {
+                    "uid": "color",
+                    "type": "Dimension",
+                    "values": [
+                        "Name"
+                    ]
+                }
+            ]
+        },
+        "configuration": {
+            "destinations": {
+                "btprc-srv": {
+                    "name": "btprc-srv",
+                    "defaultUrl": "/odata/v4/presentation/BTPAccountMeasures"
+                }
+            },
+            "filters": {
+                "level": {
+                    "selectedKey": "Directory",
+                    "type": "ComboBox",
+                    "label": "Level",
+                    "placeholder": "Level",
+                    "data": {
+                        "json": [
+                            {
+                                "key": "Directory",
+                                "text": "Directory"
+                            },
+                            {
+                                "key": "SubAccount",
+                                "text": "Sub Account"
+                            },
+                            {
+                                "key": "Datacenter",
+                                "text": "Datacenter"
+                            }
+                        ]
+                    },
+                    "item": {
+                        "path": "/",
+                        "template": {
+                            "key": "{key}",
+                            "title": "{text}"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "sap.platform.mobilecards": {
+        "compatible": false
+    }
+}

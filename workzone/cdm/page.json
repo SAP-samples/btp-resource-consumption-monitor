@@ -35,9 +35,43 @@
             ]
           },
           {
-            "id": "col-21",
+            "id": "col-12",
             "columnConfig": {
               "columnWidth": 12
+            },
+            "cells": [
+              {
+                "id": "cell-121",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "widg-1211",
+                    "viz": {
+                      "appId": "saas_approuter_btprcreport",
+                      "vizId": "tile"
+                    }
+                  },
+                  {
+                    "id": "widg-1212",
+                    "viz": {
+                      "appId": "saas_approuter_managealerts",
+                      "vizId": "tile"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "row-2",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "col-21",
+            "columnConfig": {
+              "columnWidth": 8
             },
             "cells": [
               {
@@ -47,15 +81,29 @@
                   {
                     "id": "widg-2111",
                     "viz": {
-                      "appId": "saas_approuter_btprcreport",
-                      "vizId": "tile"
+                      "appId": "cards.forecastbreakdown.app",
+                      "vizId": "cards.forecastbreakdown.viz"
                     }
-                  },
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "col-22",
+            "columnConfig": {
+              "columnWidth": 16
+            },
+            "cells": [
+              {
+                "id": "cell-221",
+                "cellConfig": {},
+                "widgets": [
                   {
-                    "id": "widg-2112",
+                    "id": "widg-2211",
                     "viz": {
-                      "appId": "saas_approuter_managealerts",
-                      "vizId": "tile"
+                      "appId": "cards.dailyforecast.app",
+                      "vizId": "cards.dailyforecast.viz"
                     }
                   }
                 ]

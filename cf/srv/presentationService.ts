@@ -42,6 +42,7 @@ import {
 } from '#cds-models/RetrievalService'
 
 import {
+    TAggregationLevel,
     TBulletChart,
     TDynamicAppLauncher,
     TForecastMethod,
@@ -184,7 +185,10 @@ export default class PresentationService extends cds.ApplicationService {
         this.on(getLatestBTPAccountMeasure, async req => {
             const data = await SELECT.one
                 .from(BTPAccountMeasures)
-                .where({ interval: TInterval.Daily })
+                .where({
+                    interval: TInterval.Daily,
+                    level: TAggregationLevel.GlobalAccount
+                })
                 .orderBy('retrieved desc')
             return [data]
         })
@@ -194,7 +198,10 @@ export default class PresentationService extends cds.ApplicationService {
             const thisMonth = dateToYearMonth()
             const info = await SELECT.one
                 .from(BTPAccountMeasures)
-                .where({ interval: TInterval.Daily })
+                .where({
+                    interval: TInterval.Daily,
+                    level: TAggregationLevel.GlobalAccount
+                })
                 .orderBy('retrieved desc')
             const tile: TDynamicAppLauncher = {
                 title: 'BTP Resource Consumption',
