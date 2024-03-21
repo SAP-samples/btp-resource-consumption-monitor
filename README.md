@@ -36,9 +36,13 @@ In **Business Application Studio**, make sure to have a `Development Space` of k
 
 `Clone` this repository in your environment and open the project.
 
-#### Option A. Deploy with Alert Notification configuration (existing configuration will be overwritten):
-***Important:*** First configure your email address in the notifications configuration file [mtaext_notifications.mtaext](/cf/mtaext_notifications.mtaext#L19)
+***Important - First change the following code lines:***
+- Configure your email address in the notifications configuration file [mtaext_notifications.mtaext](/cf/mtaext_notifications.mtaext#L19)
+- Configure your subaccount id in business app configuration files of **both** ui5 applications:
+    1. btprcreport app: [app.btprcreport.json](./workzone/cdm/app.btprcreport.json#L90)
+    2. managealerts app: [app.managealerts.json](./workzone/cdm/app.managealerts.json#L85)
 
+#### Option A. Deploy with Alert Notification configuration (existing configuration will be overwritten):
 ```cmd
 cd cf
 npm install

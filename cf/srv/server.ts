@@ -18,7 +18,7 @@ const info = cds.log('server').info
  */
 cds.on('served', async (services) => {
     const host =
-        (await getAllDestinationsFromDestinationService()).find(x => x.name == 'srv-api')?.url
+        (await getAllDestinationsFromDestinationService()).find(x => x.name == 'btprc-srv-api')?.url
         ?? 'http://dummy'
     //@ts-ignore
     const servicePath = services.RetrievalService.path

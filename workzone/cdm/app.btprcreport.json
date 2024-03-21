@@ -87,7 +87,7 @@
                 "urlTemplateParams": {
                     "appId": "btprcreport",
                     "query": {
-                        "subaccountId": "85f1fd48-ab8d-4362-9ac9-44dd496c8733",
+                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
                         "saasApprouter": "true"
                     }
                 }

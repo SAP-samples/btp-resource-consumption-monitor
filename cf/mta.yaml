@@ -55,11 +55,25 @@ modules:
       - name: btprc-dest
         parameters:
           content-target: true
+          service-key:
+            name: btprc-dest-key
       - name: srv-api
       - name: btprc-auth
+        parameters:
+          service-key:
+            name: btprc-auth-key
       - name: btprc-notif
+        parameters:
+          service-key:
+            name: btprc-notif-key
       - name: btprc-repo-host
+        parameters:
+          service-key:
+            name: btprc-repo-host-key
       - name: btprc-scheduler
+        parameters:
+          service-key:
+            name: btprc-scheduler-key
     parameters:
       content:
         subaccount:
@@ -110,6 +124,8 @@ modules:
       - name: btprc-repo-host
         parameters:
           content-target: true
+          service-key:
+            name: btprc-repo-host-key
     build-parameters:
       build-result: resources
       requires:
@@ -200,6 +216,8 @@ resources:
     parameters:
       service: html5-apps-repo
       service-plan: app-host
+      service-keys:
+        - name: btprc-repo-host-key
 
   - name: btprc-dest
     type: org.cloudfoundry.managed-service
