@@ -55,8 +55,6 @@ modules:
       - name: btprc-dest
         parameters:
           content-target: true
-          service-key:
-            name: btprc-dest-key
       - name: srv-api
       - name: btprc-auth
         parameters:
