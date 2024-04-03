@@ -54,7 +54,7 @@ cds.on('served', async (services) => {
             },
             {
                 description: 'Initial load',
-                time: 'in 10 seconds',
+                time: 'in 1 minute',
                 active: true
             }]
         },
@@ -68,7 +68,7 @@ cds.on('served', async (services) => {
             action: urlHistoric,
             schedules: [{
                 description: 'Initial load',
-                time: 'in 5 seconds',
+                time: 'in 30 seconds',
                 active: true
             }]
         },

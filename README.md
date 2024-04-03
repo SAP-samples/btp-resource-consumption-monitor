@@ -14,9 +14,10 @@ This tool is provided as-is and is not covered by SAP Support. This is not a rep
 
 ## Requirements
 
-The following Subscriptions are required to use this application:
+The following Subscriptions are required to deploy and use this application:
 - SAP HANA Cloud (you can re-use an existing instance)
 - SAP Work Zone (Standard edition is sufficient)
+- SAP Business Application Studio
 <!-- - Your user needs to have either the `Global Account Viewer` or `Global Account Administrator` role *(TBC)* -->
 
 The following Entitlements need to be available to use this application:
@@ -67,7 +68,7 @@ npm install
 npm run build
 ```
 
-This will create a `/workzone/package.zip` file.
+This will create a `/workzone/package.zip` file which you can download to your local machine to use in step 2 below.
 
 #### Step 2.Deploy the package
 In the **Work Zone Site Manager**, open the `Channel Manager` and:
@@ -83,6 +84,8 @@ In the **BTP Cockpit**, go to the Security settings of your subaccount and assig
 ## Access the application
 
 Open the Work Zone site and navigate to the `BTP Credits` page.
+
+It is suggested to configure the application and modify the 'Forecasting Configuration' individually for each of the services to make sure the forecast is calculated correctly. Until this is set correctly, the forecasted costs might be unrealisticly high.
 
 ## Run Locally
 To run the application locally, you need to bind to the cloud service instances and run the application in hybrid mode. 
