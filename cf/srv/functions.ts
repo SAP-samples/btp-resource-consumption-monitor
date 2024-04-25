@@ -1,5 +1,6 @@
 import cds from '@sap/cds'
 import { TTag } from '#cds-models/types'
+import { CdsDate } from '#cds-models/_'
 
 const info = cds.log('functions').info
 
@@ -28,7 +29,7 @@ export function lastDayOfMonth(dateYearMonth: string) {
         dateYearMonth.substring(4, 6)
     ]
     const d = new Date(Number(y), Number(m), 0).getDate()
-    return [y, m, d].join('-')
+    return [y, m, d].join('-') as CdsDate
 }
 
 export function dateToISODate(date?: Date) {

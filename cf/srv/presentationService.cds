@@ -194,9 +194,13 @@ service PresentationService {
     entity CL_ForecastMethods             as projection on CodeLists[list = 'ForecastMethods'];
     entity ForecastSettings               as projection on db.ForecastSettings;
     // Services used in Selection Field value helps
+    @singular: 'unique_serviceName_1'
     entity unique_serviceName             as select distinct key serviceName from db.BTPServices;
+    @singular: 'unique_reportYearMonth_1'
     entity unique_reportYearMonth         as select distinct key reportYearMonth from db.BTPServices;
+    @singular: 'unique_interval_1'
     entity unique_interval                as select distinct key interval from db.BTPServices;
+    @singular: 'unique_metricName_1'
     entity unique_metricName              as select distinct key metricName from db.CommercialMetrics; //not used
 
 
@@ -234,5 +238,6 @@ service PresentationService {
                 retrieved = CURRENT_DATE
             and interval  = 'Daily';
 
+    @singular: 'Card_TodaysMeasuresByLevel_1'
     entity Card_TodaysMeasuresByLevel    as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and name <> ''];
 }

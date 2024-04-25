@@ -6,7 +6,7 @@
     "validate": "node scripts/validate.js"
   },
   "dependencies": {
-    "@ui5/cli": "^3"
+    "@ui5/cli": "^3.10.0"
   },
   "devDependencies": {
     "sap-workzone-cpkg-tools": "git+https://git@github.com/SAP-samples/workzone-content-package-templates.git"

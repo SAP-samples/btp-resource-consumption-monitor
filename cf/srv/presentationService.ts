@@ -27,12 +27,6 @@ import {
 } from '#cds-models/PresentationService'
 
 import {
-    ZBTPService,
-    ZCommercialMetric,
-    ZTechnicalMetric,
-} from './zPresentationServiceTypes'
-
-import {
     calculateCommercialForecasts,
     calculateCommercialForecastsForService,
     deleteAllData,
@@ -69,13 +63,13 @@ export default class PresentationService extends cds.ApplicationService {
          * Handlers for BTPServices
          */
         this.before('READ', BTPServices, req => {
-            addRequiredMeasureColumns<ZBTPService>(req.query, 'cmByGlobalAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
-            addSortMeasureColumns<ZBTPService>(req.query, 'cmByDirectory', 'measure_cost', true)
-            addSortMeasureColumns<ZBTPService>(req.query, 'cmBySubAccount', 'measure_cost', true)
+            addRequiredMeasureColumns<BTPService>(req.query, 'cmByGlobalAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            addSortMeasureColumns<BTPService>(req.query, 'cmByDirectory', 'measure_cost', true)
+            addSortMeasureColumns<BTPService>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
         this.after('READ', BTPServices, items => {
             items?.forEach(each => {
-                const measure = (each as ZBTPService).cmByGlobalAccount
+                const measure = (each as BTPService).cmByGlobalAccount
                 if (measure) {
                     addBulletChartValues(measure)
                     measure.forecastPct !== null && addCriticalityValues(measure)
@@ -91,13 +85,13 @@ export default class PresentationService extends cds.ApplicationService {
          * Handlers for CommercialMetrics
          */
         this.before('READ', CommercialMetrics, req => {
-            addRequiredMeasureColumns<ZCommercialMetric>(req.query, 'cmByGlobalAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
-            addSortMeasureColumns<ZCommercialMetric>(req.query, 'cmByDirectory', 'measure_cost', true)
-            addSortMeasureColumns<ZCommercialMetric>(req.query, 'cmBySubAccount', 'measure_cost', true)
+            addRequiredMeasureColumns<CommercialMetric>(req.query, 'cmByGlobalAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            addSortMeasureColumns<CommercialMetric>(req.query, 'cmByDirectory', 'measure_cost', true)
+            addSortMeasureColumns<CommercialMetric>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
         this.after('READ', CommercialMetrics, items => {
             items?.forEach(each => {
-                const measure = (each as ZCommercialMetric).cmByGlobalAccount
+                const measure = (each as CommercialMetric).cmByGlobalAccount
                 if (measure) {
                     addBulletChartValues(measure)
                     measure.forecastPct !== null && addCriticalityValues(measure)
@@ -110,9 +104,9 @@ export default class PresentationService extends cds.ApplicationService {
          * Handlers for TechnicalMetrics
          */
         this.before('READ', TechnicalMetrics, req => {
-            addSortMeasureColumns<ZTechnicalMetric>(req.query, 'tmByDirectory', 'measure_usage', true)
-            addSortMeasureColumns<ZTechnicalMetric>(req.query, 'tmBySubAccount', 'measure_usage', true)
-            addRequiredColumns<ZTechnicalMetric>(req.query, ['tags'])
+            addSortMeasureColumns<TechnicalMetric>(req.query, 'tmByDirectory', 'measure_usage', true)
+            addSortMeasureColumns<TechnicalMetric>(req.query, 'tmBySubAccount', 'measure_usage', true)
+            addRequiredColumns<TechnicalMetric>(req.query, ['tags'])
         })
         this.after('READ', TechnicalMetrics, items => {
             items?.forEach(each => {
@@ -125,7 +119,7 @@ export default class PresentationService extends cds.ApplicationService {
          */
         this.after('READ', Card_HighestForecastServices, items => {
             items?.forEach(each => {
-                const measure = (each as ZBTPService).cmByGlobalAccount
+                const measure = (each as BTPService).cmByGlobalAccount
                 if (measure) {
                     measure.forecastPct !== null && addCriticalityValues(measure)
                 }
@@ -190,7 +184,7 @@ export default class PresentationService extends cds.ApplicationService {
                     level: TAggregationLevel.GlobalAccount
                 })
                 .orderBy('retrieved desc')
-            return [data]
+            return data
         })
 
         // Received from Work Zone to display Tile information
@@ -209,7 +203,6 @@ export default class PresentationService extends cds.ApplicationService {
                 icon: 'sap-icon://money-bills',
                 info: '',
                 infoState: '',
-                //@ts-expect-error
                 number: info.forecast_cost,
                 numberDigits: 2,
                 numberFactor: '',

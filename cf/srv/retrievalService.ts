@@ -70,6 +70,7 @@ import {
     calculateCommercialForecastsForService,
     testAlert
 } from '#cds-models/RetrievalService'
+import { CdsDate } from '#cds-models/_'
 
 
 const info = cds.log('retrievalService').info
@@ -276,7 +277,7 @@ function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | MonthlyUsageR
         const service: BTPService = {
             reportYearMonth: serviceGroup[0].reportYearMonth.toString(),
             serviceName: serviceGroup[0].serviceName,
-            retrieved: interval == TInterval.Daily ? dateToISODate() : lastDayOfMonth(serviceGroup[0].reportYearMonth.toString()),
+            retrieved: interval == TInterval.Daily ? dateToISODate() as CdsDate : lastDayOfMonth(serviceGroup[0].reportYearMonth.toString()),
             interval: interval
         }
         services.push(service)
