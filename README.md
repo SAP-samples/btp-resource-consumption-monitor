@@ -73,7 +73,7 @@ This will create a `/workzone/package.zip` file which you can download to your l
 #### Step 2.Deploy the package
 In the **Work Zone Site Manager**, open the `Channel Manager` and:
 1. Synchronize your HTML5 Repository
-2. Click on `+ New` and upload the generated `/workzone/package.zip` file, specifying `btprc-srv` as Runtime Destination
+2. Click on `+ New`, `Content Package` and upload the generated `/workzone/package.zip` file, specifying `btprc-srv` as Runtime Destination
 3. Navigate to the `Site Directory` and make sure you have a site with the `view` setting set to `Spaces and Pages - New Experience`, and which has the `BTP Resource Consumption Role` role assigned.
 
 ### 3. Role Assignments
@@ -140,9 +140,23 @@ To do so:
 - In the Global Account where the application is deployed, create a new `User Provided Service` in which you paste the service key contents.
 - Adapt the `mta.yaml` on lines 35, 36 and 176, 183 to swap the bound standard service instance for the user-provided instance.
 
+## Using Free Tier
+For demo and test purposes it is possible to implement this solution using Free Tier services. Be aware there are restrictions when using the Free Tier service plans.
+
+- Subscriptions:
+    - SAP HANA Cloud: free tier plan is available, but note your database will be stopped every night causing jobs to fail. Restart your database in the mornings. See [restrictions](https://help.sap.com/docs/hana-cloud/sap-hana-cloud-administration-guide/sap-hana-database-license#free-tier).
+    - SAP Work Zone, standard edition: free tier plan is available and can be used. See [restrictions](https://help.sap.com/docs/build-work-zone-standard-edition/sap-build-work-zone-standard-edition/using-account-with-free-service-plan).
+    - SAP Business Application Studio: free tier plan is available and can be used. See [restrictions](https://help.sap.com/docs/bas/sap-business-application-studio/application-plans).
+
+- Resources:
+    - Cloud Foundry runtime: free tier plan is available and can be used. Create your CF Organisation with the 'free' option before deploying the application.
+    - SAP Alert Notification service: free tier plan is available and can be used. Switch your MTA to plan 'free' instead of 'standard' [here](/cf/mta.yaml#L186).
+    - SAP Application Logging service: there is no free plan, but this is an optional service, so you can just remove it from your MTA, both [here](/cf/mta.yaml#L34) and [here](/cf/mta.yaml#L240).
+    - SAP Job Scheduling service: no free plan available. For an indicative pricing, see [here](https://discovery-center.cloud.sap/serviceCatalog/job-scheduling-service?region=all&tab=service_plan).
+
 ## Known Issues
 - **Dynamic Tile**: In case the dynamic tile of the Report application does not show your forecasted CPEA credit for this month (but shows 3 dots instead), you will need to manually create a system mapping. In the `Work Zone Site Manager`, navigate to the `Settings` menu and go to `Alias Mapping`. Add a new alias with the following settings: Aliases = `sid(BTPRC.CPKG)` and Runtime Destination = `btprc-srv`.
-
+- **Cachebuster error 500**: In case your applications do not open from the launchpad because of a failed call to `/cachebusterTokens.json`, you can correct this from the `Work Zone Channel Manager`. Use the `Update content` button of the `HTML5 Apps` entry **2 times** (refresh the content twice consecutively), which will create the cache records in the background and then your apps should open correctly.
 
 ## How to obtain support
 [Create an issue](https://github.com/SAP-samples/btp-resource-consumption-monitor/issues) in this repository if you find a bug or have questions about the content.
