@@ -108,6 +108,11 @@ annotate service.BTPServices with @(UI: {
             ![@UI.Hidden]        : hideCommercialInfo
         },
         {
+            Value                : cmByGlobalAccount.delta_measure_cost,
+            ![@HTML5.CssDefaults]: {width: '11rem'},
+            ![@UI.Hidden]        : hideCommercialInfo
+        },
+        {
             $Type                : 'UI.DataFieldForAnnotation',
             Target               : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
             Label                : 'Chart',
@@ -172,6 +177,11 @@ annotate service.BTPServices with @(UI: {
             ![@UI.Hidden]        : hideCommercialInfo
         },
         {
+            Value                : cmByGlobalAccount.delta_measure_cost,
+            ![@HTML5.CssDefaults]: {width: '11rem'},
+            ![@UI.Hidden]        : hideCommercialInfo
+        },
+        {
             $Type                : 'UI.DataFieldForAnnotation',
             Target               : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
             Label                : 'Chart',
@@ -232,6 +242,12 @@ annotate service.BTPServices with @(UI: {
         {
             $Type        : 'UI.ReferenceFacet',
             Target       : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
+            ![@UI.Hidden]: hideCommercialInfo
+        },
+        {
+            $Type        : 'UI.ReferenceFacet',
+            Target       : '@UI.FieldGroup#DeltaChange',
+            Label        : 'Daily Change',
             ![@UI.Hidden]: hideCommercialInfo
         },
         {
@@ -382,5 +398,31 @@ annotate service.BTPServices with @(UI: {
             Value: cmByGlobalAccount.forecastPct,
             Label: 'Forecasted vs maximum'
         }
+    ]},
+    FieldGroup #DeltaChange  : {Data: [
+        {
+            Value                    : cmByGlobalAccount.delta_measure_costPct,
+            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Cost change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_measure_cost,
+            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Cost change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_forecast_costPct,
+            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Forecast change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_forecast_cost,
+            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Forecast change'
+        },
     ]}
 });

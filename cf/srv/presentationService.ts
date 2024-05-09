@@ -52,6 +52,7 @@ const info = cds.log('presentationService').info
 
 enum statusMap { Good = 3, Warning = 2, Error = 1, Neutral = 0 }
 enum multipliers { Normal = 100, WarningMax = 125, ErrorMax = 150 }
+enum deltaThresholds { Normal = 3, WarningMax = 10 }
 
 export default class PresentationService extends cds.ApplicationService {
     async init() {
@@ -72,7 +73,11 @@ export default class PresentationService extends cds.ApplicationService {
                 const measure = (each as BTPService).cmByGlobalAccount
                 if (measure) {
                     addBulletChartValues(measure)
-                    measure.forecastPct !== null && addCriticalityValues(measure)
+                    if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    //@ts-ignore
+                    if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    //@ts-ignore
+                    if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
@@ -94,7 +99,12 @@ export default class PresentationService extends cds.ApplicationService {
                 const measure = (each as CommercialMetric).cmByGlobalAccount
                 if (measure) {
                     addBulletChartValues(measure)
-                    measure.forecastPct !== null && addCriticalityValues(measure)
+                    if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    //@ts-ignore
+                    if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    //@ts-ignore
+                    if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
+
                 }
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
             })
@@ -111,6 +121,11 @@ export default class PresentationService extends cds.ApplicationService {
         this.after('READ', TechnicalMetrics, items => {
             items?.forEach(each => {
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
+                const measure = (each as TechnicalMetric).tmByGlobalAccount
+                if (measure) {
+                    //@ts-ignore
+                    if (measure.delta_measure_usagePct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
+                }
             })
         })
 
@@ -121,7 +136,9 @@ export default class PresentationService extends cds.ApplicationService {
             items?.forEach(each => {
                 const measure = (each as BTPService).cmByGlobalAccount
                 if (measure) {
-                    measure.forecastPct !== null && addCriticalityValues(measure)
+                    if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    //@ts-ignore
+                    if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
@@ -325,15 +342,29 @@ function addBulletChartValues(measure: CommercialMeasure): void {
 }
 
 /**
- * Calculate the criticality values for the Forecast Percentage for this measure
- * @param measure measure to be manipulated (enriched)
+ * Calculate the criticality value for the a delta measure
+ * @param value value that will be compared to thresholds
  */
-function addCriticalityValues(measure: CommercialMeasure): void {
-    let forecastPctCriticality = statusMap.Neutral
-    if (measure.forecastPct) {
-        if (measure.forecastPct <= multipliers.Normal) forecastPctCriticality = statusMap.Good
-        else if (measure.forecastPct <= multipliers.WarningMax) forecastPctCriticality = statusMap.Warning
-        else forecastPctCriticality = statusMap.Error
+function getForecastCriticality(value?: number): number {
+    let criticality = statusMap.Neutral
+    if (value) {
+        if (value <= multipliers.Normal) criticality = statusMap.Good
+        else if (value <= multipliers.WarningMax) criticality = statusMap.Warning
+        else criticality = statusMap.Error
     }
-    Object.assign(measure, { forecastPctCriticality })
+    return criticality
+}
+
+/**
+ * Calculate the criticality value for the a delta measure
+ * @param value value that will be compared to thresholds
+ */
+function getDeltaCriticality(value?: number): number {
+    let criticality = statusMap.Neutral
+    if (value) {
+        if (value <= deltaThresholds.Normal) criticality = statusMap.Good
+        else if (value <= deltaThresholds.WarningMax) criticality = statusMap.Warning
+        else criticality = statusMap.Error
+    }
+    return criticality
 }

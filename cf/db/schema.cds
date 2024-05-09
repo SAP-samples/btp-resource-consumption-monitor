@@ -117,42 +117,73 @@ entity TechnicalMetrics {
 }
 
 entity CommercialMeasures {
-    key toMetric                       : Association to CommercialMetrics;
-    key level                          : types.TAggregationLevel      @title: 'Level';
-    key name                           : String                       @title: 'Name';
-        currency                       : String                       @title: 'Currency';
-        unit                           : String                       @title: 'Unit';
-        measure                        : {
-            cost          : Decimal(20, 2)                            @title: 'Cost'               @Measures.ISOCurrency: currency;
-            usage         : Decimal(20, 2)                            @title: 'Usage';
-            actualUsage   : Decimal(20, 2)                            @title: 'Actual Usage';
-            chargedBlocks : Decimal(20, 2)                            @title: 'Charged Blocks';
+    key toMetric                         : Association to CommercialMetrics;
+    key level                            : types.TAggregationLevel      @title: 'Level';
+    key name                             : String                       @title: 'Name';
+        currency                         : String                       @title: 'Currency';
+        unit                             : String                       @title: 'Unit';
+        measure                          : {
+            cost                 : Decimal(20, 2)                       @title: 'Cost'                               @Measures.ISOCurrency: currency;
+            usage                : Decimal(20, 2)                       @title: 'Usage';
+            actualUsage          : Decimal(20, 2)                       @title: 'Actual Usage';
+            chargedBlocks        : Decimal(20, 2)                       @title: 'Charged Blocks';
         };
-        forecast                       : {
-            cost          : Decimal(20, 2)                            @title: 'Forecasted Cost'    @Measures.ISOCurrency: currency;
-            usage         : Decimal(20, 2)                            @title: 'Forecasted Usage';
-            actualUsage   : Decimal(20, 2)                            @title: 'Forecasted Actual Usage';
-            chargedBlocks : Decimal(20, 2)                            @title: 'Forecasted Charged Blocks';
+        forecast                         : {
+            cost                 : Decimal(20, 2)                       @title: 'Forecasted Cost'                    @Measures.ISOCurrency: currency;
+            usage                : Decimal(20, 2)                       @title: 'Forecasted Usage';
+            actualUsage          : Decimal(20, 2)                       @title: 'Forecasted Actual Usage';
+            chargedBlocks        : Decimal(20, 2)                       @title: 'Forecasted Charged Blocks';
         };
-        max_cost                       : Decimal(20, 2) default null  @title: 'Previous Max Cost'  @Measures.ISOCurrency: currency;
-        forecastPct                    : Integer                      @title: 'Forecasted'         @Measures.Unit       : '%';
-        virtual forecastPctCriticality : Integer;
-        virtual costChart              : types.TBulletChart;
+        delta                            : {
+            measure              : {
+                cost             : Decimal(20, 2)                       @title: 'Delta Cost'                         @Measures.ISOCurrency: currency;
+                usage            : Decimal(20, 2)                       @title: 'Delta Usage';
+                actualUsage      : Decimal(20, 2)                       @title: 'Delta Actual Usage';
+                chargedBlocks    : Decimal(20, 2)                       @title: 'Delta Charged Blocks';
+                costPct          : Integer                              @title: 'Delta Cost %'                       @Measures.Unit       : '%';
+                usagePct         : Integer                              @title: 'Delta Usage %'                      @Measures.Unit       : '%';
+                actualUsagePct   : Integer                              @title: 'Delta Actual Usage %'               @Measures.Unit       : '%';
+                chargedBlocksPct : Integer                              @title: 'Delta Charged Blocks %'             @Measures.Unit       : '%';
+            };
+            forecast             : {
+                cost             : Decimal(20, 2)                       @title: 'Delta Forecasted Cost'              @Measures.ISOCurrency: currency;
+                usage            : Decimal(20, 2)                       @title: 'Delta Forecasted Usage';
+                actualUsage      : Decimal(20, 2)                       @title: 'Delta Forecasted Actual Usage';
+                chargedBlocks    : Decimal(20, 2)                       @title: 'Delta Forecasted Charged Blocks';
+                costPct          : Integer                              @title: 'Delta Forecasted Cost %'            @Measures.Unit       : '%';
+                usagePct         : Integer                              @title: 'Delta Forecasted Usage %'           @Measures.Unit       : '%';
+                actualUsagePct   : Integer                              @title: 'Delta Forecasted Actual Usage %'    @Measures.Unit       : '%';
+                chargedBlocksPct : Integer                              @title: 'Delta Forecasted Charged Blocks %'  @Measures.Unit       : '%';
+            };
+        };
+        max_cost                         : Decimal(20, 2) default null  @title: 'Previous Max Cost'                  @Measures.ISOCurrency: currency;
+        forecastPct                      : Integer                      @title: 'Forecasted'                         @Measures.Unit       : '%';
+        virtual forecastPctCriticality   : Integer;
+        virtual deltaActualsCriticality  : Integer;
+        virtual deltaForecastCriticality : Integer;
+        virtual costChart                : types.TBulletChart;
 
         // Used as quick link for the forecast calculation
-        forecastSetting                : Association to one ForecastSettings
-                                             on  forecastSetting.serviceName = toMetric.toService.serviceName
-                                             and forecastSetting.metricName  = toMetric.metricName;
+        forecastSetting                  : Association to one ForecastSettings
+                                               on  forecastSetting.serviceName = toMetric.toService.serviceName
+                                               and forecastSetting.metricName  = toMetric.metricName;
 }
 
 entity TechnicalMeasures {
-    key toMetric : Association to TechnicalMetrics;
-    key level    : types.TAggregationLevel @title: 'Level';
-    key name     : String                  @title: 'Name';
-        unit     : String                  @title: 'Unit';
-        measure  : {
-            usage : Decimal(20, 2)         @title: 'Usage';
+    key toMetric                        : Association to TechnicalMetrics;
+    key level                           : types.TAggregationLevel @title: 'Level';
+    key name                            : String                  @title: 'Name';
+        unit                            : String                  @title: 'Unit';
+        measure                         : {
+            usage        : Decimal(20, 2)                         @title: 'Usage';
         };
+        delta                           : {
+            measure      : {
+                usage    : Decimal(20, 2)                         @title: 'Delta Usage';
+                usagePct : Integer                                @title: 'Delta Usage %'  @Measures.Unit: '%';
+            };
+        };
+        virtual deltaActualsCriticality : Integer;
 }
 
 entity ForecastSettings {

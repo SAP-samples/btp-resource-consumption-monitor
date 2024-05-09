@@ -100,6 +100,7 @@ export default class RetrievalService extends cds.ApplicationService {
             status.push(await retrieveCommercialData({ fromDate: thisMonth, toDate: thisMonth }, TInterval.Daily))
             status.push(await updateCommercialMetricForecasts())
             status.push(await updateCommercialServiceForecasts())
+            status.push(await updateDeltaMeasures())
             status.push(await sendNotification())
 
             return status.join('\r\n')
@@ -157,6 +158,7 @@ export default class RetrievalService extends cds.ApplicationService {
             let status = []
             status.push(await updateCommercialMetricForecasts())
             status.push(await updateCommercialServiceForecasts())
+            status.push(await updateDeltaMeasures())
             return status.join('\r\n')
         })
 
@@ -166,6 +168,7 @@ export default class RetrievalService extends cds.ApplicationService {
             const { serviceName } = req.data
             status.push(await updateCommercialMetricForecasts(serviceName as string)) // calcalates forecasts
             status.push(await updateCommercialServiceForecasts(serviceName as string)) // sums up the forecasts and creates new records
+            status.push(await updateDeltaMeasures())
             return status.join('\r\n')
         })
 
@@ -349,7 +352,7 @@ function aggregateMeasures(metric: Record<string, any>, measureGroups: { [key: s
             level: level,
             name: name,
             measure: sums,
-            unit: measures[0].unitPlural,
+            unit: measures[0].unitPlural || measures[0].Unit,
             ...(isCommercial) && { currency: measures[0].currency },
             ...(isCommercial && (metric.toService.interval == TInterval.Monthly)) && { forecast: sums, forecastPct: 100 } // monthly readings default to 100% forecast
         })
@@ -463,6 +466,81 @@ async function updateCommercialServiceForecasts(serviceName?: string) {
     return status
 }
 
+/**
+ * Updates the database with LAG values for the measures
+ * @returns status message
+ */
+async function updateDeltaMeasures() {
+    info(`Updating delta calculations for all measures ...`)
+
+    let status = ''
+    if (cds.env.requires.db.kind == 'hana') {
+        const overPartitionSQL =
+            `OVER (PARTITION BY
+                toMetric_toService_reportYearMonth,
+                toMetric_toService_serviceName,
+                toMetric_toService_interval,
+                toMetric_metricName,
+                level,
+                name
+            ORDER BY
+                toMetric_toService_retrieved)`
+        const keyColumns = [
+            'toMetric_toService_reportYearMonth',
+            'toMetric_toService_retrieved',
+            'toMetric_toService_serviceName',
+            'toMetric_toService_interval',
+            'toMetric_metricName',
+            'level',
+            'name',
+        ]
+        const commercialDeltaColumns = [
+            'measure_cost',
+            'measure_usage',
+            'measure_actualUsage',
+            'measure_chargedBlocks',
+            'forecast_cost',
+            'forecast_usage',
+            'forecast_actualUsage',
+            'forecast_chargedBlocks'
+        ]
+        const technicalDeltaColumns = [
+            'measure_usage',
+        ]
+
+        const keyColumnsSQL = keyColumns.join(', ')
+        const joinClauseSQL = keyColumns.map(x => `targetTable.${x} = sourceTable.${x}`).join(' and ')
+        const technicalDeltaColumnsSelectSQL = technicalDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQL} AS delta_${x}`).join(', ')
+        const technicalDeltaColumnsUpdateSQL = [
+            technicalDeltaColumns.map(x => `targetTable.delta_${x} = sourceTable.delta_${x}`).join(', '),
+            technicalDeltaColumns.map(x => `targetTable.delta_${x}Pct = ROUND( COALESCE( sourceTable.delta_${x} * 100 / NULLIF( sourceTable.${x} - sourceTable.delta_${x}, 0), 0))`).join(', ')
+        ].join(', ')
+        const commercialDeltaColumnsSelectSQL = commercialDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQL} AS delta_${x}`).join(', ')
+        const commercialDeltaColumnsUpdateSQL = [
+            commercialDeltaColumns.map(x => `targetTable.delta_${x} = sourceTable.delta_${x}`).join(', '),
+            commercialDeltaColumns.map(x => `targetTable.delta_${x}Pct = ROUND( COALESCE( sourceTable.delta_${x} * 100 / NULLIF( sourceTable.${x} - sourceTable.delta_${x}, 0), 0))`).join(', ')
+        ].join(', ')
+
+        const queryTechnicalMeasures =
+            `MERGE INTO ${TechnicalMeasures.name.replace('.', '_')} AS targetTable
+            USING (SELECT ${keyColumnsSQL}, ${technicalDeltaColumnsSelectSQL} FROM ${TechnicalMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
+            ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`
+        const technicalRows = await db.run(queryTechnicalMeasures)
+
+        const queryCommercialMeasures =
+            `MERGE INTO ${CommercialMeasures.name.replace('.', '_')} AS targetTable
+            USING (SELECT ${keyColumnsSQL}, ${commercialDeltaColumnsSelectSQL} FROM ${CommercialMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
+            ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`
+        const commercialRows = await db.run(queryCommercialMeasures)
+
+        status = `${technicalRows} technical and ${commercialRows} commercial deltas updated.`
+    } else {
+        status = 'No deltas updated (hana feature only)'
+    }
+
+    info(status)
+    return status
+}
 
 async function sendNotification() {
     info(`Sending alerts ...`)

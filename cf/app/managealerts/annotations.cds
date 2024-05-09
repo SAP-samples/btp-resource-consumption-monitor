@@ -178,7 +178,7 @@ annotate service.Alerts with @(UI: {
         {
             Value                : thresholds.text,
             Label                : 'Defined Thresholds',
-            ![@HTML5.CssDefaults]: {width: '24rem'}
+            ![@HTML5.CssDefaults]: {width: '30rem'}
         }
     ]
 });

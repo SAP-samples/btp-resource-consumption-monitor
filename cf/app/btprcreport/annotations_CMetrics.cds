@@ -27,6 +27,10 @@ annotate service.CommercialMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
+            Value                : cmByGlobalAccount.delta_measure_cost,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
             $Type                : 'UI.DataFieldForAnnotation',
             Target               : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
             Label                : 'Chart',
@@ -109,11 +113,19 @@ annotate service.CommercialMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
+            Value                : cmByGlobalAccount.delta_measure_cost,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
             Value                : cmByGlobalAccount.forecast_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
             Value                : cmByGlobalAccount.measure_usage,
+            ![@HTML5.CssDefaults]: {width: '8rem'}
+        },
+        {
+            Value                : cmByGlobalAccount.delta_measure_usage,
             ![@HTML5.CssDefaults]: {width: '8rem'}
         },
         {
@@ -163,6 +175,11 @@ annotate service.CommercialMetrics with @(UI: {
         {
             $Type : 'UI.ReferenceFacet',
             Target: 'cmByGlobalAccount/@UI.Chart#MetricBulletChart'
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Target: '@UI.FieldGroup#DeltaChange',
+            Label : 'Daily Change'
         },
         {
             $Type : 'UI.ReferenceFacet',
@@ -240,5 +257,43 @@ annotate service.CommercialMetrics with @(UI: {
             Value: cmByGlobalAccount.forecastPct,
             Label: 'Forecasted vs maximum'
         }
+    ]},
+    FieldGroup #DeltaChange  : {Data: [
+        {
+            Value                    : cmByGlobalAccount.delta_measure_costPct,
+            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Cost change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_measure_cost,
+            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Cost change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_measure_usagePct,
+            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Usage change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_measure_usage,
+            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Usage change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_forecast_costPct,
+            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Forecast change'
+        },
+        {
+            Value                    : cmByGlobalAccount.delta_forecast_cost,
+            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Forecast change'
+        },
     ]}
 });

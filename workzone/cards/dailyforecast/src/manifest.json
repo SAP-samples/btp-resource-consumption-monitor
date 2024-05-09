@@ -43,13 +43,13 @@
             },
             "sideIndicators": [
                 {
-                    "title": "Cost",
+                    "title": "Cost to date",
                     "number": "{measure_cost}",
                     "unit": " {currency}"
                 },
                 {
-                    "title": "Forecast",
-                    "number": "{forecast_cost}",
+                    "title": "Today's change",
+                    "number": "{delta_measure_cost}",
                     "unit": " {currency}"
                 }
             ],

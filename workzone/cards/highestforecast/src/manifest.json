@@ -30,7 +30,7 @@
                 "url": "{{destinations.btprc-srv}}/odata/v4/presentation/Card_HighestForecastServices",
                 "withCredentials": true,
                 "parameters": {
-                    "$expand": "cmByGlobalAccount($select=currency,measure_cost,forecast_cost,forecastPct,forecastPctCriticality)",
+                    "$expand": "cmByGlobalAccount($select=currency,measure_cost,forecast_cost,forecastPct,forecastPctCriticality,delta_measure_costPct,deltaActualsCriticality)",
                     "$orderby": "cmByGlobalAccount/forecast_cost desc",
                     "$top": "5"
                 }
@@ -83,6 +83,12 @@
                         "value": "{= format.currency(${cmByGlobalAccount/measure_cost}, ${cmByGlobalAccount/currency}, {currencyCode: true}) }",
                         "hAlign": "Right",
                         "state": "{= extension.formatters.convertCriticality(${cmByGlobalAccount/forecastPctCriticality}) }"
+                    },
+                    {
+                        "title": "Cost Increase %",
+                        "value": "{= format.percent(${cmByGlobalAccount/delta_measure_costPct} / 100) }",
+                        "hAlign": "Right",
+                        "state": "{= extension.formatters.convertCriticality(${cmByGlobalAccount/deltaActualsCriticality}) }"
                     },
                     {
                         "title": "Forecast",
