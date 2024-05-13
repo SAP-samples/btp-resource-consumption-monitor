@@ -6,23 +6,21 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "@sap-cloud-sdk/connectivity": "^3.14.0",
-    "@sap-cloud-sdk/openapi": "^3.14.0",
-    "@sap/cds": "^7.8",
+    "@sap-cloud-sdk/connectivity": "^3.15.0",
+    "@sap-cloud-sdk/openapi": "^3.15.0",
+    "@sap/cds": "^7.9.0",
     "@sap/cds-hana": "^2.0.0",
-    "@sap/xssec": "^3.6",
-    "express": "^4.19.2",
-    "uuid": "^9.0.1"
+    "@sap/xssec": "^3.6.1",
+    "express": "^4.19.2"
   },
   "devDependencies": {
-    "@cap-js/cds-typer": "0.20",
-    "@cap-js/sqlite": "^1",
-    "@sap-cloud-sdk/openapi-generator": "^3.14.0",
-    "@sap/cds-dk": "^7.8",
-    "@sap/ux-specification": "^1.120.8",
-    "@types/node": "^20.12",
-    "@types/uuid": "^9.0.8",
-    "rimraf": "^5.0.5"
+    "@cap-js/cds-typer": "^0.20.2",
+    "@cap-js/sqlite": "^1.7.0",
+    "@sap-cloud-sdk/openapi-generator": "^3.15.0",
+    "@sap/cds-dk": "^7.9.1",
+    "@sap/ux-specification": "^1.120.9",
+    "@types/node": "^20.12.11",
+    "rimraf": "^5.0.7"
   },
   "scripts": {
     "start": "cds-serve",

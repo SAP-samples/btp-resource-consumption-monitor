@@ -1,7 +1,7 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
 import { getAllDestinationsFromDestinationService } from '@sap-cloud-sdk/connectivity'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID as uuidv4 } from 'node:crypto'
 
 import {
     JobApi,
