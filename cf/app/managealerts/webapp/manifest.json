@@ -5,7 +5,7 @@
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
-      "version": "0.0.1"
+      "version": "${version}"
     },
     "title": "{{appTitle}}",
     "description": "{{appDescription}}",
