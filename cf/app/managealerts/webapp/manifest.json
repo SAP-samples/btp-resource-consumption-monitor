@@ -17,7 +17,7 @@
     },
     "dataSources": {
       "mainService": {
-        "uri": "/odata/v4/manage-alerts/",
+        "uri": "odata/v4/manage-alerts/",
         "type": "OData",
         "settings": {
           "annotations": [],
