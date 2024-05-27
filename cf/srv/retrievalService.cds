@@ -71,36 +71,53 @@ service RetrievalService {
     entity prepareCommercialMeasureServiceForecasts as
         projection on db.CommercialMeasures {
             key toMetric {toService},
-            key '_combined_'  as toMetric_metricName    : String,
+            key '_combined_'  as toMetric_metricName             : String,
             key level,
             key name,
                 currency,
-                ''            as unit                   : String,
+                ''            as unit                            : String,
                 sum(
                     measure.cost
-                )             as measure_cost           : Decimal(20, 2),
+                )             as measure_cost                    : Decimal(20, 2),
                 sum(
                     measure.usage
-                )             as measure_usage          : Decimal(20, 2),
+                )             as measure_usage                   : Decimal(20, 2),
                 sum(
                     measure.actualUsage
-                )             as measure_actualUsage    : Decimal(20, 2),
+                )             as measure_actualUsage             : Decimal(20, 2),
                 sum(
                     measure.chargedBlocks
-                )             as measure_chargedBlocks  : Decimal(20, 2),
+                )             as measure_chargedBlocks           : Decimal(20, 2),
                 sum(
                     forecast.cost
-                )             as forecast_cost          : Decimal(20, 2),
+                )             as forecast_cost                   : Decimal(20, 2),
                 sum(
                     forecast.usage
-                )             as forecast_usage         : Decimal(20, 2),
+                )             as forecast_usage                  : Decimal(20, 2),
                 sum(
                     forecast.actualUsage
-                )             as forecast_actualUsage   : Decimal(20, 2),
+                )             as forecast_actualUsage            : Decimal(20, 2),
                 sum(
                     forecast.chargedBlocks
-                )             as forecast_chargedBlocks : Decimal(20, 2),
-                sum(max_cost) as max_cost               : Decimal(20, 2),
+                )             as forecast_chargedBlocks          : Decimal(20, 2),
+                // The below values will be updated in the Delta query later on
+                null          as delta_measure_cost              : Decimal(20, 2),
+                null          as delta_measure_usage             : Decimal(20, 2),
+                null          as delta_measure_actualUsage       : Decimal(20, 2),
+                null          as delta_measure_chargedBlocks     : Decimal(20, 2),
+                null          as delta_measure_costPct           : Integer,
+                null          as delta_measure_usagePct          : Integer,
+                null          as delta_measure_actualUsagePct    : Integer,
+                null          as delta_measure_chargedBlocksPct  : Integer,
+                null          as delta_forecast_cost             : Decimal(20, 2),
+                null          as delta_forecast_usage            : Decimal(20, 2),
+                null          as delta_forecast_actualUsage      : Decimal(20, 2),
+                null          as delta_forecast_chargedBlocks    : Decimal(20, 2),
+                null          as delta_forecast_costPct          : Integer,
+                null          as delta_forecast_usagePct         : Integer,
+                null          as delta_forecast_actualUsagePct   : Integer,
+                null          as delta_forecast_chargedBlocksPct : Integer,
+                sum(max_cost) as max_cost                        : Decimal(20, 2),
                 case
                     when
                         sum(max_cost)    is null
@@ -116,7 +133,7 @@ service RetrievalService {
                                 forecast.cost
                             ) * 100 / sum(max_cost)
                         )
-                end           as forecastPct            : Integer
+                end           as forecastPct                     : Integer
         }
         where
             toMetric.metricName <> '_combined_'

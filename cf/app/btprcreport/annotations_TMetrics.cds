@@ -27,6 +27,10 @@ annotate service.TechnicalMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '14rem'}
         },
         {
+            Value                : tmByGlobalAccount.delta_measure_usage,
+            ![@HTML5.CssDefaults]: {width: '10rem'}
+        },
+        {
             Value                : tmByGlobalAccount.unit,
             ![@HTML5.CssDefaults]: {width: '16rem'}
         }
@@ -78,6 +82,10 @@ annotate service.TechnicalMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '14rem'}
         },
         {
+            Value                : tmByGlobalAccount.delta_measure_usage,
+            ![@HTML5.CssDefaults]: {width: '10rem'}
+        },
+        {
             Value                : tmByGlobalAccount.unit,
             ![@HTML5.CssDefaults]: {width: '12rem'}
         },
@@ -112,6 +120,11 @@ annotate service.TechnicalMetrics with @(UI: {
             $Type : 'UI.ReferenceFacet',
             Target: '@UI.FieldGroup#UsageThisMonth',
             Label : 'Usage For This Month'
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Target: '@UI.FieldGroup#DeltaChange',
+            Label : 'Daily Change'
         },
         {
             $Type : 'UI.ReferenceFacet',
@@ -178,5 +191,19 @@ annotate service.TechnicalMetrics with @(UI: {
             Label: 'Usage to date'
         },
         {Value: tmByGlobalAccount.unit}
+    ]},
+    FieldGroup #DeltaChange  : {Data: [
+        {
+            Value                    : tmByGlobalAccount.delta_measure_usagePct,
+            Criticality              : tmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Usage change'
+        },
+        {
+            Value                    : tmByGlobalAccount.delta_measure_usage,
+            Criticality              : tmByGlobalAccount.deltaActualsCriticality,
+            CriticalityRepresentation: #WithoutIcon,
+            Label                    : 'Usage change'
+        }
     ]}
 });

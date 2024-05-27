@@ -10,7 +10,7 @@ sap.ui.define(["sap/ui/integration/Extension"], function (Extension) {
 						1: 'Error',
 						2: 'Warning',
 						3: 'Success',
-						4: 'None',
+						0: 'None',
 						5: 'Information'
 					}
 					return map[status] || 'Information'

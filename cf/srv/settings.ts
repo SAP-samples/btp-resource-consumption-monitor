@@ -68,6 +68,18 @@ export const Settings = {
                 padStart: true
             },
             {
+                title: 'Increase',
+                width: 11,
+                value: 'delta_measure_cost',
+                padStart: true
+            },
+            {
+                title: 'Increase %',
+                width: 10,
+                value: 'delta_measure_costPct',
+                padStart: true
+            },
+            {
                 title: 'Forecasted Cost',
                 width: 15,
                 value: 'forecast_cost',
@@ -100,6 +112,18 @@ export const Settings = {
                 title: 'Actual Usage',
                 width: 20,
                 value: 'measure_usage',
+                padStart: true
+            },
+            {
+                title: 'Increase',
+                width: 11,
+                value: 'delta_measure_usage',
+                padStart: true
+            },
+            {
+                title: 'Increase %',
+                width: 10,
+                value: 'delta_measure_usagePct',
                 padStart: true
             },
             {

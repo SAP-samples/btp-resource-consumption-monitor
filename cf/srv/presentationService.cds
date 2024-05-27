@@ -4,7 +4,7 @@ using types from '../db/types';
 @requires: ['Viewer']
 service PresentationService {
 
-    entity BTPAccountMeasures             as
+    entity BTPAccountMeasures           as
         projection on db.CommercialMeasures {
             key toMetric.toService.reportYearMonth,
             key toMetric.toService.retrieved,
@@ -14,28 +14,52 @@ service PresentationService {
                 currency,
                 sum(
                     measure.cost
-                ) as measure_cost           : Decimal(20, 2),
+                ) as measure_cost                 : Decimal(20, 2),
                 sum(
                     measure.usage
-                ) as measure_usage          : Decimal(20, 2),
+                ) as measure_usage                : Decimal(20, 2),
                 sum(
                     measure.actualUsage
-                ) as measure_actualUsage    : Decimal(20, 2),
+                ) as measure_actualUsage          : Decimal(20, 2),
                 sum(
                     measure.chargedBlocks
-                ) as measure_chargedBlocks  : Decimal(20, 2),
+                ) as measure_chargedBlocks        : Decimal(20, 2),
                 sum(
                     forecast.cost
-                ) as forecast_cost          : Decimal(20, 2),
+                ) as forecast_cost                : Decimal(20, 2),
                 sum(
                     forecast.usage
-                ) as forecast_usage         : Decimal(20, 2),
+                ) as forecast_usage               : Decimal(20, 2),
                 sum(
                     forecast.actualUsage
-                ) as forecast_actualUsage   : Decimal(20, 2),
+                ) as forecast_actualUsage         : Decimal(20, 2),
                 sum(
                     forecast.chargedBlocks
-                ) as forecast_chargedBlocks : Decimal(20, 2),
+                ) as forecast_chargedBlocks       : Decimal(20, 2),
+                sum(
+                    delta.measure.cost
+                ) as delta_measure_cost           : Decimal(20, 2),
+                sum(
+                    delta.measure.usage
+                ) as delta_measure_usage          : Decimal(20, 2),
+                sum(
+                    delta.measure.actualUsage
+                ) as delta_measure_actualUsage    : Decimal(20, 2),
+                sum(
+                    delta.measure.chargedBlocks
+                ) as delta_measure_chargedBlocks  : Decimal(20, 2),
+                sum(
+                    delta.forecast.cost
+                ) as delta_forecast_cost          : Decimal(20, 2),
+                sum(
+                    delta.forecast.usage
+                ) as delta_forecast_usage         : Decimal(20, 2),
+                sum(
+                    delta.forecast.actualUsage
+                ) as delta_forecast_actualUsage   : Decimal(20, 2),
+                sum(
+                    delta.forecast.chargedBlocks
+                ) as delta_forecast_chargedBlocks : Decimal(20, 2)
         }
         where
             //     level               = 'GlobalAccount'
@@ -50,7 +74,7 @@ service PresentationService {
             toMetric.toService.interval;
 
     @cds.redirection.target
-    entity BTPServices                    as
+    entity BTPServices                  as
         projection on db.BTPServices {
             *,
             count(
@@ -106,7 +130,7 @@ service PresentationService {
 
 
     @cds.redirection.target
-    entity CommercialMetrics              as
+    entity CommercialMetrics            as
         projection on db.CommercialMetrics {
             *,
             // Filters to display data on breakdown levels:
@@ -114,7 +138,8 @@ service PresentationService {
             commercialMeasures[level = 'Directory']         as cmByDirectory,
             commercialMeasures[level = 'SubAccount']        as cmBySubAccount,
             commercialMeasures[level = 'Datacenter']        as cmByDatacenter,
-        } actions {
+        }
+        actions {
             @Common.SideEffects: {TargetEntities: [in]}
             action SetForecastSetting(
                                       @(
@@ -158,7 +183,7 @@ service PresentationService {
 
 
     @cds.redirection.target
-    entity CommercialMeasures             as
+    entity CommercialMeasures           as
         projection on db.CommercialMeasures {
             *,
             toMetric.toService.retrieved as retrieved, // Used in Chart
@@ -166,7 +191,7 @@ service PresentationService {
             toMetric.metricName          as metricName, // Used in Chart
         };
 
-    entity TechnicalMetrics               as
+    entity TechnicalMetrics             as
         projection on db.TechnicalMetrics {
             *,
             // Filters to display data on breakdown levels:
@@ -174,13 +199,14 @@ service PresentationService {
             technicalMeasures[level = 'Directory']         as tmByDirectory,
             technicalMeasures[level = 'SubAccount']        as tmBySubAccount,
             technicalMeasures[level = 'Datacenter']        as tmByDatacenter,
-        } actions {
+        }
+        actions {
             @Common.IsActionCritical
             action deleteTechnicalMetric();
         };
 
     @cds.redirection.target
-    entity TechnicalMeasures              as
+    entity TechnicalMeasures            as
         projection on db.TechnicalMeasures {
             *,
             toMetric.toService.retrieved as retrieved, // Used in Chart
@@ -189,19 +215,23 @@ service PresentationService {
         };
 
     @readonly
-    entity CodeLists                      as projection on db.CodeLists;
+    entity CodeLists                    as projection on db.CodeLists;
 
-    entity CL_ForecastMethods             as projection on CodeLists[list = 'ForecastMethods'];
-    entity ForecastSettings               as projection on db.ForecastSettings;
+    entity CL_ForecastMethods           as projection on CodeLists[list = 'ForecastMethods'];
+    entity ForecastSettings             as projection on db.ForecastSettings;
+
     // Services used in Selection Field value helps
     @singular: 'unique_serviceName_1'
-    entity unique_serviceName             as select distinct key serviceName from db.BTPServices;
+    entity unique_serviceName           as select distinct key serviceName from db.BTPServices;
+
     @singular: 'unique_reportYearMonth_1'
-    entity unique_reportYearMonth         as select distinct key reportYearMonth from db.BTPServices;
+    entity unique_reportYearMonth       as select distinct key reportYearMonth from db.BTPServices;
+
     @singular: 'unique_interval_1'
-    entity unique_interval                as select distinct key interval from db.BTPServices;
+    entity unique_interval              as select distinct key interval from db.BTPServices;
+
     @singular: 'unique_metricName_1'
-    entity unique_metricName              as select distinct key metricName from db.CommercialMetrics; //not used
+    entity unique_metricName            as select distinct key metricName from db.CommercialMetrics; //not used
 
 
     function getLatestBTPAccountMeasure() returns BTPAccountMeasures;
@@ -230,7 +260,7 @@ service PresentationService {
      * For Work Zone cards
      */
     @readonly
-    entity Card_HighestForecastServices   as
+    entity Card_HighestForecastServices as
         projection on BTPServices {
             *
         }
@@ -239,5 +269,7 @@ service PresentationService {
             and interval  = 'Daily';
 
     @singular: 'Card_TodaysMeasuresByLevel_1'
-    entity Card_TodaysMeasuresByLevel    as projection on BTPAccountMeasures[retrieved = CURRENT_DATE and name <> ''];
+    entity Card_TodaysMeasuresByLevel   as
+        projection on BTPAccountMeasures[retrieved =  CURRENT_DATE
+        and                              name      <> ''];
 }
