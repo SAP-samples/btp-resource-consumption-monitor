@@ -5,7 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
-## Version 1.0.x - Future
+## Version 1.1.0 - 2024-05-27
+### Added
+- Enabled previous-day delta calculations on measures and forecasts
+
 ### Changed
 - Delayed the initial load job to make sure the application is running steadily before the jobs run
 
