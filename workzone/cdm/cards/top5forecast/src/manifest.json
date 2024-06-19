@@ -1,0 +1,129 @@
+{
+    "_version": "1.61.0",
+    "sap.app": {
+        "id": "cards.top5forecast",
+        "type": "card",
+        "i18n": "i18n/i18n.properties",
+        "title": "{{title}}",
+        "description": "{{description}}",
+        "applicationVersion": {
+            "version": "2.0.0"
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "deviceTypes": {
+            "desktop": true,
+            "phone": true,
+            "tablet": true
+        },
+        "icons": {
+            "icon": "sap-icon://table-view"
+        }
+    },
+    "sap.card": {
+        "type": "Table",
+        "designtime": "dt/configuration",
+        "extension": "extensions/afterReadExtension",
+        "data": {
+            "request": {
+                "url": "{{destinations.btprc-srv}}/odata/v4/presentation/Card_HighestForecastServices",
+                "withCredentials": true,
+                "parameters": {
+                    "$filter": "countCommercialMetrics gt 0",
+                    "$expand": "cmByCustomer($select=currency,measure_cost,forecast_cost,forecastPct,forecastPctCriticality,delta_measure_costPct,deltaActualsCriticality)",
+                    "$orderby": "cmByCustomer/forecast_cost desc",
+                    "$top": "5"
+                }
+            },
+            "path": "/value"
+        },
+        "header": {
+            "title": "{{title}}",
+            "subTitle": "{{subtitle}}",
+            "status": {
+                "text": ""
+            },
+            "icon": {
+                "src": "sap-icon://money-bills"
+            },
+            "actions": [
+                {
+                    "type": "Navigation",
+                    "enabled": true,
+                    "parameters": {
+                        "ibnTarget": {
+                            "semanticObject": "services",
+                            "action": "display"
+                        }
+                    }
+                }
+            ]
+        },
+        "content": {
+            "row": {
+                "highlight": "{= extension.formatters.convertCriticality(${cmByCustomer/forecastPctCriticality}) }",
+                "columns": [
+                    {
+                        "title": "Service",
+                        "value": "{serviceName}",
+                        "identifier": true,
+                        "additionalText": "{namesCommercialMetrics}",
+                        "state": "{= extension.formatters.convertCriticality(${cmByCustomer/forecastPctCriticality}) }",
+                        "actions": [
+                            {
+                                "type": "Navigation",
+                                "enabled": true,
+                                "parameters": {
+                                    "ibnTarget": {
+                                        "semanticObject": "services",
+                                        "action": "display"
+                                    },
+                                    "ibnAppSpecificRoute": "BTPServices(reportYearMonth='{reportYearMonth}',serviceId='{= encodeURIComponent(encodeURIComponent(${serviceId}))}',retrieved={retrieved},interval='{interval}')"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Cost",
+                        "value": "{= format.currency(${cmByCustomer/measure_cost}, ${cmByCustomer/currency}, {currencyCode: true}) }",
+                        "hAlign": "Right",
+                        "state": "{= extension.formatters.convertCriticality(${cmByCustomer/forecastPctCriticality}) }"
+                    },
+                    {
+                        "title": "Cost Increase %",
+                        "value": "{= format.percent(${cmByCustomer/delta_measure_costPct} / 100) }",
+                        "hAlign": "Right",
+                        "state": "{= extension.formatters.convertCriticality(${cmByCustomer/deltaActualsCriticality}) }"
+                    },
+                    {
+                        "title": "Forecast",
+                        "value": "{= format.currency(${cmByCustomer/forecast_cost}, ${cmByCustomer/currency}, {currencyCode: true}) }",
+                        "hAlign": "Right",
+                        "state": "{= extension.formatters.convertCriticality(${cmByCustomer/forecastPctCriticality}) }"
+                    },
+                    {
+                        "title": "Forecast %",
+                        "progressIndicator": {
+                            "percent": "{cmByCustomer/forecastPct}",
+                            "text": "{= format.percent(${cmByCustomer/forecastPct} / 100)}",
+                            "state": "{= extension.formatters.convertCriticality(${cmByCustomer/forecastPctCriticality}) }"
+                        }
+                    }
+                ]
+            },
+            "maxItems": 5
+        },
+        "configuration": {
+            "destinations": {
+                "btprc-srv": {
+                    "name": "btprc-srv",
+                    "defaultUrl": "/odata/v4/presentation"
+                }
+            }
+        }
+    },
+    "sap.platform.mobilecards": {
+        "compatible": false
+    }
+}

@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_4_sac.measuresforyearbytags",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Dashboard (Monthly)"
+    },
+    "rows": [
+      {
+        "id": "page_sac.measuresforyearbytags-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_sac.measuresforyearbytags-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_sac.measuresforyearbytags-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_sac.measuresforyearbytags-1111",
+                    "viz": {
+                      "appId": "cards.sac.measuresforyearbytags.app",
+                      "vizId": "cards.sac.measuresforyearbytags.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

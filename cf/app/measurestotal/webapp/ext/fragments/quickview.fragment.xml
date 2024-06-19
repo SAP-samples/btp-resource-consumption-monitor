@@ -1,0 +1,19 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+    <ResponsivePopover
+        id="myPopover"
+        title="{context>/title}"
+        class="sapUiContentPadding"
+        placement="Bottom">
+        <content>
+            <List id="list" items="{context>/items}">
+                <items>
+                    <StandardListItem
+                        id="_IDGenStandardListItem1"
+                        title="{context>item}"
+                        icon="sap-icon://settings"
+                        iconInset="true" />
+                </items>
+            </List>
+        </content>
+    </ResponsivePopover>
+</core:FragmentDefinition>

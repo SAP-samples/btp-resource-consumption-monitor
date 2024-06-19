@@ -92,6 +92,20 @@ annotate service.CommercialMeasures with @(
                 DataPoint: '@UI.DataPoint#measure_cost'
             }]
         },
+        Chart #ComparisonByGlobalAccount                 : {
+            $Type            : 'UI.ChartDefinitionType',
+            Title            : 'By Global Account',
+            Description      : 'Cost this month',
+            ChartType        : #Bar,
+            Dimensions       : [name],
+            Measures         : [measure_cost],
+            DynamicMeasures  : ['@Analytics.AggregatedProperty#SUM_measure_cost'],
+            MeasureAttributes: [{
+                Measure  : measure_cost,
+                Role     : #Axis1,
+                DataPoint: '@UI.DataPoint#measure_cost'
+            }]
+        },
         DataPoint #measure_cost                          : {
             $Type: 'UI.DataPointType',
             Value: measure_cost
@@ -233,7 +247,7 @@ annotate service.TechnicalMeasures with @(
         AggregatableProperty: measure_usage
     },
     UI                                             : {
-        Chart #ComparisonBySubAccount: {
+        Chart #ComparisonBySubAccount   : {
             $Type            : 'UI.ChartDefinitionType',
             Title            : 'By Sub Account',
             Description      : 'Usage this month',
@@ -246,7 +260,7 @@ annotate service.TechnicalMeasures with @(
                 DataPoint: '@UI.DataPoint#measure_usage'
             }]
         },
-        Chart #ComparisonByDirectory : {
+        Chart #ComparisonByDirectory    : {
             $Type            : 'UI.ChartDefinitionType',
             Title            : 'By Directory',
             Description      : 'Usage this month',
@@ -259,7 +273,20 @@ annotate service.TechnicalMeasures with @(
                 DataPoint: '@UI.DataPoint#measure_usage'
             }]
         },
-        DataPoint #measure_usage     : {
+        Chart #ComparisonByGlobalAccount: {
+            $Type            : 'UI.ChartDefinitionType',
+            Title            : 'By Global Account',
+            Description      : 'Usage this month',
+            ChartType        : #Bar,
+            Dimensions       : [name],
+            Measures         : [measure_usage],
+            MeasureAttributes: [{
+                Measure  : measure_usage,
+                Role     : #Axis1,
+                DataPoint: '@UI.DataPoint#measure_usage'
+            }]
+        },
+        DataPoint #measure_usage        : {
             $Type: 'UI.DataPointType',
             Value: measure_usage
         }

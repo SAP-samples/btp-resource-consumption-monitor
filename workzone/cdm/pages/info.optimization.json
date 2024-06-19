@@ -1,0 +1,96 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_info.optimization",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": ""
+    },
+    "rows": [
+      {
+        "id": "page_info.optimization-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_info.optimization-11",
+            "columnConfig": {
+              "columnWidth": 8
+            },
+            "cells": [
+              {
+                "id": "page_info.optimization-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_info.optimization-1111",
+                    "viz": {
+                      "appId": "cards.info.optimization1.app",
+                      "vizId": "cards.info.optimization1.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "page_info.optimization-12",
+            "columnConfig": {
+              "columnWidth": 8
+            },
+            "cells": [
+              {
+                "id": "page_info.optimization-121",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_info.optimization-1211",
+                    "viz": {
+                      "appId": "cards.info.optimization2.app",
+                      "vizId": "cards.info.optimization2.viz"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "page_info.optimization-122",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_info.optimization-1221",
+                    "viz": {
+                      "appId": "cards.info.optimization3.app",
+                      "vizId": "cards.info.optimization3.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "page_info.optimization-13",
+            "columnConfig": {
+              "columnWidth": 8
+            },
+            "cells": [
+              {
+                "id": "page_info.optimization-131",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_info.optimization-1311",
+                    "viz": {
+                      "appId": "cards.info.optimization4.app",
+                      "vizId": "cards.info.optimization4.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

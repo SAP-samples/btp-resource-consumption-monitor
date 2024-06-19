@@ -1,0 +1,10 @@
+<core:FragmentDefinition
+       xmlns:core="sap.ui.core"
+       xmlns:l="sap.ui.layout"
+       xmlns="sap.m">
+       <l:VerticalLayout id="vl1">
+              <Button id="bContactSAP" text="Contact SAP"
+                     press=".extension.billingdifferences.ext.contact.contactSAP"
+                     visible="{= %{criticality} !== 3 }" />
+       </l:VerticalLayout>
+</core:FragmentDefinition>

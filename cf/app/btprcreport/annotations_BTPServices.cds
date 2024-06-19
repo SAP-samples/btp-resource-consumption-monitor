@@ -12,7 +12,7 @@ annotate service.BTPServices with @(Capabilities: {FilterRestrictions: {FilterEx
     serviceName     @(Common: {
         ValueListWithFixedValues: true,
         ValueList               : {
-            CollectionPath: 'unique_serviceName',
+            CollectionPath: 'unique_serviceNames',
             Parameters    : [{
                 $Type            : 'Common.ValueListParameterOut',
                 ValueListProperty: 'serviceName',
@@ -23,7 +23,7 @@ annotate service.BTPServices with @(Capabilities: {FilterRestrictions: {FilterEx
     reportYearMonth @(Common: {
         ValueListWithFixedValues: true,
         ValueList               : {
-            CollectionPath: 'unique_reportYearMonth',
+            CollectionPath: 'unique_reportYearMonths',
             Parameters    : [{
                 $Type            : 'Common.ValueListParameterOut',
                 ValueListProperty: 'reportYearMonth',
@@ -34,7 +34,7 @@ annotate service.BTPServices with @(Capabilities: {FilterRestrictions: {FilterEx
     interval        @(Common: {
         ValueListWithFixedValues: true,
         ValueList               : {
-            CollectionPath: 'unique_interval',
+            CollectionPath: 'unique_intervals',
             Parameters    : [{
                 $Type            : 'Common.ValueListParameterOut',
                 ValueListProperty: 'interval',
@@ -53,10 +53,10 @@ annotate service.BTPServices with @(UI: {
         SortOrder     : [
             {Property: reportYearMonth},
             {
-                Property  : cmByGlobalAccount.forecast_cost,
+                Property  : cmByCustomer.forecast_cost,
                 Descending: true
             }
-        ],
+        ]
     },
     SelectionFields                            : [
         retrieved,
@@ -82,13 +82,18 @@ annotate service.BTPServices with @(UI: {
         },
         {
             $Type : 'UI.DataFieldForAction',
-            Label : 'Reset all consumption data',
+            Label : 'Delete all consumption data',
             Action: 'PresentationService.EntityContainer/proxy_deleteAllData'
         },
         {
             $Type : 'UI.DataFieldForAction',
             Label : 'Revert all forecast settings to default',
             Action: 'PresentationService.EntityContainer/proxy_resetForecastSettings'
+        },
+        {
+            $Type : 'UI.DataFieldForAction',
+            Label : 'Delete all technical allocations',
+            Action: 'PresentationService.EntityContainer/proxy_resetTechnicalAllocations'
         },
         {
             Value                : retrieved,
@@ -103,29 +108,29 @@ annotate service.BTPServices with @(UI: {
             ![@HTML5.CssDefaults]: {width: '22rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_cost,
+            Value                : cmByCustomer.measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'},
             ![@UI.Hidden]        : hideCommercialInfo
         },
         {
-            Value                : cmByGlobalAccount.delta_measure_cost,
+            Value                : cmByCustomer.delta_measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'},
             ![@UI.Hidden]        : hideCommercialInfo
         },
         {
             $Type                : 'UI.DataFieldForAnnotation',
-            Target               : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
+            Target               : 'cmByCustomer/@UI.Chart#MetricBulletChart',
             Label                : 'Chart',
             ![@HTML5.CssDefaults]: {width: '7rem'}
         },
         {
-            Value                    : cmByGlobalAccount.forecastPct,
-            Criticality              : cmByGlobalAccount.forecastPctCriticality,
+            Value                    : cmByCustomer.forecastPct,
+            Criticality              : cmByCustomer.forecastPctCriticality,
             CriticalityRepresentation: #WithoutIcon,
             ![@HTML5.CssDefaults]    : {width: '6rem'}
         },
         {
-            Value                : cmByGlobalAccount.forecast_cost,
+            Value                : cmByCustomer.forecast_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'},
             ![@UI.Hidden]        : hideCommercialInfo
         },
@@ -136,16 +141,7 @@ annotate service.BTPServices with @(UI: {
         {
             Value                : countTechnicalMetrics,
             ![@HTML5.CssDefaults]: {width: '5rem'}
-        },
-    // {
-    //     $Type                : 'UI.DataFieldForAction',
-    //     Label                : 'DeleteMe',
-    //     Action               : 'PresentationService.deleteBTPService',
-    //     IconUrl              : 'sap-icon://delete',
-    //     // Inline               : true,
-    //     InvocationGrouping   : #ChangeSet,
-    //     ![@HTML5.CssDefaults]: {width: '4rem'}
-    // }
+        }
     ],
     PresentationVariant #ServiceEmbeddedHistory: {
         $Type         : 'UI.PresentationVariantType',
@@ -172,31 +168,39 @@ annotate service.BTPServices with @(UI: {
             ![@HTML5.CssDefaults]: {width: '8rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_cost,
+            Value                : cmByCustomer.measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'},
             ![@UI.Hidden]        : hideCommercialInfo
         },
         {
-            Value                : cmByGlobalAccount.delta_measure_cost,
+            Value                : cmByCustomer.delta_measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'},
             ![@UI.Hidden]        : hideCommercialInfo
         },
         {
             $Type                : 'UI.DataFieldForAnnotation',
-            Target               : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
+            Target               : 'cmByCustomer/@UI.Chart#MetricBulletChart',
             Label                : 'Chart',
             ![@HTML5.CssDefaults]: {width: '7rem'}
         },
         {
-            Value                    : cmByGlobalAccount.forecastPct,
-            Criticality              : cmByGlobalAccount.forecastPctCriticality,
+            Value                    : cmByCustomer.forecastPct,
+            Criticality              : cmByCustomer.forecastPctCriticality,
             CriticalityRepresentation: #WithoutIcon,
             ![@HTML5.CssDefaults]    : {width: '6rem'}
         },
         {
-            Value                : cmByGlobalAccount.forecast_cost,
+            Value                : cmByCustomer.forecast_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'},
             ![@UI.Hidden]        : hideCommercialInfo
+        },
+        {
+            Value                : cmByCustomer.measure_cloudCreditsCost,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
+            Value                : cmByCustomer.measure_paygCost,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
             Value                : countCommercialMetrics,
@@ -212,7 +216,8 @@ annotate service.BTPServices with @(UI: {
             Action               : 'PresentationService.deleteBTPService',
             IconUrl              : 'sap-icon://delete',
             Inline               : true,
-            ![@HTML5.CssDefaults]: {width: '4rem'}
+            ![@HTML5.CssDefaults]: {width: '4rem'},
+            ![@UI.Importance]    : #High
         }
     ],
 });
@@ -241,7 +246,7 @@ annotate service.BTPServices with @(UI: {
         },
         {
             $Type        : 'UI.ReferenceFacet',
-            Target       : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
+            Target       : 'cmByCustomer/@UI.Chart#MetricBulletChart',
             ![@UI.Hidden]: hideCommercialInfo
         },
         {
@@ -249,6 +254,14 @@ annotate service.BTPServices with @(UI: {
             Target       : '@UI.FieldGroup#DeltaChange',
             Label        : 'Daily Change',
             ![@UI.Hidden]: hideCommercialInfo
+        },
+        {
+            $Type        : 'UI.ReferenceFacet',
+            Target       : 'cmByGlobalAccount/@UI.Chart#ComparisonByGlobalAccount',
+            ![@UI.Hidden]: {$edmJson: {$Or: [
+                {$Path: 'hideCommercialInfo'},
+                {$Path: 'hideGlobalAccountDistribution'}
+            ]}}
         },
         {
             $Type        : 'UI.ReferenceFacet',
@@ -275,9 +288,10 @@ annotate service.BTPServices with @(UI: {
                     ![@UI.Hidden]: true
                 },
                 {
-                    $Type : 'UI.ReferenceFacet',
-                    Label : 'Commercial Metrics',
-                    Target: 'commercialMetrics/@UI.PresentationVariant#ServiceEmbeddedMetricsTable'
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Commercial Metrics',
+                    Target       : 'commercialMetrics/@UI.PresentationVariant#ServiceEmbeddedMetricsTable',
+                    ![@UI.Hidden]: hideCommercialInfo
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
@@ -285,33 +299,43 @@ annotate service.BTPServices with @(UI: {
                     Target: 'technicalMetrics/@UI.PresentationVariant#ServiceEmbeddedMetricsTable'
                 },
                 {
-                    $Type : 'UI.ReferenceFacet',
-                    Label : 'Cost over time (Daily)',
-                    Target: 'cmHistoryByMetricDaily/@UI.PresentationVariant#HistoricMeasuresChart'
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Cost over time (Daily)',
+                    Target       : 'cmHistoryByMetricDaily/@UI.PresentationVariant#HistoricMeasuresChart',
+                    ![@UI.Hidden]: hideCommercialInfo
                 },
                 {
-                    $Type : 'UI.ReferenceFacet',
-                    Label : 'Cost over time (Monthly)',
-                    Target: 'cmHistoryByMetricMonthly/@UI.PresentationVariant#HistoricMeasuresChart'
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Cost over time (Monthly)',
+                    Target       : 'cmHistoryByMetricMonthly/@UI.PresentationVariant#HistoricMeasuresChart',
+                    ![@UI.Hidden]: hideCommercialInfo
                 },
                 {
-                    $Type : 'UI.ReferenceFacet',
-                    Label : 'Cost over time (Combined)',
-                    Target: 'cmHistoryByMetricAll/@UI.PresentationVariant#HistoricMeasuresAllTimeChart'
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Cost over time (Combined)',
+                    Target       : 'cmHistoryByMetricAll/@UI.PresentationVariant#HistoricMeasuresAllTimeChart',
+                    ![@UI.Hidden]: hideCommercialInfo
                 }
             ]
         },
         {
-            $Type : 'UI.CollectionFacet',
-            ID    : 'commercialInfo',
-            Label : 'Commercial Details',
-            Facets: [
+            $Type        : 'UI.CollectionFacet',
+            ID           : 'commercialInfo',
+            Label        : 'Commercial Details',
+            ![@UI.Hidden]: hideCommercialInfo,
+            Facets       : [
                 {
                     // Needed to trick rendering the below tables with collapsed header (see UI5 v1.121.1)
                     $Type        : 'UI.CollectionFacet',
                     ID           : 'placeholderCommercialInfo',
                     Facets       : [],
                     ![@UI.Hidden]: true
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Global Account',
+                    Target       : 'cmByMetricByGlobalAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideGlobalAccountDistribution
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
@@ -322,6 +346,12 @@ annotate service.BTPServices with @(UI: {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'Breakdown By Sub Account',
                     Target: 'cmByMetricBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdown'
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Space',
+                    Target       : 'cmByMetricBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideCommercialSpaceAllocation
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
@@ -348,6 +378,12 @@ annotate service.BTPServices with @(UI: {
                     ![@UI.Hidden]: true
                 },
                 {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Global Account',
+                    Target       : 'tmByMetricByGlobalAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideGlobalAccountDistribution
+                },
+                {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'Breakdown By Directory',
                     Target: 'tmByMetricByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdown'
@@ -356,6 +392,11 @@ annotate service.BTPServices with @(UI: {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'Breakdown By Sub Account',
                     Target: 'tmByMetricBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdown'
+                },
+                {
+                    $Type : 'UI.ReferenceFacet',
+                    Label : 'Breakdown By Space',
+                    Target: 'tmByMetricBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdown'
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
@@ -376,51 +417,53 @@ annotate service.BTPServices with @(UI: {
         }
     ],
     FieldGroup #Metadata     : {Data: [
-        {Value: serviceName},
+        {Value: serviceId},
         {Value: retrieved},
         {Value: countCommercialMetrics},
         {Value: countTechnicalMetrics}
     ]},
     FieldGroup #CostThisMonth: {Data: [
         {
-            Value: cmByGlobalAccount.measure_cost,
+            Value: cmByCustomer.measure_cost,
             Label: 'Cost to date'
         },
+        {Value: cmByCustomer.measure_cloudCreditsCost},
+        {Value: cmByCustomer.measure_paygCost},
         {
-            Value: cmByGlobalAccount.max_cost,
+            Value: cmByCustomer.max_cost,
             Label: 'Monthly maximum'
         },
         {
-            Value: cmByGlobalAccount.forecast_cost,
+            Value: cmByCustomer.forecast_cost,
             Label: 'Forecasted this month'
         },
         {
-            Value: cmByGlobalAccount.forecastPct,
+            Value: cmByCustomer.forecastPct,
             Label: 'Forecasted vs maximum'
         }
     ]},
     FieldGroup #DeltaChange  : {Data: [
         {
-            Value                    : cmByGlobalAccount.delta_measure_costPct,
-            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            Value                    : cmByCustomer.delta_measure_costPct,
+            Criticality              : cmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Cost change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_measure_cost,
-            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            Value                    : cmByCustomer.delta_measure_cost,
+            Criticality              : cmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Cost change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_forecast_costPct,
-            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            Value                    : cmByCustomer.delta_forecast_costPct,
+            Criticality              : cmByCustomer.deltaForecastCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Forecast change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_forecast_cost,
-            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            Value                    : cmByCustomer.delta_forecast_cost,
+            Criticality              : cmByCustomer.deltaForecastCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Forecast change'
         },

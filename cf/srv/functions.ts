@@ -1,16 +1,21 @@
 import cds from '@sap/cds'
 import { TTag } from '#cds-models/types'
 import { CdsDate } from '#cds-models/_'
+import { Settings } from './settings'
+import {
+    CustomTags,
+    ManagedTagAllocations
+} from '#cds-models/db'
 
 const info = cds.log('functions').info
 
-export function fixDecimals(n: number | string | undefined, scale: number = 2) {
+export function fixDecimals(n: number | string | undefined, scale: number = 2): number {
     if (typeof n == 'number') return Number(n.toFixed(scale))
     if (typeof n == 'string') return Number(Number(n).toFixed(scale))
     return 0
 }
 
-export function dateToYearMonth(date?: Date) {
+export function dateToYearMonth(date?: Date): string {
     return (date ? date : new Date())
         .toISOString()
         .split('T')[0]
@@ -18,6 +23,12 @@ export function dateToYearMonth(date?: Date) {
         .slice(0, 2)
         .join('')
 }
+
+export function getDaysInMonth(date?: Date): number {
+    const d = date ? date : new Date()
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+}
+
 /**
  * 
  * @param dateYearMonth 202402
@@ -32,13 +43,24 @@ export function lastDayOfMonth(dateYearMonth: string) {
     return [y, m, d].join('-') as CdsDate
 }
 
-export function dateToISODate(date?: Date) {
+export function dateToISODate(date?: Date): string {
     return (date ? date : new Date()).toISOString().split('T')[0]
+}
+export function stringToCdsDate(date: string): CdsDate {
+    return dateToISODate(new Date(date)) as CdsDate
+}
+
+export function getPreviousMonth(date?: Date): number {
+    const thisMonth = dateToYearMonth(date)
+    return thisMonth.endsWith('01') ? Number(thisMonth) - 1 - 88 : Number(thisMonth) - 1
+}
+export function getNextMonth(yearMonth: string): number {
+    return yearMonth.endsWith('12') ? Number(yearMonth) + 1 + 88 : Number(yearMonth) + 1
 }
 
 export function groupByKeys<T>(items: T[], keys: (keyof T)[]): { [key: string]: T[] } {
     return items.reduce((p, c) => {
-        const id = keys.map(x => c[x]).join('__')
+        const id = JSON.stringify(keys.map(x => c[x] || Settings.defaultValues.noNameErrorValue))
         p[id] = p[id] || []
         p[id].push(c)
         return p
@@ -86,4 +108,69 @@ export function formatTags(tags: TTag[]) {
     return tags
         .map(n => `${n.name?.toUpperCase()}:${line}${bullet}${n.values?.join(line + bullet)}`)
         .join(line + line)
+}
+
+// export function increaseMonth(dateYearMonth: string) {
+//     return (
+//         dateYearMonth.endsWith('12') ?
+//             Number(dateYearMonth) + 88 + 1
+//             : Number(dateYearMonth) + 1
+//     ).toString()
+// }
+
+export function isInRange(date: string, start?: string, end?: string) {
+    let inRange: boolean = true
+    const dDate = date && new Date(date)
+    if (start) inRange &&= new Date(start) <= dDate
+    if (end) inRange &&= new Date(end) >= dDate
+    return inRange
+}
+
+export function stringifyTagAllocations(items?: ManagedTagAllocations) {
+    return items && items
+        .sort((a, b) => { return (a.pct ?? 0) < (b.pct ?? 0) ? 1 : -1 })
+        .map(x => `${x.value} (${x.pct}%)`)
+        .join(', ')
+}
+export function stringifyCustomTags(items?: CustomTags) {
+    return items && items
+        .map(x => `${x.name} (${x.value})`)
+        .join(', ')
+}
+
+export function reportYearMonthToText(reportYearMonth: string): string {
+    const months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+    ]
+    const month = Number(reportYearMonth.slice(4, 6)) - 1
+    return month < months.length ? (`${months[month]} ${reportYearMonth.slice(0, 4)}`) : reportYearMonth
+}
+export function reportYearMonthToTextShort(reportYearMonth: string): string {
+    const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+    ]
+    const month = Number(reportYearMonth.slice(4, 6)) - 1
+    return month < months.length ? (`${months[month]} ${reportYearMonth.slice(0, 4)}`) : reportYearMonth
 }

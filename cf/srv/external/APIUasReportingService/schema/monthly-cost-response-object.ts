@@ -14,6 +14,8 @@ export type MonthlyCostResponseObject =
        * Format: "double".
        */
       cost?: number;
+      paygCost?: number;
+      cloudCreditsCost?: number;
       /**
        * The SKU of the service consumed.
        */

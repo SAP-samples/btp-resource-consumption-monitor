@@ -1,0 +1,96 @@
+{
+    "_version": "3.2.0",
+    "identification": {
+        "id": "saas_approuter_billingdifferences",
+        "title": "Report showing Billing differences",
+        "entityType": "businessapp",
+        "description": "",
+        "providerId": "saas_approuter"
+    },
+    "payload": {
+        "visualizations": {
+            "tile": {
+                "vizType": "sap.ushell.StaticAppLauncher",
+                "vizConfig": {
+                    "sap.ui": {
+                        "icons": {
+                            "icon": "sap-icon://compare-2"
+                        }
+                    },
+                    "sap.app": {
+                        "id": "billingdifferences",
+                        "title": "Credit Expenditure",
+                        "subTitle": "Report"
+                    },
+                    "sap.flp": {
+                        "target": {
+                            "type": "IBN",
+                            "inboundId": "billing-display"
+                        }
+                    }
+                }
+            }
+        },
+        "commonAppConfig": {
+            "sap.app": {
+                "dataSources": {
+                    "mainService": {
+                        "uri": "odata/v4/contracts/",
+                        "type": "OData",
+                        "settings": {
+                            "annotations": [],
+                            "odataVersion": "4.0"
+                        }
+                    }
+                }
+            }
+        },
+        "targetAppConfig": {
+            "sap.ui": {
+                "technology": "URL",
+                "deviceTypes": {
+                    "phone": true,
+                    "tablet": true,
+                    "desktop": true
+                }
+            },
+            "sap.app": {
+                "crossNavigation": {
+                    "inbounds": {
+                        "billing-display": {
+                            "semanticObject": "billing",
+                            "action": "display",
+                            "title": "Credit Expenditure",
+                            "subTitle": "Report",
+                            "icon": "sap-icon://compare-2",
+                            "signature": {
+                                "parameters": {},
+                                "additionalParameters": "allowed"
+                            }
+                        }
+                    }
+                },
+                "providerId": "saas_approuter",
+                "destination": "saas_approuter"
+            },
+            "sap.ui5": {
+                "componentName": "billingdifferences"
+            },
+            "sap.integration": {
+                "navMode": "inplace",
+                "urlTemplateId": "urltemplate.fiori-cf-ars",
+                "urlTemplateParams": {
+                    "appId": "billingdifferences",
+                    "query": {
+                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
+                        "saasApprouter": "true"
+                    }
+                }
+            }
+        },
+        "systemAlias": {
+            "id": "saas_approuter",
+            "https": {}
+        }
+    }
+}

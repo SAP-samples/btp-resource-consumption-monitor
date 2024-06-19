@@ -1,0 +1,101 @@
+{
+    "_version": "3.2.0",
+    "identification": {
+        "id": "saas_approuter_managealerts",
+        "title": "Application to manage Alert Notifications",
+        "entityType": "businessapp",
+        "description": "",
+        "providerId": "saas_approuter"
+    },
+    "payload": {
+        "visualizations": {
+            "tile": {
+                "vizType": "sap.ushell.StaticAppLauncher",
+                "vizConfig": {
+                    "sap.ui": {
+                        "icons": {
+                            "icon": "sap-icon://bell"
+                        }
+                    },
+                    "sap.app": {
+                        "id": "managealerts",
+                        "title": "Configure Alerts",
+                        "subTitle": "Settings"
+                    },
+                    "sap.flp": {
+                        "target": {
+                            "type": "IBN",
+                            "inboundId": "alerts-manage"
+                        },
+                        "indicatorDataSource": {
+                            "path": "Alerts/$count?$filter=active eq true",
+                            "refresh": 600,
+                            "dataSource": "mainService"
+                        }
+                    }
+                }
+            }
+        },
+        "commonAppConfig": {
+            "sap.app": {
+                "dataSources": {
+                    "mainService": {
+                        "uri": "odata/v4/manage-alerts/",
+                        "type": "OData",
+                        "settings": {
+                            "annotations": [],
+                            "odataVersion": "4.0"
+                        }
+                    }
+                }
+            }
+        },
+        "targetAppConfig": {
+            "sap.ui": {
+                "technology": "URL",
+                "deviceTypes": {
+                    "phone": true,
+                    "tablet": true,
+                    "desktop": true
+                }
+            },
+            "sap.app": {
+                "crossNavigation": {
+                    "inbounds": {
+                        "alerts-manage": {
+                            "semanticObject": "alerts",
+                            "action": "manage",
+                            "title": "Configure Alerts",
+                            "subTitle": "Settings",
+                            "icon": "sap-icon://bell",
+                            "signature": {
+                                "parameters": {},
+                                "additionalParameters": "allowed"
+                            }
+                        }
+                    }
+                },
+                "providerId": "saas_approuter",
+                "destination": "saas_approuter"
+            },
+            "sap.ui5": {
+                "componentName": "managealerts"
+            },
+            "sap.integration": {
+                "navMode": "inplace",
+                "urlTemplateId": "urltemplate.fiori-cf-ars",
+                "urlTemplateParams": {
+                    "appId": "managealerts",
+                    "query": {
+                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
+                        "saasApprouter": "true"
+                    }
+                }
+            }
+        },
+        "systemAlias": {
+            "id": "saas_approuter",
+            "https": {}
+        }
+    }
+}

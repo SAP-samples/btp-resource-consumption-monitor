@@ -1,0 +1,32 @@
+<core:FragmentDefinition
+       xmlns:core="sap.ui.core"
+       xmlns:table="sap.ui.table"
+       xmlns="sap.m">
+       <table:Column id="c1" width="25rem">
+              <Label id="l1" text="Hierarchy" />
+              <table:customData>
+                     <core:CustomData key="p13nData"
+                            value='\{"autoColumnWidth": "true", "columnKey": "icon", "leadingProperty": "AccountStructureItem_label", "columnIndex": "0" }' />
+              </table:customData>
+              <table:template>
+                     <FlexBox id="f1" alignItems="Center" justifyContent="Start">
+                            <core:Icon id="_IDGenIcon1" src="{AccountStructureItem_icon}"
+                                   class="sapUiSmallMarginEnd" />
+                            <Label id="_IDGenLabel1" text="{AccountStructureItem_label}" tooltip="ID: {AccountStructureItem_ID}"/>
+                     </FlexBox>
+              </table:template>
+       </table:Column>
+       <table:Column id="c2" width="6rem">
+              <Label id="l2" text="Services" />
+              <table:customData>
+                     <core:CustomData key="p13nData"
+                            value='\{"autoColumnWidth": "true", "columnKey": "serviceNames", "leadingProperty": "Measures_countServices", "columnIndex": "2" }' />
+              </table:customData>
+              <table:template>
+                     <Link id="link1"
+                            text="{= ${Measures_countServices} + (${Measures_countServices} > 1 ? ' charges' : ' charge') }"
+                            press=".extension.measuresforyears.ext.controller.ListReportExt.handleLinkPress"
+                            visible="{= ${Measures_countServices} > 0 }" />
+              </table:template>
+       </table:Column>
+</core:FragmentDefinition>

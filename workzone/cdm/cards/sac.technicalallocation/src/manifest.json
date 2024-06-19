@@ -1,0 +1,40 @@
+{
+	"_version": "1.15.0",
+	"sap.app": {
+		"id": "cards.sac.technicalallocation",
+		"type": "card",
+		"title": "SAC Technical Allocation",
+		"subTitle": "",
+        "description": "{{description}}",
+        "i18n": "i18n/i18n.properties",
+		"applicationVersion": {
+            "version": "2.0.0"
+		}
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"deviceTypes": {
+			"desktop": true,
+			"phone": true,
+			"tablet": true
+		}
+	},
+	"sap.card": {
+		"type": "WebPage",
+		"header": {},
+		"content": {
+			"src": "{parameters>/SAC_url/value}&page=1",
+			"sandbox": "allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-downloads",
+			"minHeight": "57rem"
+		},
+		"configuration": {
+			"parameters": {
+				"SAC_url": {
+					"value": "<YOUR_SAC_STORY_URL>",
+					"type": "string",
+					"description": "The base url of your SAC story. Example: https://<YOUR_HOST>.sapanalytics.cloud/sap/fpa/ui/tenants/<YOUR_TENANT>/app.html#/story2?shellMode=embed&/s2/<YOUR_STORY>/?url_api=true&pageBar=disable&view_id=story2"
+				}
+			}
+		}
+	}
+}

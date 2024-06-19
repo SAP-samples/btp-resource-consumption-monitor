@@ -1,5 +1,11 @@
+import cds from '@sap/cds'
 import assert from 'assert'
-import { UsageAndCostManagementApi } from './external/APIUasReportingService'
+import {
+    CloudCreditsDetailsResponseObject,
+    MonthlyCostResponseList,
+    MonthlyUsageResponseList,
+    UsageAndCostManagementApi
+} from './external/APIUasReportingService'
 import {
     getDestinationFromServiceBinding,
     serviceToken,
@@ -7,29 +13,73 @@ import {
     HttpDestination
 } from '@sap-cloud-sdk/connectivity'
 
+const info = cds.log('UAS API').info
+
 /**
  * Call the UAS API to get the usage data
  * @param queryParameters
  * @returns Monthly usage data
  */
+// export async function api_monthlyUsage(queryParameters: { fromDate: number, toDate: number }) {
+//     const serviceDestination = await getServiceDestination()
+//     return await UsageAndCostManagementApi
+//         .monthlyUsage(queryParameters)
+//         .execute(serviceDestination)
+// }
 export async function api_monthlyUsage(queryParameters: { fromDate: number, toDate: number }) {
-    const serviceDestination = await getServiceDestination()
-    return await UsageAndCostManagementApi
-        .monthlyUsage(queryParameters)
-        .execute(serviceDestination)
+    let data: MonthlyUsageResponseList = { content: [] }
+    for (const binding of serviceBindingNames) {
+        info(`Querying binding ${binding}...`)
+        const serviceDestination = await getServiceDestination(binding)
+        const result = await UsageAndCostManagementApi
+            .monthlyUsage(queryParameters)
+            .execute(serviceDestination)
+        data.content = data.content.concat(result.content)
+    }
+    return data
 }
+// export async function api_monthlyCost(queryParameters: { fromDate: number, toDate: number }) {
+//     const serviceDestination = await getServiceDestination()
+//     return await UsageAndCostManagementApi
+//         .monthlyUsageSubaccountCost(queryParameters)
+//         .execute(serviceDestination)
+// }
 export async function api_monthlyCost(queryParameters: { fromDate: number, toDate: number }) {
-    const serviceDestination = await getServiceDestination()
-    return await UsageAndCostManagementApi
-        .monthlyUsageSubaccountCost(queryParameters)
-        .execute(serviceDestination)
+    let data: MonthlyCostResponseList = { content: [] }
+    for (const binding of serviceBindingNames) {
+        info(`Querying binding ${binding}...`)
+        const serviceDestination = await getServiceDestination(binding)
+        const result = await UsageAndCostManagementApi
+            .monthlyUsageSubaccountCost(queryParameters)
+            .execute(serviceDestination)
+        data.content = data.content.concat(result.content)
+    }
+    return data
+}
+// export async function api_creditDetails(queryParameters: { viewPhases: 'ALL' | 'CURRENT' }) {
+//     const serviceDestination = await getServiceDestination()
+//     return await UsageAndCostManagementApi
+//         .cloudCreditsDetails(queryParameters)
+//         .execute(serviceDestination)
+// }
+export async function api_creditDetails(queryParameters: { viewPhases: 'ALL' | 'CURRENT' }) {
+    let data: CloudCreditsDetailsResponseObject[] = []
+    for (const binding of serviceBindingNames) {
+        info(`Querying binding ${binding}...`)
+        const serviceDestination = await getServiceDestination(binding)
+        const result = await UsageAndCostManagementApi
+            .cloudCreditsDetails(queryParameters)
+            .execute(serviceDestination)
+        data = data.concat(result)
+    }
+    return data
 }
 
 /**
  * Retrieves destination configuration with renewed token
  * @returns HTTPDestination
 */
-async function getServiceDestination() {
+async function getServiceDestination(ServiceBindingName: string) {
     return await getDestinationFromServiceBinding({
         destinationName: ServiceBindingName,
         serviceBindingTransformFn: async (service, options) => {
@@ -53,9 +103,16 @@ async function getServiceDestination() {
 /**
  * Startup validation of required bindings
 */
-const service = 'uas'
-const config = process.env.VCAP_SERVICES
-    && JSON.parse(process.env.VCAP_SERVICES)[service] // use the normal service binding
-    || JSON.parse(process.env.VCAP_SERVICES ?? '{}')['user-provided'] // fallback: use a User Provided Service for other-Global Account service instances
-const ServiceBindingName: string = config?.length > 0 ? config[0].name : undefined
-assert(ServiceBindingName, `No service instance of type ${service} has been bound to the application`)
+let serviceBindingNames: string[] = []
+const config: Record<string, Record<string, string>[]> = JSON.parse(process.env.VCAP_SERVICES ?? '{}');
+Object.keys(config).forEach(binding => {
+    if (config[binding]?.length > 0) {
+        serviceBindingNames = serviceBindingNames.concat(
+            config[binding]
+                .map(x => x.name)
+                .filter(x => x.match(/.*(btprc\-uas).*/))
+        )
+    }
+})
+assert(serviceBindingNames.length > 0, `No service instance of type UAS has been bound to the application`)
+info(`Connected to ${serviceBindingNames.length} UAS instances: ${serviceBindingNames.join(', ')}`)

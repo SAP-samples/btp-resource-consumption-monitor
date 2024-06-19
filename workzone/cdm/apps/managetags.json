@@ -1,0 +1,96 @@
+{
+    "_version": "3.2.0",
+    "identification": {
+        "id": "saas_approuter_managetags",
+        "title": "Application to manage Tags",
+        "entityType": "businessapp",
+        "description": "",
+        "providerId": "saas_approuter"
+    },
+    "payload": {
+        "visualizations": {
+            "tile": {
+                "vizType": "sap.ushell.StaticAppLauncher",
+                "vizConfig": {
+                    "sap.ui": {
+                        "icons": {
+                            "icon": "sap-icon://tags"
+                        }
+                    },
+                    "sap.app": {
+                        "id": "managetags",
+                        "title": "Configure Tags",
+                        "subTitle": "Settings"
+                    },
+                    "sap.flp": {
+                        "target": {
+                            "type": "IBN",
+                            "inboundId": "tags-manage"
+                        }
+                    }
+                }
+            }
+        },
+        "commonAppConfig": {
+            "sap.app": {
+                "dataSources": {
+                    "mainService": {
+                        "uri": "odata/v2/manage-tags/",
+                        "type": "OData",
+                        "settings": {
+                            "annotations": [],
+                            "odataVersion": "2.0"
+                        }
+                    }
+                }
+            }
+        },
+        "targetAppConfig": {
+            "sap.ui": {
+                "technology": "URL",
+                "deviceTypes": {
+                    "phone": true,
+                    "tablet": true,
+                    "desktop": true
+                }
+            },
+            "sap.app": {
+                "crossNavigation": {
+                    "inbounds": {
+                        "tags-manage": {
+                            "semanticObject": "tags",
+                            "action": "manage",
+                            "title": "Configure Tags",
+                            "subTitle": "Settings",
+                            "icon": "sap-icon://tags",
+                            "signature": {
+                                "parameters": {},
+                                "additionalParameters": "allowed"
+                            }
+                        }
+                    }
+                },
+                "providerId": "saas_approuter",
+                "destination": "saas_approuter"
+            },
+            "sap.ui5": {
+                "componentName": "managetags"
+            },
+            "sap.integration": {
+                "navMode": "inplace",
+                "urlTemplateId": "urltemplate.fiori-cf-ars",
+                "urlTemplateParams": {
+                    "appId": "managetags",
+                    "query": {
+                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
+                        "saasApprouter": "true"
+                    }
+                }
+            }
+        },
+        "systemAlias": {
+            "id": "saas_approuter",
+            "https": {}
+        }
+    }
+}

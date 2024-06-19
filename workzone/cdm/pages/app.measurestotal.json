@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_1_app.measurestotal",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Cost Breakdown (Daily)"
+    },
+    "rows": [
+      {
+        "id": "page_app.measurestotal-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_app.measurestotal-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_app.measurestotal-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_app.measurestotal-1111",
+                    "viz": {
+                      "appId": "cards.app.measurestotal.app",
+                      "vizId": "cards.app.measurestotal.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

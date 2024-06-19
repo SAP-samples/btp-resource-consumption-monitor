@@ -1,0 +1,111 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "access_role",
+    "title": "{{role_base_title}}",
+    "description": "{{role_base_description}}",
+    "entityType": "role"
+  },
+  "payload": {
+    "spaces": [
+      {
+        "id": "space_1_overview"
+      },
+      {
+        "id": "space_2_billingverification"
+      },
+      {
+        "id": "space_3_costbreakdown"
+      },
+      {
+        "id": "space_4_creditexpenditure"
+      },
+      {
+        "id": "space_5_crosscharging"
+      },
+      {
+        "id": "space_6_monitoringalerting"
+      },
+      {
+        "id": "space_7_info.optimization"
+      },
+      {
+        "id": "space_8_tagmanager"
+      }
+    ],
+    "apps": [
+      {
+        "id": "cards.top5forecast.app"
+      },
+      {
+        "id": "cards.historictrend.app"
+      },
+      {
+        "id": "cards.breakdownbylevel.app"
+      },
+      {
+        "id": "cards.app.btprcreport.app"
+      },
+      {
+        "id": "cards.app.measuresbytags.app"
+      },
+      {
+        "id": "cards.app.measuresforyearbytags.app"
+      },
+      {
+        "id": "cards.app.measurestotal.app"
+      },
+      {
+        "id": "cards.app.measuresforyears.app"
+      },
+      {
+        "id": "cards.app.billingdifferences.app"
+      },
+      {
+        "id": "cards.app.managealerts.app"
+      },
+      {
+        "id": "cards.app.managetags.app"
+      },
+      {
+        "id": "cards.info.optimization1.app"
+      },
+      {
+        "id": "cards.info.optimization2.app"
+      },
+      {
+        "id": "cards.info.optimization3.app"
+      },
+      {
+        "id": "cards.info.optimization4.app"
+      },
+      {
+        "id": "cards.creditburndown.app"
+      },
+      {
+        "id": "saas_approuter_btprcreport"
+      },
+      {
+        "id": "saas_approuter_managealerts"
+      },
+      {
+        "id": "saas_approuter_managetags"
+      },
+      {
+        "id": "saas_approuter_measurestotal"
+      },
+      {
+        "id": "saas_approuter_measuresbytags"
+      },
+      {
+        "id": "saas_approuter_measuresforyears"
+      },
+      {
+        "id": "saas_approuter_measuresforyearbytags"
+      },
+      {
+        "id": "saas_approuter_billingdifferences"
+      }
+    ]
+  }
+}

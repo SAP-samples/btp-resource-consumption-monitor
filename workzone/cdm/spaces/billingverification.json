@@ -1,0 +1,20 @@
+{
+  "_version": "3.1.0",
+  "identification": {
+    "id": "space_2_billingverification",
+    "title": "Billing Verification",
+    "entityType": "space"
+  },
+  "payload": {
+    "contentNodes": [
+      {
+        "type": "workpage",
+        "id": "page_app.btprcreport"
+      },
+      {
+        "type": "workpage",
+        "id": "page_3_sac.technicalallocation"
+      }
+    ]
+  }
+}

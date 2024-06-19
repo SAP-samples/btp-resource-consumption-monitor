@@ -1,6 +1,6 @@
 _schema-version: "3.1"
 ID: btp-resource-consumption
-version: 1.0.0
+version: 2.0.0
 description: BTP usage and resource consumption dashboard
 parameters:
   enable-parallel-deployments: true
@@ -135,6 +135,30 @@ modules:
           target-path: resources/
           artifacts:
             - managealerts.zip
+        - name: managetags
+          target-path: resources/
+          artifacts:
+            - managetags.zip
+        - name: measurestotal
+          target-path: resources/
+          artifacts:
+            - measurestotal.zip
+        - name: measuresbytags
+          target-path: resources/
+          artifacts:
+            - measuresbytags.zip
+        - name: measuresforyears
+          target-path: resources/
+          artifacts:
+            - measuresforyears.zip
+        - name: measuresforyearbytags
+          target-path: resources/
+          artifacts:
+            - measuresforyearbytags.zip
+        - name: billingdifferences
+          target-path: resources/
+          artifacts:
+            - billingdifferences.zip
 
   - name: btprcreport
     type: html5
@@ -158,6 +182,72 @@ modules:
         - npm run build:cf
       supported-platforms: []
 
+  - name: managetags
+    type: html5
+    path: app/managetags
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+  - name: measurestotal
+    type: html5
+    path: app/measurestotal
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+  - name: measuresbytags
+    type: html5
+    path: app/measuresbytags
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+  - name: measuresforyears
+    type: html5
+    path: app/measuresforyears
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+  - name: measuresforyearbytags
+    type: html5
+    path: app/measuresforyearbytags
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+  - name: billingdifferences
+    type: html5
+    path: app/billingdifferences
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
 resources:
   - name: btprc-db
     type: com.sap.xs.hdi-container
@@ -165,7 +255,7 @@ resources:
       service: hana
       service-plan: hdi-shared
       config:
-        schema: BTPResourceConsumption_${space}
+        schema: BTPRC_${space}
       service-keys:
         - name: btprc-db-key
 

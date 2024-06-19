@@ -1,0 +1,31 @@
+{
+    "_version": "1.15.0",
+    "sap.app": {
+        "id": "cards.app.measurestotal",
+        "type": "card",
+        "title": "URL Widget",
+        "description": "{{description}}",
+        "i18n": "i18n/i18n.properties",
+        "applicationVersion": {
+            "version": "2.0.0"
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "deviceTypes": {
+            "desktop": true,
+            "phone": true,
+            "tablet": true
+        }
+    },
+    "sap.card": {
+        "extension": "./extension",
+        "type": "WebPage",
+        "header": {},
+        "content": {
+            "src": "{/basePath}#measurestotal-display?sap-ui-app-id-hint=btprc.cpkg_saas_approuter_measurestotal",
+            "sandbox": "allow-same-origin allow-scripts allow-popups allow-forms allow-modals",
+            "minHeight": "57rem"
+        }
+    }
+}

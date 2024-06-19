@@ -1,0 +1,77 @@
+{
+	"_version": "1.15.0",
+	"sap.app": {
+		"id": "cards.info.optimization1",
+		"type": "card",
+		"title": "Cost Optimization 1",
+		"subTitle": "",
+        "description": "{{description}}",
+        "i18n": "i18n/i18n.properties",
+		"applicationVersion": {
+            "version": "2.0.0"
+		}
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"deviceTypes": {
+			"desktop": true,
+			"phone": true,
+			"tablet": true
+		}
+	},
+	"sap.card": {
+		"extension": "./extension",
+		"configuration": {
+			"enableMarkdown": true
+		},
+		"header": {
+			"title": "Enable Alert Notification Service",
+			"subTitle": "Cost Optimization Strategy #1",
+			"icon": {
+				"src": "sap-icon://bell"
+			}
+		},
+		"type": "AdaptiveCard",
+		"content": {
+			"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+			"type": "AdaptiveCard",
+			"version": "1.2",
+			"body": [
+				{
+					"type": "TextBlock",
+					"text": "Kickstart your cost optimization journey by activating the Alert Notification Service through our dedicated application. This crucial first step empowers you to **proactively** oversee your cloud consumption by setting up real-time alerts for usage spikes or budget overruns.",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "Customize alert thresholds to match your budgetary limits directly within the app, ensuring immediate awareness and control over your cloud costs. Stay on top of your finances effortlessly and **prevent unexpected expenses!**",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "**Alert configuration:**\r- Enables configuring alerts to monitor usage and cost consumption.\r- Alerts can be set based on predefined thresholds, which may be derived from forecasts of cost or usage.\r- Hierarchical configuration for fine-grained control.",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "**Alerts can be customized at multiple levels:**\r- Global Account\r- Directory\r- Subaccount\r- Data Center",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "**Granular alert options:**\r- Alerts can be set at the service or individual metric level.\r- Alerts can be differentiated between commercial measures (charged costs) and technical measures (actual usage).",
+					"wrap": true
+				}
+			],
+			"actions": [
+				{
+					"type": "Action.Submit",
+					"title": "Read More ...",
+					"data":{
+						"url":"https://raw.githubusercontent.com/SAP-samples/btp-resource-consumption-monitor/main/docs/snippets/info.optimization1.md"
+					}
+				}
+			]
+		}
+	}
+}

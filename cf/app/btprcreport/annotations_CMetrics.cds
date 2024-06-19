@@ -2,12 +2,38 @@ using PresentationService as service from '../../srv/presentationService';
 using from './annotations_Measures';
 using from './charts';
 
+annotate types.TSetForecastSettingParams with {
+    method           @(Common: {
+        Label                   : 'Choose forecasting method',
+        ValueListWithFixedValues: true,
+        ValueList               : {
+            CollectionPath: 'CL_ForecastMethods',
+            Parameters    : [{
+                $Type            : 'Common.ValueListParameterInOut',
+                ValueListProperty: 'code',
+                LocalDataProperty: 'method'
+            }]
+        }
+    });
+    degressionFactor @(
+        assert.range: [
+            0,
+            10
+        ],
+        Common.Label: 'Set degression factor'
+    )
+}
+
+annotate types.TSetTechnicalMetricForAllocationParams with {
+    tMeasureId @Common.Label: 'Select Technical Metric or set empty value to remove allocation';
+}
+
 // List Views
 annotate service.CommercialMetrics with @(UI: {
     PresentationVariant #ServiceEmbeddedMetricsTable       : {
         $Type         : 'UI.PresentationVariantType',
         Visualizations: ['@UI.LineItem#ServiceEmbeddedMetricsTable'],
-        SortOrder     : [{Property: metricName}],
+        SortOrder     : [{Property: metricName}]
     },
     LineItem #ServiceEmbeddedMetricsTable                  : [
         {
@@ -23,31 +49,28 @@ annotate service.CommercialMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '19rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_cost,
+            Value                : cmByCustomer.measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
-            Value                : cmByGlobalAccount.delta_measure_cost,
+            Value                : cmByCustomer.delta_measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
             $Type                : 'UI.DataFieldForAnnotation',
-            Target               : 'cmByGlobalAccount/@UI.Chart#MetricBulletChart',
+            Target               : 'cmByCustomer/@UI.Chart#MetricBulletChart',
             Label                : 'Chart',
             ![@HTML5.CssDefaults]: {width: '7rem'}
         },
         {
-            Value                    : cmByGlobalAccount.forecastPct,
-            Criticality              : cmByGlobalAccount.forecastPctCriticality,
+            Value                    : cmByCustomer.forecastPct,
+            Criticality              : cmByCustomer.forecastPctCriticality,
             CriticalityRepresentation: #WithoutIcon,
             ![@HTML5.CssDefaults]    : {width: '6rem'},
-            ![@UI.Hidden]            : {$edmJson: {$Eq: [
-                {$Path: 'forecastSetting/method'},
-                'Excluded'
-            ]}}
+            ![@UI.Hidden]            : (forecastSetting.method = 'Excluded')
         },
         {
-            Value                : cmByGlobalAccount.forecast_cost,
+            Value                : cmByCustomer.forecast_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
@@ -58,12 +81,24 @@ annotate service.CommercialMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_usage,
+            $Type                : 'UI.DataFieldWithAction',
+            Label                : 'Technical Allocation',
+            Value                : technicalMetricForAllocation.metricName,
+            Action               : 'PresentationService.SetTechnicalMetricForAllocation',
+            ![@UI.Hidden]        : hideCommercialSpaceAllocation,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
+            Value                : cmByCustomer.measure_usage,
             ![@HTML5.CssDefaults]: {width: '8rem'}
         },
         {
-            Value                : cmByGlobalAccount.unit,
+            Value                : cmByCustomer.unit,
             ![@HTML5.CssDefaults]: {width: '12rem'}
+        },
+        {
+            Value                : cmByCustomer.plans,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
         }
     ],
     PresentationVariant #ServiceEmbeddedHistory            : {
@@ -109,36 +144,48 @@ annotate service.CommercialMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '19rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_cost,
+            Value                : cmByCustomer.measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
-            Value                : cmByGlobalAccount.delta_measure_cost,
+            Value                : cmByCustomer.delta_measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
-            Value                : cmByGlobalAccount.forecast_cost,
+            Value                : cmByCustomer.forecast_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_usage,
+            Value                : cmByCustomer.measure_usage,
             ![@HTML5.CssDefaults]: {width: '8rem'}
         },
         {
-            Value                : cmByGlobalAccount.delta_measure_usage,
+            Value                : cmByCustomer.delta_measure_usage,
             ![@HTML5.CssDefaults]: {width: '8rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_actualUsage,
+            Value                : cmByCustomer.measure_actualUsage,
             ![@HTML5.CssDefaults]: {width: '8rem'}
         },
         {
-            Value                : cmByGlobalAccount.measure_chargedBlocks,
+            Value                : cmByCustomer.measure_chargedBlocks,
             ![@HTML5.CssDefaults]: {width: '8rem'}
         },
         {
-            Value                : cmByGlobalAccount.unit,
+            Value                : cmByCustomer.measure_cloudCreditsCost,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
+            Value                : cmByCustomer.measure_paygCost,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
+            Value                : cmByCustomer.unit,
             ![@HTML5.CssDefaults]: {width: '12rem'}
+        },
+        {
+            Value                : cmByCustomer.plans,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
         },
         {
             $Type                : 'UI.DataFieldForAction',
@@ -146,7 +193,8 @@ annotate service.CommercialMetrics with @(UI: {
             Action               : 'PresentationService.deleteCommercialMetric',
             IconUrl              : 'sap-icon://delete',
             Inline               : true,
-            ![@HTML5.CssDefaults]: {width: '4rem'}
+            ![@HTML5.CssDefaults]: {width: '4rem'},
+            ![@UI.Importance]    : #High
         }
     ]
 });
@@ -174,12 +222,17 @@ annotate service.CommercialMetrics with @(UI: {
         },
         {
             $Type : 'UI.ReferenceFacet',
-            Target: 'cmByGlobalAccount/@UI.Chart#MetricBulletChart'
+            Target: 'cmByCustomer/@UI.Chart#MetricBulletChart'
         },
         {
             $Type : 'UI.ReferenceFacet',
             Target: '@UI.FieldGroup#DeltaChange',
             Label : 'Daily Change'
+        },
+        {
+            $Type        : 'UI.ReferenceFacet',
+            Target       : 'cmByGlobalAccount/@UI.Chart#ComparisonByGlobalAccount',
+            ![@UI.Hidden]: hideGlobalAccountDistribution
         },
         {
             $Type : 'UI.ReferenceFacet',
@@ -204,14 +257,26 @@ annotate service.CommercialMetrics with @(UI: {
                     ![@UI.Hidden]: true
                 },
                 {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'By Global Account',
+                    Target       : 'cmByGlobalAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetric',
+                    ![@UI.Hidden]: hideGlobalAccountDistribution
+                },
+                {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Directory',
-                    Target: 'cmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetric'
+                    Target: 'cmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Sub Account',
-                    Target: 'cmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetric'
+                    Target: 'cmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'By Space',
+                    Target       : 'cmBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel',
+                    ![@UI.Hidden]: hideCommercialSpaceAllocation
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
@@ -228,70 +293,69 @@ annotate service.CommercialMetrics with @(UI: {
         {
             $Type : 'UI.ReferenceFacet',
             Target: '@UI.FieldGroup#Tags',
-            Label : 'Tags'
+            Label : 'Platform Tags'
         }
     ],
     FieldGroup #Metadata     : {Data: [
-        {
-            Value: cmByGlobalAccount.name,
-            Label: 'Account'
-        },
-        {Value: toService.serviceName},
-        {Value: toService.retrieved}
+        {Value: measureId},
+        {Value: toService.retrieved},
+        {Value: cmByCustomer.plans}
     ]},
     FieldGroup #Tags         : {Data: [{Value: tagStrings}]},
     FieldGroup #CostThisMonth: {Data: [
         {
-            Value: cmByGlobalAccount.measure_cost,
+            Value: cmByCustomer.measure_cost,
             Label: 'Cost to date'
         },
+        {Value: cmByCustomer.measure_cloudCreditsCost},
+        {Value: cmByCustomer.measure_paygCost},
         {
-            Value: cmByGlobalAccount.max_cost,
+            Value: cmByCustomer.max_cost,
             Label: 'Monthly maximum'
         },
         {
-            Value: cmByGlobalAccount.forecast_cost,
+            Value: cmByCustomer.forecast_cost,
             Label: 'Forecasted this month'
         },
         {
-            Value: cmByGlobalAccount.forecastPct,
+            Value: cmByCustomer.forecastPct,
             Label: 'Forecasted vs maximum'
         }
     ]},
     FieldGroup #DeltaChange  : {Data: [
         {
-            Value                    : cmByGlobalAccount.delta_measure_costPct,
-            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            Value                    : cmByCustomer.delta_measure_costPct,
+            Criticality              : cmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Cost change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_measure_cost,
-            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            Value                    : cmByCustomer.delta_measure_cost,
+            Criticality              : cmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Cost change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_measure_usagePct,
-            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            Value                    : cmByCustomer.delta_measure_usagePct,
+            Criticality              : cmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Usage change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_measure_usage,
-            Criticality              : cmByGlobalAccount.deltaActualsCriticality,
+            Value                    : cmByCustomer.delta_measure_usage,
+            Criticality              : cmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Usage change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_forecast_costPct,
-            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            Value                    : cmByCustomer.delta_forecast_costPct,
+            Criticality              : cmByCustomer.deltaForecastCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Forecast change'
         },
         {
-            Value                    : cmByGlobalAccount.delta_forecast_cost,
-            Criticality              : cmByGlobalAccount.deltaForecastCriticality,
+            Value                    : cmByCustomer.delta_forecast_cost,
+            Criticality              : cmByCustomer.deltaForecastCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Forecast change'
         },

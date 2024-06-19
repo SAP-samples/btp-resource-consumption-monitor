@@ -1,0 +1,32 @@
+pre {
+  background-color: ghostwhite;
+  border: 1px solid silver;
+  padding: 10px;
+  margin: 0px;
+  font-size: small;
+}
+
+.json-key {
+  color: brown;
+}
+
+.json-value {
+  color: blue;
+}
+
+.json-string {
+  color: olive;
+}
+
+#managealerts\:\:AlertsObjectPage--fe\:\:CustomSubSection\:\:SimulationSection--simulation_table-inner {
+  font-family: "Courier New", Courier, monospace;
+  font-size: small;
+}
+
+#managealerts\:\:AlertsObjectPage--fe\:\:CustomSubSection\:\:SimulationSection--p1-content {
+  padding-left: 0px;
+}
+
+#managealerts\:\:AlertsObjectPage--fe\:\:CustomSubSection\:\:SimulationSection--p2-content {
+  padding-right: 0px;
+}

@@ -1,64 +1,390 @@
 {
-  "role": {
+  "role.base": {
     "type": "role",
     "src": {
       "from": "cdm",
-      "content": "role.json"
+      "content": "role.base.json"
     }
   },
-  "space": {
+  "role.sac": {
+    "type": "role",
+    "src": {
+      "from": "cdm",
+      "content": "role.SAC.json"
+    }
+  },
+  "space_overview": {
     "type": "space",
     "src": {
-      "from": "cdm",
-      "content": "space.json"
+      "from": "cdm/spaces",
+      "content": "overview.json"
     }
   },
-  "page": {
+  "space_billingverification": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "billingverification.json"
+    }
+  },
+  "space_info.optimization": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "info.optimization.json"
+    }
+  },
+  "space_crosscharging": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "crosscharging.json"
+    }
+  },
+  "space_creditexpenditure": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "creditexpenditure.json"
+    }
+  },
+  "space_monitoringalerting": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "monitoringalerting.json"
+    }
+  },
+  "space_tagmanager": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "tagmanager.json"
+    }
+  },
+  "space_costbreakdown": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "costbreakdown.json"
+    }
+  },
+  "page-overview": {
     "type": "workpage",
     "src": {
-      "from": "cdm",
-      "content": "page.json"
+      "from": "cdm/pages",
+      "content": "overview.json"
     }
   },
-  "card-highestforecast": {
-    "type": "card",
+  "page-app.btprcreport": {
+    "type": "workpage",
     "src": {
-      "from": "cards/highestforecast",
-      "package": "cards.highestforecast.zip",
-      "manifest": "src/manifest.json",
-      "build": "npm i && npm run-script build"
-    }
-  },
-  "card-dailyforecast": {
-    "type": "card",
-    "src": {
-      "from": "cards/dailyforecast",
-      "package": "cards.dailyforecast.zip",
-      "manifest": "src/manifest.json",
-      "build": "npm i && npm run-script build"
-    }
-  },
-  "card-forecastbreakdown": {
-    "type": "card",
-    "src": {
-      "from": "cards/forecastbreakdown",
-      "package": "cards.forecastbreakdown.zip",
-      "manifest": "src/manifest.json",
-      "build": "npm i && npm run-script build"
-    }
-  },
-  "app-report": {
-    "type": "businessapp",
-    "src": {
-      "from": "cdm",
+      "from": "cdm/pages",
       "content": "app.btprcreport.json"
     }
   },
-  "app-alerts": {
+  "page-app.measuresbytags": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "app.measuresbytags.json"
+    }
+  },
+  "page-app.measurestotal": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "app.measurestotal.json"
+    }
+  },
+  "page-app.measuresforyearbytags": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "app.measuresforyearbytags.json"
+    }
+  },
+  "page-app.measuresforyears": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "app.measuresforyears.json"
+    }
+  },
+  "page-app.billingdifferences": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "app.billingdifferences.json"
+    }
+  },
+  "page-app.managealerts": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "app.managealerts.json"
+    }
+  },
+  "page-app.managetags": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "app.managetags.json"
+    }
+  },
+  "page-info.optimization": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "info.optimization.json"
+    }
+  },
+  "page-sac.measuresbytags": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "sac.measuresbytags.json"
+    }
+  },
+  "page-sac.measuresforyearbytags": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "sac.measuresforyearbytags.json"
+    }
+  },
+  "page-sac.technicalallocation": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "sac.technicalallocation.json"
+    }
+  },
+  "card-top5forecast": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/top5forecast",
+      "package": "cards.top5forecast.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-historictrend": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/historictrend",
+      "package": "cards.historictrend.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-breakdownbylevel": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/breakdownbylevel",
+      "package": "cards.breakdownbylevel.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.btprcreport": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.btprcreport",
+      "package": "cards.app.btprcreport.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.billingdifferences": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.billingdifferences",
+      "package": "cards.app.billingdifferences.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.managealerts": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.managealerts",
+      "package": "cards.app.managealerts.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.managetags": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.managetags",
+      "package": "cards.app.managetags.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.measuresbytags": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.measuresbytags",
+      "package": "cards.app.measuresbytags.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.measurestotal": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.measurestotal",
+      "package": "cards.app.measurestotal.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.measuresforyearbytags": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.measuresforyearbytags",
+      "package": "cards.app.measuresforyearbytags.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-app.measuresforyears": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/app.measuresforyears",
+      "package": "cards.app.measuresforyears.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-info.optimization1": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/info.optimization1",
+      "package": "cards.info.optimization1.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-info.optimization2": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/info.optimization2",
+      "package": "cards.info.optimization2.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-info.optimization3": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/info.optimization3",
+      "package": "cards.info.optimization3.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-info.optimization4": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/info.optimization4",
+      "package": "cards.info.optimization4.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-sac.measuresbytags": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/sac.measuresbytags",
+      "package": "cards.sac.measuresbytags.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-sac.measuresforyearbytags": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/sac.measuresforyearbytags",
+      "package": "cards.sac.measuresforyearbytags.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-sac.technicalallocation": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/sac.technicalallocation",
+      "package": "cards.sac.technicalallocation.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-creditburndown": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/creditburndown",
+      "package": "cards.creditburndown.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "app-btprcreport": {
     "type": "businessapp",
     "src": {
-      "from": "cdm",
-      "content": "app.managealerts.json"
+      "from": "cdm/apps",
+      "content": "btprcreport.json"
+    }
+  },
+  "app-managealerts": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm/apps",
+      "content": "managealerts.json"
+    }
+  },
+  "app-managetags": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm/apps",
+      "content": "managetags.json"
+    }
+  },
+  "app-measurestotal": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm/apps",
+      "content": "measurestotal.json"
+    }
+  },
+  "app-measuresbytags": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm/apps",
+      "content": "measuresbytags.json"
+    }
+  },
+  "app-measuresforyears": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm/apps",
+      "content": "measuresforyears.json"
+    }
+  },
+  "app-measuresforyearbytags": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm/apps",
+      "content": "measuresforyearbytags.json"
+    }
+  },
+  "app-billingdifferences": {
+    "type": "businessapp",
+    "src": {
+      "from": "cdm/apps",
+      "content": "billingdifferences.json"
     }
   }
 }

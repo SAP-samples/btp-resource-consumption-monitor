@@ -1,0 +1,68 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_app.billingdifferences",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": ""
+    },
+    "rows": [
+      {
+        "id": "page_app.billingdifferences-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_app.billingdifferences-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_app.billingdifferences-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_app.billingdifferences-1111",
+                    "viz": {
+                      "appId": "cards.creditburndown.app",
+                      "vizId": "cards.creditburndown.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "page_app.billingdifferences-2",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_app.billingdifferences-21",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_app.billingdifferences-211",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_app.billingdifferences-2111",
+                    "viz": {
+                      "appId": "cards.app.billingdifferences.app",
+                      "vizId": "cards.app.billingdifferences.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

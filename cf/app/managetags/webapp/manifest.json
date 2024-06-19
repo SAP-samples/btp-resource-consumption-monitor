@@ -1,0 +1,195 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "managetags",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "${version}"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:lrop",
+      "version": "1.12.1",
+      "toolsId": "f26521fa-4774-489e-8106-fe7850251864"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "odata/v2/manage-tags/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "odataVersion": "2.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "tags-manage": {
+          "semanticObject": "tags",
+          "action": "manage",
+          "title": "{{appTitle}}",
+          "subTitle": "{{appSubTitle}}",
+          "icon": "sap-icon://label",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "sap.btp.resourceconsumption"
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.platform.cf": {
+    "ui5VersionNumber": "1.124.1"
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.124.1",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ushell": {},
+        "sap.fe.templates": {},
+        "sap.f": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "managetags.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "@i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      }
+    },
+    "resources": {
+      "css": []
+    },
+    "extends": {
+      "extensions": {
+        "sap.ui.controllerExtensions": {
+          "sap.suite.ui.generic.template.ObjectPage.view.Details": {
+            "controllerName": "managetags.ext.controller.ObjectPageExt"
+          }
+        },
+        "sap.ui.viewExtensions": {
+          "sap.suite.ui.generic.template.ListReport.view.ListReport": {
+            "TreeTableColumnsExtension|AccountStructureItems": {
+              "className": "sap.ui.core.Fragment",
+              "fragmentName": "managetags.ext.fragments.columns",
+              "type": "XML"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.ui.generic.app": {
+    "_version": "1.3.0",
+    "settings": {
+      "flexibleColumnLayout": {
+        "defaultTwoColumnLayoutType": "TwoColumnsBeginExpanded"
+      }
+    },
+    "pages": {
+      "ListReport|AccountStructureItems": {
+        "entitySet": "AccountStructureItems",
+        "component": {
+          "name": "sap.suite.ui.generic.template.ListReport",
+          "list": true,
+          "settings": {
+            "condensedTableLayout": false,
+            "smartVariantManagement": true,
+            "enableTableFilterInPageVariant": true,
+            "hideFilterBar": true,
+            "dataLoadSettings": {
+              "loadDataOnAppLaunch": "always"
+            },
+            "tableSettings": {
+              "multiSelect": true,
+              "copy": false,
+              "type": "TreeTable"
+            }
+          }
+        },
+        "pages": {
+          "ObjectPage|AccountStructureItems": {
+            "entitySet": "AccountStructureItems",
+            "component": {
+              "name": "sap.suite.ui.generic.template.ObjectPage",
+              "settings": {
+                "condensedTableLayout": false,
+                "sections": {
+                  "managedTagAllocations": {
+                    "navigationProperty": "managedTagAllocations",
+                    "entitySet": "ManagedTagAllocations",
+                    "createMode": "inline",
+                    "tableSettings": {
+                      "type": "ResponsiveTable",
+                      "multiSelect": true,
+                      "variantManagement": false
+                    }
+                  },
+                  "customTags": {
+                    "navigationProperty": "customTags",
+                    "entitySet": "CustomTags",
+                    "createMode": "inline",
+                    "tableSettings": {
+                      "type": "ResponsiveTable",
+                      "multiSelect": true,
+                      "variantManagement": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [],
+    "archeType": "transactional"
+  }
+}

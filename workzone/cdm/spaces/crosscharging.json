@@ -1,0 +1,28 @@
+{
+  "_version": "3.1.0",
+  "identification": {
+    "id": "space_5_crosscharging",
+    "title": "Cross Charging",
+    "entityType": "space"
+  },
+  "payload": {
+    "contentNodes": [
+      {
+        "type": "workpage",
+        "id": "page_1_app.measuresbytags"
+      },
+      {
+        "type": "workpage",
+        "id": "page_2_app.measuresforyearbytags"
+      },
+      {
+        "type": "workpage",
+        "id": "page_3_sac.measuresbytags"
+      },
+      {
+        "type": "workpage",
+        "id": "page_4_sac.measuresforyearbytags"
+      }
+    ]
+  }
+}
