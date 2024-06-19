@@ -10,7 +10,7 @@
     "payload": {
         "visualizations": {
             "tile": {
-                "vizType": "sap.ushell.StaticAppLauncher",
+                "vizType": "sap.ushell.DynamicAppLauncher",
                 "vizConfig": {
                     "sap.ui": {
                         "icons": {
@@ -40,7 +40,7 @@
             "sap.app": {
                 "dataSources": {
                     "mainService": {
-                        "uri": "odata/v4/manage-alerts/",
+                        "uri": "/odata/v4/manage-alerts/",
                         "type": "OData",
                         "settings": {
                             "annotations": [],

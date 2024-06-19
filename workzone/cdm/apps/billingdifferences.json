@@ -35,7 +35,7 @@
             "sap.app": {
                 "dataSources": {
                     "mainService": {
-                        "uri": "odata/v4/contracts/",
+                        "uri": "/odata/v4/contracts/",
                         "type": "OData",
                         "settings": {
                             "annotations": [],

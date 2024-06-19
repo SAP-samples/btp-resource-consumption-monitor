@@ -35,7 +35,7 @@
             "sap.app": {
                 "dataSources": {
                     "mainService": {
-                        "uri": "odata/v2/analytics/",
+                        "uri": "/odata/v2/analytics/",
                         "type": "OData",
                         "settings": {
                             "annotations": [],

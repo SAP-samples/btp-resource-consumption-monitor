@@ -35,7 +35,7 @@
             "sap.app": {
                 "dataSources": {
                     "mainService": {
-                        "uri": "odata/v2/manage-tags/",
+                        "uri": "/odata/v2/manage-tags/",
                         "type": "OData",
                         "settings": {
                             "annotations": [],
