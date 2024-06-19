@@ -6,17 +6,25 @@ import {
     dateToISODate,
     groupByKeys,
     flattenObject,
-    lastDayOfMonth
+    lastDayOfMonth,
+    getPreviousMonth,
+    stringToCdsDate,
+    getDaysInMonth,
+    getNextMonth
 } from './functions'
 
 import {
     api_monthlyUsage,
-    api_monthlyCost
+    api_monthlyCost,
+    api_creditDetails
 } from './api_uasReporting'
 
 import {
     MonthlyCostResponseObject,
-    MonthlyUsageResponseObject
+    MonthlyUsageResponseObject,
+    ContractResponseObject,
+    PhaseUpdates,
+    PhasesResponseObject
 } from './external/APIUasReportingService'
 
 import {
@@ -25,8 +33,10 @@ import {
 } from './external/APIAlertNotificationService'
 
 import {
+    TAccountStructureLevels,
     TAggregationLevel,
     TAlertType,
+    TCreditStatus,
     TForecastMethod,
     TInExclude,
     TInterval,
@@ -52,6 +62,10 @@ import {
     TechnicalMetrics,
     TechnicalMeasure,
     TechnicalMeasures,
+
+    AccountStructureItems as dbAccountStructureItems,
+    ContractCreditValue,
+    CloudCreditsDetailsResponseObjects,
 } from '#cds-models/db'
 
 import {
@@ -68,15 +82,18 @@ import {
     prepareCommercialMeasureMetricForecasts,
     prepareCommercialMeasureServiceForecasts,
     calculateCommercialForecastsForService,
-    testAlert
+    testAlert,
+    AccountStructureItems,
+    CloudCreditsDetails,
+    prepareTechnicalAllocations,
+    AllocationSettings,
+    resetTechnicalAllocations,
 } from '#cds-models/RetrievalService'
+
 import { CdsDate } from '#cds-models/_'
 
-
 const info = cds.log('retrievalService').info
-
-// import { cost_data } from './demo_cost';
-// import { usage_data } from './demo_usage';
+const warn = cds.log('retrievalService').warn
 
 type alertTableColumn = {
     title: string
@@ -100,7 +117,9 @@ export default class RetrievalService extends cds.ApplicationService {
             status.push(await retrieveCommercialData({ fromDate: thisMonth, toDate: thisMonth }, TInterval.Daily))
             status.push(await updateCommercialMetricForecasts())
             status.push(await updateCommercialServiceForecasts())
-            status.push(await updateDeltaMeasures())
+            status.push(await updateDailyDeltaMeasures())
+            status.push(await updateMonthlyDeltaMeasures())
+            status.push(await retrieveCreditDetails())
             status.push(await sendNotification())
 
             return status.join('\r\n')
@@ -117,12 +136,13 @@ export default class RetrievalService extends cds.ApplicationService {
         this.on(downloadMeasuresForPastMonths, async req => {
             let status = []
 
-            const thisMonth = dateToYearMonth()
-            const pastMonth = thisMonth.endsWith('01') ? Number(thisMonth) - 1 - 88 : Number(thisMonth) - 1
+            const pastMonth = getPreviousMonth()
             status.push(await retrieveTechnicalData({ fromDate: req.data.fromDate || pastMonth, toDate: pastMonth }, TInterval.Monthly))
             status.push(await retrieveCommercialData({ fromDate: req.data.fromDate || pastMonth, toDate: pastMonth }, TInterval.Monthly))
             status.push(await updateCommercialMetricForecasts())
             status.push(await updateCommercialServiceForecasts())
+            status.push(await updateDailyDeltaMeasures())
+            status.push(await updateMonthlyDeltaMeasures())
 
             return status.join('\r\n')
         })
@@ -132,7 +152,13 @@ export default class RetrievalService extends cds.ApplicationService {
          */
         this.on(deleteAllData, async req => {
             await DELETE.from(BTPServices)
+            await DELETE.from(CloudCreditsDetailsResponseObjects)
             return `All consumption data has been removed from the database.`
+        })
+
+        this.on(resetTechnicalAllocations, async req => {
+            await DELETE.from(AllocationSettings)
+            return `All technical allocations have been reset.`
         })
 
         /**
@@ -158,29 +184,44 @@ export default class RetrievalService extends cds.ApplicationService {
             let status = []
             status.push(await updateCommercialMetricForecasts())
             status.push(await updateCommercialServiceForecasts())
-            status.push(await updateDeltaMeasures())
+            status.push(await updateDailyDeltaMeasures())
+            status.push(await updateMonthlyDeltaMeasures())
             return status.join('\r\n')
         })
 
         // Received from Presentation Service when a metric has its Forecast Settings changed, or a commercial item is deleted
         this.on(calculateCommercialForecastsForService, async req => {
             let status = []
-            const { serviceName } = req.data
-            status.push(await updateCommercialMetricForecasts(serviceName as string)) // calcalates forecasts
-            status.push(await updateCommercialServiceForecasts(serviceName as string)) // sums up the forecasts and creates new records
-            status.push(await updateDeltaMeasures())
+            const { serviceId } = req.data
+            status.push(await updateCommercialMetricForecasts(serviceId as string)) // calcalates forecasts
+            status.push(await updateCommercialServiceForecasts(serviceId as string)) // sums up the forecasts and creates new records
+            status.push(await updateDailyDeltaMeasures())
+            status.push(await updateMonthlyDeltaMeasures())
             return status.join('\r\n')
         })
 
         // Received from ManagedAlerts service to test an alert configuration
         this.on(testAlert, async req => {
-            const { ID } = req.data
-            const data = await fetchMeasuresForAlerts(ID as UUID)
-            return data.reduce((p, c): string => {
-                const { alert, measures } = c
-                p += createAlertsTableCourierNew(alert, measures)
-                return p
-            }, '')
+            const { alert } = req.data
+            if (alert) {
+                const request = buildRequestForAlert(alert)
+                let table = ''
+                let measures: any[] = []
+                try {
+                    measures = await request.req
+                    //@ts-ignore
+                    measures.forEach(m => m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : m.metricName)
+                    table = createAlertsTableCourierNew(alert, measures)
+                } catch (error) {
+                    warn(error)
+                    table = String(error)
+                }
+                return {
+                    table,
+                    json: JSON.stringify(request.json),
+                    sql: request.sql
+                }
+            }
         })
 
         return super.init()
@@ -201,13 +242,9 @@ async function retrieveTechnicalData(query: { fromDate: number, toDate: number }
     const data = (usageData.content as MonthlyUsageResponseObject[])
     // const [usageData, data] = [{ content: [] }, usage_data]
 
-    // add default values if property is null
-    data.forEach(x => {
-        x.serviceName ??= Settings.defaultValues.noNameErrorValue
-        x.metricName ??= Settings.defaultValues.noNameErrorValue
-    })
-
-    const { services, metrics, measures } = aggregateDataPerLevel(data, interval, ['usage'], ['spaceName', 'environmentInstanceName', 'application', 'instanceId'])
+    sanitizeDataPoints(data)
+    await updateAccountStructureData(data)
+    const { services, metrics, measures } = await aggregateDataPerLevel(data, interval, ['usage'], ['spaceId', 'spaceName', 'environmentInstanceName', 'application', 'instanceId'])
 
     // Store in database
     services.length > 0 && await UPSERT.into(BTPServices).entries(services)
@@ -225,27 +262,24 @@ async function retrieveCommercialData(query: { fromDate: number, toDate: number 
     const data = (usageData.content as MonthlyCostResponseObject[])
     // const [usageData, data] = [{ content: [] }, cost_data]
 
-    // add default values if property is null
-    data.forEach(x => {
-        x.serviceName ??= Settings.defaultValues.noNameErrorValue
-        x.metricName ??= Settings.defaultValues.noNameErrorValue
-    })
-
-    const { services, metrics, measures } = aggregateDataPerLevel(data, interval, ['cost', 'usage', 'actualUsage', 'chargedBlocks'], [])
+    sanitizeDataPoints(data)
+    applyCurrencyConversion(data, 'currency', ['cost', 'paygCost', 'cloudCreditsCost'])
+    await updateAccountStructureData(data)
+    const { services, metrics, measures } = await aggregateDataPerLevel(data, interval, ['cost', 'usage', 'actualUsage', 'chargedBlocks', 'paygCost', 'cloudCreditsCost'], [])
 
     // Create the dataset of new services that need to be added to the forecast settings table
-    const existingForecastSettings = (await SELECT.from(ForecastSettings).columns('serviceName', 'metricName')).map(x => `${x.serviceName}__${x.metricName}`)
+    const existingForecastSettings = (await SELECT.from(ForecastSettings).columns('serviceId', 'measureId')).map(x => `${x.serviceId}__${x.measureId}`)
     const forecastSettings = [
         ...new Set(
-            metrics.filter(x => x.metricName !== '_combined_')
-                .map(x => `${x.toService_serviceName}__${x.metricName}`)
+            metrics.filter(x => x.measureId !== '_combined_')
+                .map(x => `${x.toService_serviceId}__${x.measureId}`)
                 .filter(x => !existingForecastSettings.includes(x))
         )
     ].map(x => {
-        const [serviceName, metricName] = x.split('__')
+        const [serviceId, measureId] = x.split('__')
         return {
-            serviceName,
-            metricName,
+            serviceId,
+            measureId,
             ...Settings.defaultValues.forecastSetting
         }
     })
@@ -261,6 +295,51 @@ async function retrieveCommercialData(query: { fromDate: number, toDate: number 
     return status
 }
 
+function sanitizeDataPoints(data: MonthlyUsageResponseObject[] | MonthlyCostResponseObject[]): void {
+    data.forEach(x => {
+        // Harmonize the serviceId and measureId as commercial and technical usage might have different cases.
+        x.serviceId = x.serviceId?.toLowerCase()
+        x.measureId = x.measureId?.toLowerCase()
+        // Add error values for fields that should not be empty
+        x.serviceId ??= Settings.defaultValues.noNameErrorValue
+        x.serviceName ??= Settings.defaultValues.noNameErrorValue
+        x.measureId ??= Settings.defaultValues.noNameErrorValue
+        x.metricName ??= Settings.defaultValues.noNameErrorValue
+        // Fix empty values if services are outside a sub account (these would be: process-automation, IAS, IPS, custom domain, market-rates and IRPA)
+        if (x.subaccountId == null || x.subaccountId == '' || x.subaccountId.toUpperCase() == 'DEFAULT_SA') {
+            x.subaccountId = `unallocatedSA_${x.globalAccountId}`
+            x.subaccountName = 'Unallocated'
+        }
+        // Add placeholder values if there is no value
+        if (x.dataCenter == null || x.dataCenter == '') {
+            x.dataCenter = `unallocatedDC`
+            x.dataCenterName = 'Unallocated'
+        }
+        // Make Datacenter ID unique per Global Account
+        x.dataCenter += `_${x.globalAccountId}`
+
+        // Make sure the new API fields are available if not yet in response body
+        if ('cost' in x) {
+            if (!('paygCost' in x)) x.paygCost = 0
+            if (!('cloudCreditsCost' in x)) x.cloudCreditsCost = x.cost
+        }
+    })
+}
+
+function applyCurrencyConversion<T>(data: T[], currencyField: keyof T, conversionFields: (keyof T)[]): void {
+    const { active, target } = Settings.appConfiguration.currencyConversions
+    const rates: { [key: string]: number } = Settings.appConfiguration.currencyConversions.rates
+
+    active && data.forEach(x => {
+        const currency = (x[currencyField] as string ?? '').toUpperCase()
+        if (target !== currency && currency in rates) {
+            conversionFields.forEach(field => {
+                x[field] = x[field] ? (x[field] as number * rates[currency]) as any : null
+            })
+            x[currencyField] = target as any
+        }
+    })
+}
 
 /**
  * 
@@ -270,15 +349,19 @@ async function retrieveCommercialData(query: { fromDate: number, toDate: number 
  * @param tagAggregationProperties 
  * @returns 
  */
-function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | MonthlyUsageResponseObject[], interval: TInterval, measureAggregationProperties: string[], tagAggregationProperties: string[]) {
+async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | MonthlyUsageResponseObject[], interval: TInterval, measureAggregationProperties: string[], tagAggregationProperties: string[]) {
     let services: BTPServices = []
     let metrics: CommercialMetrics | TechnicalMetrics = []
     let measures: CommercialMeasures | TechnicalMeasures = []
 
+    // Fetch technical allocations for commercial metrics
+    const technicalAllocationTable = await SELECT.from(prepareTechnicalAllocations)
+
     // Aggregate on initial level: per Service
-    for (const serviceGroup of Object.values(groupByKeys(data, ['serviceName', 'reportYearMonth']))) {
+    for (const serviceGroup of Object.values(groupByKeys(data, ['serviceId', 'reportYearMonth']))) {
         const service: BTPService = {
             reportYearMonth: serviceGroup[0].reportYearMonth.toString(),
+            serviceId: serviceGroup[0].serviceId,
             serviceName: serviceGroup[0].serviceName,
             retrieved: interval == TInterval.Daily ? dateToISODate() as CdsDate : lastDayOfMonth(serviceGroup[0].reportYearMonth.toString()),
             interval: interval
@@ -286,23 +369,44 @@ function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | MonthlyUsageR
         services.push(service)
 
         const metric = {
-            toService: service,
-            metricName: '_combined_'
+            toService: {
+                reportYearMonth: service.reportYearMonth,
+                serviceId: service.serviceId,
+                retrieved: service.retrieved,
+                interval: service.interval
+            },
+            measureId: '_combined_'
         }
         metrics.push(metric)
 
+        const serviceGroupByParent = serviceGroup.map(x => x as MonthlyCostResponseObject & { groupId: string })
+        //@ts-ignore
+        serviceGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
+
+        const isCommercial = 'currency' in serviceGroup[0]
         measures = [
             ...measures,
-            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['globalAccountName']), 'GlobalAccount', measureAggregationProperties),
-            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['dataCenterName']), 'Datacenter', measureAggregationProperties),
-            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['directoryName']), 'Directory', measureAggregationProperties),
-            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['subaccountName']), 'SubAccount', measureAggregationProperties)
+            ...aggregateMeasures(metric, Object.fromEntries([[JSON.stringify(Settings.appConfiguration.accountHierarchy.master), serviceGroup]]), TAggregationLevel.Customer, measureAggregationProperties),
+            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['globalAccountId', 'globalAccountName']), TAggregationLevel.GlobalAccount, measureAggregationProperties),
+            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['dataCenter', 'dataCenterName']), TAggregationLevel.Datacenter, measureAggregationProperties),
+            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['directoryId', 'directoryName']), TAggregationLevel.Directory, measureAggregationProperties),
+            ...aggregateMeasures(metric, groupByKeys(serviceGroup, ['subaccountId', 'subaccountName']), TAggregationLevel.SubAccount, measureAggregationProperties),
+            //@ts-ignore
+            ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(serviceGroup, ['spaceId', 'spaceName']), TAggregationLevel.Space, measureAggregationProperties) : []),
+            // Create Service records
+            ...aggregateMeasures(metric, groupByKeys(serviceGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties),
         ]
 
         // Aggregate one additional level: per Metric
-        for (const metricGroup of Object.values(groupByKeys(serviceGroup, ['metricName']))) {
+        for (const metricGroup of Object.values(groupByKeys(serviceGroup, ['measureId']))) {
             const metric = {
-                toService: service,
+                toService: {
+                    reportYearMonth: service.reportYearMonth,
+                    serviceId: service.serviceId,
+                    retrieved: service.retrieved,
+                    interval: service.interval
+                },
+                measureId: metricGroup[0].measureId,
                 metricName: metricGroup[0].metricName
             }
             metrics.push({
@@ -310,12 +414,26 @@ function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | MonthlyUsageR
                 tags: aggregateTags(metricGroup, tagAggregationProperties)
             })
 
+            const metricGroupByParent = metricGroup.map(x => x as MonthlyCostResponseObject & { groupId: string })
+            //@ts-ignore
+            metricGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
+
+            const isCommercial = 'currency' in metricGroup[0]
             measures = [
                 ...measures,
-                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['globalAccountName']), 'GlobalAccount', measureAggregationProperties),
-                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['dataCenterName']), 'Datacenter', measureAggregationProperties),
-                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['directoryName']), 'Directory', measureAggregationProperties),
-                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['subaccountName']), 'SubAccount', measureAggregationProperties)
+                ...aggregateMeasures(metric, Object.fromEntries([[JSON.stringify(Settings.appConfiguration.accountHierarchy.master), metricGroup]]), TAggregationLevel.Customer, measureAggregationProperties),
+                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['globalAccountId', 'globalAccountName']), TAggregationLevel.GlobalAccount, measureAggregationProperties),
+                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['dataCenter', 'dataCenterName']), TAggregationLevel.Datacenter, measureAggregationProperties),
+                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['directoryId', 'directoryName']), TAggregationLevel.Directory, measureAggregationProperties),
+                ...aggregateMeasures(metric, groupByKeys(metricGroup, ['subaccountId', 'subaccountName']), TAggregationLevel.SubAccount, measureAggregationProperties),
+                //@ts-ignore
+                ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(metricGroup, ['spaceId', 'spaceName']), TAggregationLevel.Space, measureAggregationProperties) : []),
+                // Create Service records
+                ...aggregateMeasures(metric, groupByKeys(metricGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties),
+                ...((isCommercial && Settings.appConfiguration.distributeCostsToSpaces)
+                    ? generateSpaceMeasures(metric, technicalAllocationTable, aggregateMeasures(metric, groupByKeys(metricGroup, ['subaccountId', 'subaccountName']), TAggregationLevel.SubAccount, measureAggregationProperties))
+                    : []
+                )
             ]
         }
     }
@@ -335,27 +453,40 @@ function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | MonthlyUsageR
  */
 function aggregateMeasures(metric: Record<string, any>, measureGroups: { [key: string]: Record<string, any>[] }, level: TAggregationLevel, aggregationProperties: string[]) {
     const aggregatedMeasures: Record<string, any>[] = []
-    for (const [name, measures] of Object.entries(measureGroups)) {
+    for (const [groupKey, measures] of Object.entries(measureGroups)) {
+        const [id, name] = JSON.parse(groupKey)
+        if (id == Settings.defaultValues.noNameErrorValue && (level == TAggregationLevel.Space || level == TAggregationLevel.Directory)) {
+            // Do not generate 'unallocated' entries for Directories (will be in Sub Accounts) and Spaces (will belong to higher level)
+        } else {
+            // Sum up the mentioned properties over all measures
+            const sums = measures.reduce((p, c) => {
+                aggregationProperties.forEach(k => p[k] = (p[k] ?? 0) + c[k])
+                return p
+            }, {})
+            const planNames = [...new Set(measures.map(x => x.planName))].join(', ')
 
-        // Sum up the mentioned properties over all measures
-        const sums = measures.reduce((p, c) => {
-            aggregationProperties.forEach(k => p[k] = (p[k] ?? 0) + c[k])
-            return p
-        }, {})
+            // Verify if this is commercial data. We only need/have forecasts for commercial data
+            const isCommercial = 'currency' in measures[0]
 
-        // Verify if this is commercial data. We only need/have forecasts for commercial data
-        const isCommercial = measures[0].hasOwnProperty('currency')
+            // Remove paygCost and cloudCreditsCost from the default 100% forecast values
+            const { paygCost, cloudCreditsCost, ...defaultForecastValues } = sums
 
-        // Create record for database update
-        aggregatedMeasures.push({
-            toMetric: metric,
-            level: level,
-            name: name,
-            measure: sums,
-            unit: measures[0].unitPlural || measures[0].Unit,
-            ...(isCommercial) && { currency: measures[0].currency },
-            ...(isCommercial && (metric.toService.interval == TInterval.Monthly)) && { forecast: sums, forecastPct: 100 } // monthly readings default to 100% forecast
-        })
+            // Create record for database update
+            aggregatedMeasures.push({
+                toMetric: {
+                    toService: metric.toService,
+                    measureId: metric.measureId
+                },
+                level: level,
+                id: id,
+                name: name,
+                measure: sums,
+                unit: measures[0].unitPlural || measures[0].Unit,
+                plans: planNames,
+                ...(isCommercial) && { currency: measures[0].currency },
+                ...(isCommercial && (metric.toService.interval == TInterval.Monthly)) && { forecast: defaultForecastValues, forecastPct: 100 } // monthly readings default to 100% forecast
+            })
+        }
     }
 
     return aggregatedMeasures
@@ -371,23 +502,226 @@ function aggregateTags(items: MonthlyCostResponseObject[] | MonthlyUsageResponse
     }
     return aggregated
 }
+function generateSpaceMeasures(metric: any, technicalAllocationTable: prepareTechnicalAllocations, parentMeasures: Record<string, any>[]) {
+    const spaceMeasures: CommercialMeasures | TechnicalMeasures = []
+
+    const allocationForService = technicalAllocationTable.filter(x =>
+        x.serviceId == metric.toService.serviceId
+        && x.reportYearMonth == metric.toService.reportYearMonth
+        && x.retrieved == metric.toService.retrieved
+        && x.interval == metric.toService.interval
+        && x.cMeasureId == metric.measureId
+    )
+
+    parentMeasures.forEach(parentMeasure => {
+        const allocationForParent = allocationForService.filter(x => x.parentID == parentMeasure.id)
+        const totalUsage = allocationForParent.reduce((p, c) => p + Number(c.usage ?? 0), 0)
+        allocationForParent.forEach(allocation => {
+            const allocationPct = totalUsage > 0 ? (Number(allocation.usage ?? 0) / totalUsage) : 0
+            const sums = { ...parentMeasure.measure }
+            const { paygCost, cloudCreditsCost, ...defaultForecastValues } = sums
+            Object.keys(sums).forEach(k => sums[k] = fixDecimals(Number(sums[k]) * allocationPct))
+            spaceMeasures.push(
+                // Create Space record
+                {
+                    toMetric: parentMeasure.toMetric,
+                    level: TAggregationLevel.Space,
+                    id: allocation.spaceID,
+                    name: allocation.spaceName,
+                    measure: sums,
+                    unit: parentMeasure.unit,
+                    plans: parentMeasure.plans,
+                    currency: parentMeasure.currency,
+                    ...(metric.toService.interval == TInterval.Monthly) && { forecast: defaultForecastValues, forecastPct: 100 } // monthly readings default to 100% forecast
+                },
+                // Create Service record
+                {
+                    toMetric: parentMeasure.toMetric,
+                    level: TAggregationLevel.ServiceInSpace,
+                    id: `${allocation.spaceID}_${allocation.serviceId}`,
+                    name: allocation.serviceId, // no serviceName available. Required?
+                    measure: sums,
+                    unit: parentMeasure.unit,
+                    plans: parentMeasure.plans,
+                    currency: parentMeasure.currency,
+                    ...(metric.toService.interval == TInterval.Monthly) && { forecast: defaultForecastValues, forecastPct: 100 } // monthly readings default to 100% forecast
+                }
+            )
+        })
+    })
+
+    return spaceMeasures
+}
+
+async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
+    info(`Updating account structure data ...`)
+
+    const structureItems: dbAccountStructureItems = [];
+
+    // Main Customer record
+    structureItems.push({
+        ID: Settings.appConfiguration.accountHierarchy.master[0],
+        region: 'no region',
+        name: Settings.appConfiguration.accountHierarchy.master[1],
+        environment: 'none',
+        level: TAccountStructureLevels.Customer,
+        parentID: '(none)',
+        treeLevel: 0,
+        treeState: 'expanded',
+        managedTagAllocations: [], //Root record should not have tags as that defeats the purpose of tags.
+        customTags: []
+    });
+
+    // Account records
+    [...new Set(data.filter(x => x.globalAccountId !== null).map(x => x.globalAccountId))]
+        .forEach(id => {
+            const item = data.find(x => x.globalAccountId == id)
+            item?.globalAccountId && structureItems.push({
+                ID: item?.globalAccountId,
+                region: item?.dataCenterName,
+                name: item?.globalAccountName || item?.globalAccountId,
+                environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                level: TAccountStructureLevels.GlobalAccount,
+                parentID: Settings.appConfiguration.accountHierarchy.master[0],
+                treeLevel: 1,
+                treeState: 'expanded',
+                managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.GlobalAccount ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
+                customTags: [{ name: 'Hierarchy', value: `1-${TAccountStructureLevels.GlobalAccount}` }]
+            })
+        });
+    [...new Set(data.filter(x => x.directoryId !== null).map(x => x.directoryId))]
+        .forEach(id => {
+            const item = data.find(x => x.directoryId == id)
+            item?.directoryId && structureItems.push({
+                ID: item?.directoryId,
+                region: item?.dataCenterName,
+                name: item?.directoryName || item?.directoryId,
+                environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                level: TAccountStructureLevels.Directory,
+                parentID: item?.globalAccountId,
+                treeLevel: 2,
+                treeState: 'expanded',
+                managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.Directory ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
+                customTags: [{ name: 'Hierarchy', value: `2-${TAccountStructureLevels.Directory}` }]
+            })
+        });
+    [...new Set(data.filter(x => x.dataCenter !== null).map(x => x.dataCenter))]
+        .forEach(id => {
+            const item = data.find(x => x.dataCenter == id)
+            item?.dataCenter && structureItems.push({
+                ID: item?.dataCenter,
+                region: item?.dataCenterName,
+                name: item?.dataCenterName || item?.dataCenter,
+                environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                level: TAccountStructureLevels.Datacenter,
+                parentID: item?.globalAccountId,
+                treeLevel: 2,
+                treeState: 'leaf',
+                managedTagAllocations: [], //Datacenters are only included to make sure Metrics can link to it and find their parent (GlobalAccount).
+                customTags: [{ name: 'Hierarchy', value: `2-${TAccountStructureLevels.Datacenter}` }]
+            })
+        });
+    [...new Set(data.filter(x => x.subaccountId !== null).map(x => x.subaccountId))]
+        .forEach(id => {
+            const item = data.find(x => x.subaccountId == id)
+            item?.subaccountId && structureItems.push({
+                ID: item?.subaccountId,
+                region: item?.dataCenterName,
+                name: item?.subaccountName || item?.subaccountId,
+                environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                level: TAccountStructureLevels.SubAccount,
+                parentID: item?.directoryId || item?.globalAccountId,
+                treeLevel: item?.directoryId ? 3 : 2,
+                treeState: 'expanded',
+                managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.SubAccount ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
+                customTags: [{ name: 'Hierarchy', value: `3-${TAccountStructureLevels.SubAccount}` }]
+            })
+        });
+    [...new Set(data.filter(x => x.spaceId !== null).map(x => x.spaceId))]
+        .forEach(id => {
+            const item = data.find(x => x.spaceId == id)
+            item?.spaceId && structureItems.push({
+                ID: item?.spaceId,
+                region: item?.dataCenterName,
+                name: item?.spaceName || item?.spaceId,
+                environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                level: TAccountStructureLevels.Space,
+                parentID: item?.subaccountId,
+                treeLevel: item?.directoryId ? 4 : 3,
+                treeState: 'expanded',
+                managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.Space ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
+                customTags: [{ name: 'Hierarchy', value: `4-${TAccountStructureLevels.Space}` }]
+            })
+        });
+    [...new Set(data.filter(x => x.environmentInstanceId !== null).map(x => x.environmentInstanceId))]
+        .forEach(id => {
+            const item = data.find(x => x.environmentInstanceId == id)
+            item?.environmentInstanceId && structureItems.push({
+                ID: item?.environmentInstanceId,
+                region: item?.dataCenterName,
+                name: item?.environmentInstanceName || item?.environmentInstanceId,
+                environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                level: TAccountStructureLevels.Instance,
+                parentID: item?.subaccountId,
+                treeLevel: item?.directoryId ? 4 : 3,
+                treeState: 'leaf',
+                managedTagAllocations: [], // There are no cost allocations on this level, so no need for a tag
+                customTags: [], // There are no cost allocations on this level, so no need for a tag
+                excluded: true // There are no cost allocations on this level, so no need for a tag
+            })
+        });
+
+    // Service records
+    [...new Set(data.filter(x => x.serviceId !== null).map(x => x.serviceId))]
+        .forEach(id => {
+            const spaceItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => x.spaceId), ['serviceId', 'spaceId'])
+            const subaccountItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => !x.spaceId), ['serviceId', 'subaccountId'])
+            const itemsByParent = [
+                ... (Object.keys(spaceItems).length > 0 ? Object.values(spaceItems).flatMap(x => x[0]) : []),
+                ... (Object.keys(subaccountItems).length > 0 ? Object.values(subaccountItems).flatMap(x => x[0]) : [])
+            ]
+            for (const item of itemsByParent) {
+                const isSpaceLevel = item?.spaceId ? true : false
+                const itemLevel = isSpaceLevel ? TAccountStructureLevels.ServiceInSpace : TAccountStructureLevels.ServiceInSubaccount
+                const itemParentID = item?.spaceId || item?.subaccountId
+                const itemID = `${itemParentID}_${item?.serviceId}`
+                item?.serviceId && structureItems.push({
+                    ID: itemID,
+                    region: item?.dataCenterName,
+                    name: item?.serviceName || item?.serviceId,
+                    environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                    level: itemLevel,
+                    parentID: itemParentID,
+                    treeLevel: item?.directoryId ? (isSpaceLevel ? 5 : 4) : (isSpaceLevel ? 4 : 3),
+                    treeState: 'leaf',
+                    managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == itemLevel ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
+                    customTags: [{ name: 'Hierarchy', value: `${isSpaceLevel ? 5 : 4}-${itemLevel}` }]
+                })
+            }
+        });
+
+    const existingStructureItems = (await SELECT.from(dbAccountStructureItems).columns('ID')).map(x => x.ID)
+    const newStructureItems = structureItems.filter(x => !existingStructureItems.includes(x.ID))
+    newStructureItems.length > 0 && await INSERT.into(AccountStructureItems).entries(newStructureItems)
+}
 
 /**
  * Calculates the forecasted values for the daily measurements
- * @param serviceName optional name of the service to restrict the update only to that service
+ * @param serviceId optional name of the service to restrict the update only to that service
  * @returns string
  */
-async function updateCommercialMetricForecasts(serviceName?: string) {
+async function updateCommercialMetricForecasts(serviceId?: string) {
     info(`Updating forecast data ...`)
 
     let forecasted: CommercialMeasures = []
-    const measures = await SELECT.from(prepareCommercialMeasureMetricForecasts).where(serviceName && { serviceName: serviceName })
+    const measures = await SELECT.from(prepareCommercialMeasureMetricForecasts).where(serviceId && { serviceId: serviceId })
     for (const measure of measures) {
 
         // Calculate how far in the month we are
         const retrievedDay = Number(measure.retrieved?.split('-')[2])
         const retrievedYearMonth = dateToYearMonth(new Date(measure.retrieved ?? 0))
-        const howFarInMonthPct = (measure.reportYearMonth == retrievedYearMonth) ? Math.min(retrievedDay / 30, 1) : 1
+        const daysInMonth = getDaysInMonth(new Date(measure.retrieved ?? 0))
+        const howFarInMonthPct = (measure.reportYearMonth == retrievedYearMonth) ? Math.min(retrievedDay / daysInMonth, 1) : 1
 
         // Set multiplier based on Forecast Method
         let multiplier = 1
@@ -419,15 +753,16 @@ async function updateCommercialMetricForecasts(serviceName?: string) {
             toMetric: {
                 toService: {
                     reportYearMonth: measure.reportYearMonth,
-                    serviceName: measure.serviceName,
+                    serviceId: measure.serviceId,
                     retrieved: measure.retrieved,
                     interval: measure.interval
                 },
-                metricName: measure.metricName,
+                measureId: measure.measureId,
             },
             level: measure.level,
-            name: measure.name,
-            ... (measure.metricName !== '_combined_') && { forecast },
+            id: measure.id,
+            // name: measure.name,
+            ... (measure.measureId !== '_combined_') && { forecast },
             forecastPct: fixDecimals(forecastPct, 0),
             max_cost: measure.max_cost
         })
@@ -442,22 +777,22 @@ async function updateCommercialMetricForecasts(serviceName?: string) {
 }
 /**
  * Calculates the forecasted values for the daily measurements, aggregated on service level
- * @param serviceName optional name of the service to restrict the update only to that service
+ * @param serviceId optional name of the service to restrict the update only to that service
  * @returns string
  */
-async function updateCommercialServiceForecasts(serviceName?: string) {
+async function updateCommercialServiceForecasts(serviceId?: string) {
     info(`Updating commercial sum by level data ...`)
 
     let status = ''
     if (cds.env.requires.db.kind == 'hana') {
         // Use single SQL query that can be executed in HANA (faster)
-        const where = serviceName ? ` WHERE (toMetric_toService_serviceName = '${serviceName}')` : ''
+        const where = serviceId ? ` WHERE (toMetric_toService_serviceId = '${serviceId}')` : ''
         const sql = `UPSERT ${CommercialMeasures.name.replace('.', '_')} SELECT * FROM ${prepareCommercialMeasureServiceForecasts.name.replace('.', '_')}${where}`
         const rows = await db.run(sql)
         status = `${rows} data points updated in the database (optimized).`
     } else {
         // Fallback approach which routes the data via the application layer (slower)
-        const data = await SELECT.from(prepareCommercialMeasureServiceForecasts).where(serviceName && { toMetric_toService_serviceName: serviceName })
+        const data = await SELECT.from(prepareCommercialMeasureServiceForecasts).where(serviceId && { toMetric_toService_serviceId: serviceId })
         data.length > 0 && await UPSERT.into(CommercialMeasures).entries(data)
         status = `${data.length} data points updated in the database.`
     }
@@ -470,29 +805,40 @@ async function updateCommercialServiceForecasts(serviceName?: string) {
  * Updates the database with LAG values for the measures
  * @returns status message
  */
-async function updateDeltaMeasures() {
-    info(`Updating delta calculations for all measures ...`)
+async function updateDailyDeltaMeasures() { return updateDeltaMeasures(TInterval.Daily) }
+async function updateMonthlyDeltaMeasures() { return updateDeltaMeasures(TInterval.Monthly) }
+async function updateDeltaMeasures(interval: TInterval) {
+    info(`Updating ${interval} delta calculations for all measures ...`)
 
     let status = ''
     if (cds.env.requires.db.kind == 'hana') {
-        const overPartitionSQL =
+        const overPartitionSQLDaily =
             `OVER (PARTITION BY
                 toMetric_toService_reportYearMonth,
-                toMetric_toService_serviceName,
+                toMetric_toService_serviceId,
                 toMetric_toService_interval,
-                toMetric_metricName,
+                toMetric_measureId,
                 level,
-                name
+                id
             ORDER BY
                 toMetric_toService_retrieved)`
+        const overPartitionSQLMonthly =
+            `OVER (PARTITION BY
+                    toMetric_toService_serviceId,
+                    toMetric_toService_interval,
+                    toMetric_measureId,
+                    level,
+                    id
+                ORDER BY
+                    toMetric_toService_retrieved)`
         const keyColumns = [
             'toMetric_toService_reportYearMonth',
             'toMetric_toService_retrieved',
-            'toMetric_toService_serviceName',
+            'toMetric_toService_serviceId',
             'toMetric_toService_interval',
-            'toMetric_metricName',
+            'toMetric_measureId',
             'level',
-            'name',
+            'id',
         ]
         const commercialDeltaColumns = [
             'measure_cost',
@@ -510,30 +856,48 @@ async function updateDeltaMeasures() {
 
         const keyColumnsSQL = keyColumns.join(', ')
         const joinClauseSQL = keyColumns.map(x => `targetTable.${x} = sourceTable.${x}`).join(' and ')
-        const technicalDeltaColumnsSelectSQL = technicalDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQL} AS delta_${x}`).join(', ')
+
+        // Technical deltas
+        const technicalDeltaColumnsSelectSQLDaily = technicalDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQLDaily} AS delta_${x}`).join(', ')
+        const technicalDeltaColumnsSelectSQLMonthly = technicalDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQLMonthly} AS delta_${x}`).join(', ')
         const technicalDeltaColumnsUpdateSQL = [
             technicalDeltaColumns.map(x => `targetTable.delta_${x} = sourceTable.delta_${x}`).join(', '),
             technicalDeltaColumns.map(x => `targetTable.delta_${x}Pct = ROUND( COALESCE( sourceTable.delta_${x} * 100 / NULLIF( sourceTable.${x} - sourceTable.delta_${x}, 0), 0))`).join(', ')
         ].join(', ')
-        const commercialDeltaColumnsSelectSQL = commercialDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQL} AS delta_${x}`).join(', ')
+
+        let technicalRows = 0
+        if (interval == TInterval.Daily)
+            technicalRows += await db.run(
+                `MERGE INTO ${TechnicalMeasures.name.replace('.', '_')} AS targetTable
+                USING (SELECT ${keyColumnsSQL}, ${technicalDeltaColumnsSelectSQLDaily} FROM ${TechnicalMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`)
+        if (interval == TInterval.Monthly)
+            technicalRows += await db.run(
+                `MERGE INTO ${TechnicalMeasures.name.replace('.', '_')} AS targetTable
+                USING (SELECT ${keyColumnsSQL}, ${technicalDeltaColumnsSelectSQLMonthly} FROM ${TechnicalMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Monthly')) AS sourceTable
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`)
+
+        // Commercial deltas
+        const commercialDeltaColumnsSelectSQLDaily = commercialDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQLDaily} AS delta_${x}`).join(', ')
+        const commercialDeltaColumnsSelectSQLMonthly = commercialDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQLMonthly} AS delta_${x}`).join(', ')
         const commercialDeltaColumnsUpdateSQL = [
             commercialDeltaColumns.map(x => `targetTable.delta_${x} = sourceTable.delta_${x}`).join(', '),
             commercialDeltaColumns.map(x => `targetTable.delta_${x}Pct = ROUND( COALESCE( sourceTable.delta_${x} * 100 / NULLIF( sourceTable.${x} - sourceTable.delta_${x}, 0), 0))`).join(', ')
         ].join(', ')
 
-        const queryTechnicalMeasures =
-            `MERGE INTO ${TechnicalMeasures.name.replace('.', '_')} AS targetTable
-            USING (SELECT ${keyColumnsSQL}, ${technicalDeltaColumnsSelectSQL} FROM ${TechnicalMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
-            ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`
-        const technicalRows = await db.run(queryTechnicalMeasures)
+        let commercialRows = 0
+        if (interval == TInterval.Daily)
+            commercialRows += await db.run(
+                `MERGE INTO ${CommercialMeasures.name.replace('.', '_')} AS targetTable
+                USING (SELECT ${keyColumnsSQL}, ${commercialDeltaColumnsSelectSQLDaily} FROM ${CommercialMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`)
+        if (interval == TInterval.Monthly)
+            commercialRows += await db.run(
+                `MERGE INTO ${CommercialMeasures.name.replace('.', '_')} AS targetTable
+                USING (SELECT ${keyColumnsSQL}, ${commercialDeltaColumnsSelectSQLMonthly} FROM ${CommercialMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Monthly')) AS sourceTable
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`)
 
-        const queryCommercialMeasures =
-            `MERGE INTO ${CommercialMeasures.name.replace('.', '_')} AS targetTable
-            USING (SELECT ${keyColumnsSQL}, ${commercialDeltaColumnsSelectSQL} FROM ${CommercialMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
-            ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`
-        const commercialRows = await db.run(queryCommercialMeasures)
-
-        status = `${technicalRows} technical and ${commercialRows} commercial deltas updated.`
+        status = `${technicalRows} technical and ${commercialRows} commercial ${interval} deltas updated.`
     } else {
         status = 'No deltas updated (hana feature only)'
     }
@@ -542,10 +906,106 @@ async function updateDeltaMeasures() {
     return status
 }
 
+async function retrieveCreditDetails() {
+    info(`Getting cloud credit details ...`)
+
+    let status = ''
+
+    const creditDetails = (await api_creditDetails({ viewPhases: 'ALL' }) as CloudCreditsDetails)
+        .filter(x => x.contracts && x.contracts?.length > 0)
+
+    for (const globalAccount of creditDetails) {
+        let values: ContractCreditValue[] = []
+
+        // Aggregate all phaseUpdates
+        globalAccount.contracts?.forEach(contract => {
+            contract.phases?.forEach(phase => {
+                if (phase.phaseUpdates) {
+                    values = [
+                        ...values,
+                        ...phase.phaseUpdates
+                            // remove updates that happened before the start date of the phase
+                            .filter(update => new Date(update.phaseUpdatedOn!) >= new Date(phase.phaseStartDate!))
+                            .map(update => {
+                                return {
+                                    contractStartDate: stringToCdsDate(contract.contractStartDate!),
+                                    contractEndDate: stringToCdsDate(contract.contractEndDate!),
+                                    currency: contract.currency,
+                                    phaseStartDate: stringToCdsDate(phase.phaseStartDate!),
+                                    phaseEndDate: stringToCdsDate(phase.phaseEndDate!),
+                                    yearMonth: update.phaseUpdatedOn && getPreviousMonth(new Date(update.phaseUpdatedOn)).toString(),
+                                    phaseUpdatedOn: stringToCdsDate(update.phaseUpdatedOn!),
+                                    cloudCreditsForPhase: update.cloudCreditsForPhase,
+                                    balance: update.balance,
+                                    status: TCreditStatus.Actual
+                                }
+                            })
+                    ]
+                }
+            })
+        })
+
+        // Remove obsolete (outdated) entries
+        globalAccount.valueUpdates = (
+            Object.values(groupByKeys(values, ['yearMonth']))
+                .flatMap(group =>
+                    group.sort((a, b) => new Date(a.phaseUpdatedOn!) < new Date(b.phaseUpdatedOn!) ? 1 : -1)
+                        .at(0)
+                ) as ContractCreditValue[]
+        ).sort((a, b) => a.yearMonth! > b.yearMonth! ? 1 : -1)
+
+        // Add phaseUpdates for projections until phaseEndDate
+        if (globalAccount.valueUpdates && globalAccount.valueUpdates.length > 0) {
+            const mostRecent = globalAccount.valueUpdates.at(-1)!
+            const endMonth = dateToYearMonth(new Date(mostRecent.phaseEndDate!.toString()))
+
+            let currentMonth = mostRecent.yearMonth!
+            while (currentMonth < endMonth) {
+                currentMonth = getNextMonth(currentMonth).toString()
+                globalAccount.valueUpdates.push({
+                    contractStartDate: mostRecent.contractStartDate,
+                    contractEndDate: mostRecent.contractEndDate,
+                    currency: mostRecent.currency,
+                    phaseStartDate: mostRecent.phaseStartDate,
+                    phaseEndDate: mostRecent.phaseEndDate,
+                    yearMonth: currentMonth,
+                    phaseUpdatedOn: stringToCdsDate(dateToISODate()),
+                    cloudCreditsForPhase: mostRecent.cloudCreditsForPhase,
+                    balance: null,
+                    status: TCreditStatus.Projection
+                })
+            }
+
+        }
+
+        // Apply currency conversion if needed
+        applyCurrencyConversion(globalAccount.valueUpdates, 'currency', ['cloudCreditsForPhase', 'balance'])
+    }
+
+    await DELETE.from(CloudCreditsDetails)
+    await INSERT.into(CloudCreditsDetails).entries(creditDetails)
+
+    status = `${creditDetails.length || 0} contract items updated in the database.`
+    info(status)
+    return status
+}
+
 async function sendNotification() {
     info(`Sending alerts ...`)
 
-    const data = await fetchMeasuresForAlerts()
+    //@ts-ignore
+    const alerts = (await SELECT.from(Alerts).columns(a => {
+        a('*'),
+            //@ts-ignore
+            a.thresholds('*'),
+            //@ts-ignore
+            a.serviceItems('*'),
+            //@ts-ignore
+            a.levelItems('*')
+    }) as Alerts)
+        .filter(x => x.active)
+
+    const data = await fetchMeasuresForAlerts(alerts)
     const alertBody = data.reduce((p, c): string => {
         const { alert, measures } = c
         if (measures.length > 0) p += createAlertsTableCourierNew(alert, measures)
@@ -573,60 +1033,21 @@ function api_sendNotification(event: CustomerResourceEvent) {
         .execute({ destinationName: 'btprc-notif' })
 }
 
-async function fetchMeasuresForAlerts(alertID?: UUID): Promise<{ alert: Alert; measures: any[] }[]> {
-    //@ts-expect-error
-    let alerts = await SELECT.from(Alerts).columns(a => { a('*'), a.thresholds('*') })
-    if (alertID) {
-        alerts = alerts.filter(x => x.ID == alertID)
-    } else {
-        alerts = alerts.filter(x => x.active)
-    }
-
+async function fetchMeasuresForAlerts(alerts: Alerts): Promise<{ alert: Alert; measures: any[] }[]> {
     const result: { alert: Alert, measures: any[] }[] = []
     for (const alert of alerts) {
-        const whereClause: CommercialMeasure = {
-            // Add static filters
-            toMetric_toService_retrieved: dateToISODate(),
-
-            // Add filters for included/excluded levels by name
-            level: alert.levelScope,
-            ...(alert.levelItems && alert.levelItems.length > 0) && {
-                name: (alert.levelMode == TInExclude.Include)
-                    ? { 'in': alert.levelItems }
-                    : { 'not in': alert.levelItems }
-            },
-
-            // Add filters for included/excluded Services/Metrics
-            ...alert.serviceScope == TServiceScopes.Service
-                ? {
-                    ...(alert.serviceItems && alert.serviceItems.length > 0) && {
-                        toMetric_toService_serviceName: (alert.serviceMode == TInExclude.Include)
-                            ? { 'in': alert.serviceItems }
-                            : { 'not in': alert.serviceItems }
-                    },
-                    toMetric_metricName: '_combined_'
-                }
-                : {
-                    toMetric_metricName: (alert.serviceMode == TInExclude.Include && alert.serviceItems && alert.serviceItems.length > 0)
-                        ? { 'in': alert.serviceItems }
-                        : { 'not in': [...(alert.serviceItems && alert.serviceItems.length > 0 ? alert.serviceItems : []), '_combined_'] }
-                },
-
-            // Add filters for dynamic thresholds
-            ...alert.thresholds?.reduce((p: any, c: any) => {
-                p[c.property] = { [c.operator]: c.amount }
-                return p
-            }, {})
+        const request = buildRequestForAlert(alert)
+        let measures: any[] = []
+        try {
+            measures = await request.req
+        } catch (error) {
+            warn(error)
+            alert.name = `${alert.name}:  [${String(error)}]`
+            measures = [{ name: 'Please fix alert configuration' }]
         }
-        const measures = await SELECT.from(
-            alert.alertType == TAlertType.Commercial
-                ? CommercialMeasures
-                : TechnicalMeasures
-        )
-            .where(whereClause)
-            .orderBy('toMetric_toService_serviceName', 'toMetric_metricName')
 
-        measures.forEach(m => m.toMetric_metricName = m.toMetric_metricName == '_combined_' ? 'Multiple' : m.toMetric_metricName)
+        //@ts-ignore
+        measures.forEach(m => m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : m.metricName)
         result.push({
             alert: alert as Alert,
             measures
@@ -635,6 +1056,59 @@ async function fetchMeasuresForAlerts(alertID?: UUID): Promise<{ alert: Alert; m
 
     return result
 }
+function buildRequestForAlert(alert: Alert): { json: Object; sql: string; req: cds.ql.Awaitable<cds.ql.SELECT<typeof CommercialMeasures | typeof TechnicalMeasures>, CommercialMeasures | TechnicalMeasures> } {
+    const serviceItemsList = alert.serviceItems?.map(x => x.itemID?.slice(8)) || [] //Cut 'service_' or 'cmetric_' or 'tmetric_' off from the stored ID
+    const levelItemsList = alert.levelItems?.map(x => x.itemID) || []
+
+    const json: CommercialMeasure = {
+        // Add static filters
+        toMetric_toService_retrieved: dateToISODate(),
+
+        // Add filters for included/excluded levels by name
+        level: alert.levelScope,
+        ...(levelItemsList && levelItemsList.length > 0) && {
+            id: (alert.levelMode == TInExclude.Include)
+                ? { 'in': levelItemsList }
+                : { 'not in': levelItemsList }
+        },
+
+        // Add filters for included/excluded Services/Metrics
+        ...alert.serviceScope == TServiceScopes.Service
+            ? {
+                ...(serviceItemsList && serviceItemsList.length > 0) && {
+                    toMetric_toService_serviceId: (alert.serviceMode == TInExclude.Include)
+                        ? { 'in': serviceItemsList }
+                        : { 'not in': serviceItemsList }
+                },
+                toMetric_measureId: '_combined_'
+            }
+            : {
+                toMetric_measureId: (alert.serviceMode == TInExclude.Include && serviceItemsList && serviceItemsList.length > 0)
+                    ? { 'in': serviceItemsList }
+                    : { 'not in': [...(serviceItemsList && serviceItemsList.length > 0 ? serviceItemsList : []), '_combined_'] }
+            },
+
+        // Add filters for dynamic thresholds
+        ...alert.thresholds?.reduce((p: any, c: any) => {
+            p[c.property] = { [c.operator]: c.amount }
+            return p
+        }, {})
+    }
+
+    const req = SELECT.from(
+        alert.alertType == TAlertType.Commercial
+            ? CommercialMeasures
+            : TechnicalMeasures
+    )
+        .columns(a => { a('*'), a.toMetric?.metricName, a.toMetric?.toService?.serviceName })
+        .where(json)
+        .orderBy('toMetric_toService_serviceId', 'toMetric_measureId')
+
+    const sql = req + ''
+
+    return { json, sql, req }
+}
+
 function createAlertsTableHTML(alert: Alert, measures: CommercialMeasures | TechnicalMeasures): string {
     let rows: string[] = []
     if (alert.alertType == TAlertType.Commercial) {
@@ -648,7 +1122,7 @@ function createAlertsTableHTML(alert: Alert, measures: CommercialMeasures | Tech
             ...(measures.length > 0
                 ? measures.map(item =>
                     //@ts-expect-error
-                    [item.toService_serviceName, item.metricName, item.measure_cost, item.forecast_cost, item.currency]
+                    [item.toService_serviceId, item.measureId, item.measure_cost, item.forecast_cost, item.currency]
                         .map(x => `<td>${x}</td>`)
                         .join()
                 )
@@ -666,7 +1140,7 @@ function createAlertsTableHTML(alert: Alert, measures: CommercialMeasures | Tech
             ...(measures.length > 0
                 ? measures.map(item =>
                     //@ts-expect-error
-                    [item.toService_serviceName, item.metricName, item.measure_usage, item.unit]
+                    [item.toService_serviceId, item.measureId, item.measure_usage, item.unit]
                         .map(x => `<td>${x}</td>`)
                         .join()
                 )
@@ -687,7 +1161,7 @@ function createAlertsTableCourierNew(alert: Alert, measures: CommercialMeasures 
     const line = `|${columns.map(c => '-'.repeat(c.width + 2)).join(`|`)}|`
     const rows = measures.map(m => {
         //@ts-ignore
-        const line = columns.map(c => setColumnWidth(m[c.value].toString(), c))
+        const line = columns.map(c => setColumnWidth(m[c.value]?.toString() ?? '', c))
         return `| ${line.join(` | `)} | `
     })
 

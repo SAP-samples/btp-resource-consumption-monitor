@@ -1,8 +1,0 @@
-{
-  "name": "cards.dailyforecast",
-  "version": "1.0.0",
-  "description": "",
-  "scripts": {
-    "build": "node scripts/build.js"
-  }
-}

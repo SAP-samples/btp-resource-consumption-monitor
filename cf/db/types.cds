@@ -4,38 +4,65 @@ namespace types;
  * Enums
  */
 
-type TAggregationLevel : String enum {
-    GlobalAccount;
-    SubAccount;
+type TAggregationLevel       : String enum {
+    Customer;
+    GlobalAccount       = 'Global Account';
+    SubAccount          = 'Sub Account';
     Directory;
     Datacenter;
-    CustomTag;
+    Space;
+    CustomTag           = 'Custom Tag'; //Not used so far
+    ServiceInSubaccount = 'Service';
+    ServiceInSpace      = 'Service (alloc.)';
 }
 
-type TInterval         : String enum {
+type TInterval               : String enum {
     Monthly;
     Daily;
 }
 
-type TForecastMethod   : String enum {
+type TForecastMethod         : String enum {
     Excluded;
     TimeLinear;
     TimeDegressive
 }
 
-type TInExclude        : String enum {
+type TInExclude              : String enum {
     Include;
     Exclude
 } default 'Include';
 
-type TAlertType        : String enum {
+type TAlertType              : String enum {
     Commercial;
     Technical
 }
 
-type TServiceScopes    : String enum {
+type TServiceScopes          : String enum {
     Service;
     Metric
+}
+
+type TAccountStructureLevels : String enum {
+    Customer;
+    GlobalAccount       = 'Global Account';
+    Directory;
+    Datacenter;
+    SubAccount          = 'Sub Account';
+    Space;
+    Instance            = 'Environment';
+    ServiceInSubaccount = 'Service';
+    ServiceInSpace      = 'Service (alloc.)';
+}
+
+type TPasteMode              : String enum {
+    Both                = 'Both Managed and Custom tags';
+    Only1ManagedTags    = 'Only Managed tags';
+    Only2CustomTags     = 'Only Custom tags';
+}
+
+type TCreditStatus           : String enum {
+    Actual;
+    Projection;
 }
 
 /**
@@ -68,4 +95,29 @@ type TDynamicAppLauncher {
 type TTag {
     name   :      String;
     values : many String;
+}
+
+type TAlertSimulation {
+    table : String;
+    json  : String;
+    sql   : String;
+}
+
+
+/**
+ * Action parameters
+ */
+
+type TSetForecastSettingParams {
+    method           : String;
+    degressionFactor : Double;
+}
+
+type TSetTechnicalMetricForAllocationParams {
+    tMeasureId : String;
+    metricName : String;
+}
+
+type TPasteTagsParams {
+    mode : String;
 }

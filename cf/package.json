@@ -1,25 +1,28 @@
 {
   "name": "btp-resource-consumption",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "BTP usage and resource consumption dashboard",
   "repository": "https://github.com/SAP-samples/btp-resource-consumption-monitor",
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
+    "@cap-js-community/odata-v2-adapter": "^1.12.10",
     "@sap-cloud-sdk/connectivity": "^3.15.0",
     "@sap-cloud-sdk/openapi": "^3.15.0",
-    "@sap/cds": "^7.9.0",
+    "@sap/cds": "^7.9",
     "@sap/cds-hana": "^2.0.0",
-    "@sap/xssec": "^3.6.1",
+    "@sap/xssec": "^3.6",
     "express": "^4.19.2"
   },
   "devDependencies": {
     "@cap-js/cds-typer": "^0.20.2",
-    "@cap-js/sqlite": "^1.7.0",
+    "@cap-js/sqlite": "^1.7.1",
     "@sap-cloud-sdk/openapi-generator": "^3.15.0",
-    "@sap/cds-dk": "^7.9.1",
-    "@sap/ux-specification": "^1.120.9",
-    "@types/node": "^20.12.11",
+    "@sap/cds-dk": "^7.9.3",
+    "@sap/eslint-plugin-cds": "^3.0.3",
+    "@sap/ux-specification": "^1.120.12",
+    "@types/node": "^20.14.5",
+    "eslint": "^9.5.0",
     "rimraf": "^5.0.7"
   },
   "scripts": {
@@ -38,6 +41,9 @@
   "cds": {
     "fiori": {
       "bypass_draft": true
+    },
+    "cov2ap": {
+      "plugin": true
     },
     "requires": {
       "[production]": {
@@ -65,6 +71,13 @@
   },
   "sapux": [
     "app/btprcreport",
-    "app/managealerts"
+    "app/managealerts",
+    "app/managetags",
+    "app/tagallocations",
+    "app/measurestotal",
+    "app/measuresbytags",
+    "app/measuresforyears",
+    "app/measuresforyearbytags",
+    "app/billingdifferences"
   ]
 }

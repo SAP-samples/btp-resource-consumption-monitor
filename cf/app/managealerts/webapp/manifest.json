@@ -37,6 +37,11 @@
           "signature": {
             "parameters": {},
             "additionalParameters": "allowed"
+          },
+          "indicatorDataSource": {
+            "dataSource": "mainService",
+            "path": "Alerts/$count?$filter=active eq true",
+            "refresh": 600
           }
         }
       }
@@ -63,12 +68,12 @@
     }
   },
   "sap.platform.cf": {
-    "ui5VersionNumber": "1.121.1"
+    "ui5VersionNumber": "1.124.1"
   },
   "sap.ui5": {
     "flexEnabled": true,
     "dependencies": {
-      "minUI5Version": "1.121.1",
+      "minUI5Version": "1.124.1",
       "libs": {
         "sap.m": {},
         "sap.ui.core": {},
@@ -103,7 +108,11 @@
       }
     },
     "resources": {
-      "css": []
+      "css": [
+        {
+          "uri": "custom.css"
+        }
+      ]
     },
     "routing": {
       "config": {},
@@ -157,8 +166,28 @@
                   }
                 }
               },
-              "navigation": {}
+              "navigation": {},
+              "content": {
+                "body": {
+                  "sections": {
+                    "SimulationSection": {
+                      "type": "XMLFragment",
+                      "title": "Simulation",
+                      "template": "managealerts.ext.simulation"
+                    }
+                  }
+                }
+              }
             }
+          }
+        }
+      }
+    },
+    "extends": {
+      "extensions": {
+        "sap.ui.controllerExtensions": {
+          "sap.fe.templates.ObjectPage.ObjectPageController": {
+            "controllerName": "managealerts.ext.simulation"
           }
         }
       }

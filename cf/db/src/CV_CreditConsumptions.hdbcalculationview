@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Calculation:scenario xmlns:Calculation="http://www.sap.com/ndb/BiModelCalculation.ecore" id="CV_CreditConsumptions" applyPrivilegeType="NONE" dataCategory="CUBE" schemaVersion="3.0" hierarchyGeneration="SQL" outputViewType="Aggregation" cacheInvalidationPeriod="NONE" enforceSqlExecution="true" application="BAS">
+<descriptions defaultDescription="CV_CreditConsumptions"/>
+<localVariables/>
+<variableMappings/>
+<dataSources>
+  <DataSource id="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS">
+    <resourceUri>ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS</resourceUri>
+  </DataSource>
+</dataSources>
+<snapshotProcedures/>
+<calculationViews/>
+
+<logicalModel id="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS">
+  <attributes>
+    <attribute id="GLOBALACCOUNTID" order="1" descriptionColumnName="GLOBALACCOUNTNAME" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Global Account"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="GLOBALACCOUNTID"/>
+    </attribute>
+    <attribute id="GLOBALACCOUNTNAME" hidden="true" order="2" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Global Account"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="GLOBALACCOUNTNAME"/>
+    </attribute>
+    <attribute id="REPORTYEARMONTH" order="3" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Month"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="REPORTYEARMONTH"/>
+    </attribute>
+    <attribute id="CURRENCY" order="4" semanticType="currencyCode" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Currency"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CURRENCY"/>
+    </attribute>
+    <attribute id="CREDITS_PHASESTARTDATE" order="7" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Phase Start Date"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_PHASESTARTDATE"/>
+    </attribute>
+    <attribute id="CREDITS_PHASEUPDATEDON" order="8" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Updated On"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_PHASEUPDATEDON"/>
+    </attribute>
+  
+    <attribute id="CREDITS_STATUS" order="17" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Status"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_STATUS"/>
+    </attribute>
+  </attributes>
+  <calculatedAttributes>
+    <calculatedAttribute id="Date" order="16" semanticType="date" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Date"/>
+      <keyCalculation datatype="DATE" expressionLanguage="SQL">
+        <formula>TO_DATE(CONCAT(&quot;REPORTYEARMONTH&quot;, '01'))</formula>
+      </keyCalculation>
+      </calculatedAttribute>
+  </calculatedAttributes>
+  <baseMeasures>
+    <measure id="CREDITS_CLOUDCREDITSFORPHASE" order="5" semanticType="amount" aggregationType="max" measureType="amount">
+      <descriptions defaultDescription="Total Credits"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_CLOUDCREDITSFORPHASE"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="CREDITS_BALANCE" order="6" semanticType="amount" aggregationType="min" measureType="amount">
+      <descriptions defaultDescription="Balance"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_BALANCE"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="CREDITS_BALANCE_CONSUMED" order="9" semanticType="amount" aggregationType="sum" measureType="amount">
+      <descriptions defaultDescription="Consumed Credits"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_BALANCE_CONSUMED"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_COST" order="10" semanticType="amount" aggregationType="sum" measureType="amount">
+      <descriptions defaultDescription="Cost"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="MEASURES_COST"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_PAYGCOST" order="11" semanticType="amount" aggregationType="sum" measureType="amount">
+      <descriptions defaultDescription="Pay Go Cost"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="MEASURES_PAYGCOST"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_CLOUDCREDITSCOST" order="12" semanticType="amount" aggregationType="sum" measureType="amount">
+      <descriptions defaultDescription="Estimated Credits"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="MEASURES_CLOUDCREDITSCOST"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_COST_SMA3" order="13" semanticType="amount" aggregationType="avg" measureType="amount">
+      <descriptions defaultDescription="Cost SMA3"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="MEASURES_COST_SMA3"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_COST_SMA6" order="14" semanticType="amount" aggregationType="avg" measureType="amount">
+      <descriptions defaultDescription="Cost SMA6"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="MEASURES_COST_SMA6"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_COST_SMA12" order="15" semanticType="amount" aggregationType="avg" measureType="amount">
+      <descriptions defaultDescription="Cost SMA12"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="MEASURES_COST_SMA12"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+  
+    <measure id="FORECAST_COST" order="18" semanticType="amount" aggregationType="sum" measureType="amount">
+      <descriptions defaultDescription="Forecasted Cost"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="FORECAST_COST"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="PREDICTED_CREDITS_BALANCE" order="19" semanticType="amount" aggregationType="min" measureType="amount">
+      <descriptions defaultDescription="Predicted Credits"/>
+      <unitCurrencyAttribute attributeName="CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="PREDICTED_CREDITS_BALANCE"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+  </baseMeasures>
+  <calculatedMeasures/>
+  <restrictedMeasures/>
+  <localDimensions/>
+</logicalModel>
+<layout>
+  <shapes>
+    <shape expanded="true" modelObjectName="Output" modelObjectNameSpace="MeasureGroup">
+      <upperLeftCorner x="40" y="85"/>
+    </shape>
+    
+  </shapes>
+</layout>
+</Calculation:scenario>

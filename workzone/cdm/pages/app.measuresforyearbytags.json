@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_2_app.measuresforyearbytags",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Cost By Tags (Monthly)"
+    },
+    "rows": [
+      {
+        "id": "page_app.measuresforyearbytags-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_app.measuresforyearbytags-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_app.measuresforyearbytags-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_app.measuresforyearbytags-1111",
+                    "viz": {
+                      "appId": "cards.app.measuresforyearbytags.app",
+                      "vizId": "cards.app.measuresforyearbytags.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

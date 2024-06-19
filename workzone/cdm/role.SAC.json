@@ -1,0 +1,22 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "sac_role",
+    "title": "{{role_sac_title}}",
+    "description": "{{role_sac_description}}",
+    "entityType": "role"
+  },
+  "payload": {
+    "apps": [
+      {
+        "id": "cards.sac.measuresbytags.app"
+      },
+      {
+        "id": "cards.sac.technicalallocation.app"
+      },
+      {
+        "id": "cards.sac.measuresforyearbytags.app"
+      }
+    ]
+  }
+}

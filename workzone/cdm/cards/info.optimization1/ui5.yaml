@@ -1,0 +1,13 @@
+specVersion: "3.2"
+metadata:
+  name: cards.info.optimization1
+type: application
+resources:
+  configuration:
+    paths:
+      webapp: src
+builder:
+  resources:
+    excludes:
+     - "test/**"
+     - ".card/**"

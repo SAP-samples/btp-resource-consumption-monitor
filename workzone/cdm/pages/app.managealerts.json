@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_app.managealerts",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": ""
+    },
+    "rows": [
+      {
+        "id": "page_app.managealerts-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_app.managealerts-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_app.managealerts-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_app.managealerts-1111",
+                    "viz": {
+                      "appId": "cards.app.managealerts.app",
+                      "vizId": "cards.app.managealerts.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

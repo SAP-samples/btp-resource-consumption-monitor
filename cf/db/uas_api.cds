@@ -5,10 +5,12 @@ type TTechnicalMeasure {
 }
 
 type TCommercialMeasure {
-    cost          : Decimal(20, 2) @title: 'Cost';
-    usage         : Decimal(20, 2) @title: 'Usage';
-    actualUsage   : Decimal(20, 2) @title: 'Actual Usage';
-    chargedBlocks : Decimal(20, 2) @title: 'Charged Blocks';
+    cost             : Decimal(20, 2) @title: 'Cost';
+    usage            : Decimal(20, 2) @title: 'Usage';
+    actualUsage      : Decimal(20, 2) @title: 'Actual Usage';
+    chargedBlocks    : Decimal(20, 2) @title: 'Charged Blocks';
+    paygCost         : Decimal(20, 2);
+    cloudCreditsCost : Decimal(20, 2);
 }
 
 // API Interface from '/reports/v1/monthlyUsage' (https://api.sap.com/api/APIUasReportingService/overview)
@@ -30,11 +32,11 @@ aspect AMonthlyUsageResponseObject : TTechnicalMeasure {
     subaccountName          : String;
     unitPlural              : String;
     unitSingular            : String;
-    startIsoDate            : String;
-    endIsoDate              : String;
+    startIsoDate            : String; // Not used in application
+    endIsoDate              : String; // Not used in application
     environmentInstanceId   : String;
     environmentInstanceName : String;
-    identityZone            : String;
+    identityZone            : String; // Not used in application
     instanceId              : String;
     spaceId                 : String;
     spaceName               : String;
@@ -61,11 +63,11 @@ aspect AMonthlyCostResponseObject : TCommercialMeasure {
     subaccountName      : String;
     unitPlural          : String;
     unitSingular        : String;
-    startIsoDate        : String;
-    endIsoDate          : String;
-    crmSku              : String;
-    estimated           : Boolean;
-    quota               : Decimal(20, 2);
+    startIsoDate        : String; // Not used in application
+    endIsoDate          : String; // Not used in application
+    crmSku              : String; // Not used in application
+    estimated           : Boolean; // Not used in application
+    quota               : Decimal(20, 2); // Not used in application
     currency            : String;
     unit                : String;
 }

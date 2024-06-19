@@ -100,21 +100,20 @@ cds.on('served', async (services) => {
                 })
         })
 
-    info(`Creating sample alert if none exist...`)
+    info(`Creating sample alerts if none exist...`)
     const alerts = await SELECT.from('db_Alerts').columns('ID')
     if (alerts.length == 0) {
-        const alertUUID = uuidv4()
+        // Alert 1:
+        let alertUUID = uuidv4()
         await INSERT.into('db_Alerts').entries([{
             ID: alertUUID,
             // active: 'true',
             name: 'Sample Alert',
             alertType: 'Commercial',
-            levelScope: 'GlobalAccount',
+            levelScope: 'Global Account',
             levelMode: 'Exclude',
-            levelItems: '[]',
             serviceScope: 'Service',
-            serviceMode: 'Exclude',
-            serviceItems: '[]',
+            serviceMode: 'Exclude'
         }])
         await INSERT.into('db_AlertThresholds').entries([
             {
@@ -132,7 +131,28 @@ cds.on('served', async (services) => {
                 amount: 120
             }
         ])
-        info(`Sample Alert created.`)
+        // Alert 2:
+        alertUUID = uuidv4()
+        await INSERT.into('db_Alerts').entries([{
+            ID: alertUUID,
+            // active: 'true',
+            name: 'Out-of-credits Charges',
+            alertType: 'Commercial',
+            levelScope: 'Global Account',
+            levelMode: 'Exclude',
+            serviceScope: 'Service',
+            serviceMode: 'Exclude'
+        }])
+        await INSERT.into('db_AlertThresholds').entries([
+            {
+                ID: uuidv4(),
+                toAlert_ID: alertUUID,
+                property: 'measure_paygCost',
+                operator: '>',
+                amount: 0
+            }
+        ])
+        info(`Sample alerts created.`)
     } else {
         info(`${alerts.length} alerts exist. No action taken.`)
     }

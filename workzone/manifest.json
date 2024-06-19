@@ -2,7 +2,7 @@
 	"sap.package": {
 		"id": "btprc.cpkg",
 		"packageVersion": {
-			"version": "1.1.0",
+			"version": "2.0.0",
 			"upgradeNotification": "all"
 		},
 		"i18n": "i18n/i18n.properties",
@@ -17,7 +17,8 @@
 		"products": "",
 		"vendor": {
 			"id": "",
-			"name": "SAP BTP GCoE"
+			"name": "SAP BTP GCoE",
+			"url": "https://www.sap.com"
 		},
 		"categories": "",
 		"scope": "external",

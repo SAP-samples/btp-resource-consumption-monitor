@@ -12,66 +12,11 @@ service ManageAlertsService {
     entity Alerts                 as
         projection on db.Alerts {
             *,
-            case
-                when
-                    active = true
-                then
-                    3
-                else
-                    1
-            end as activeCriticality : Integer
-        } actions {
-            @Core.OperationAvailable: {$edmJson: {$Not: {$Path: 'in/IsActiveEntity'}}}
-            @Common.SideEffects     : {TargetEntities: [in]}
-            action setLevelItems(
-                                 @(Common:{
-                                     ValueListWithFixedValues: false,
-                                     ValueList               : {
-                                         CollectionPath: 'LevelNames',
-                                         Parameters    : [
-                                             {
-                                                 $Type            : 'Common.ValueListParameterIn',
-                                                 LocalDataProperty: in.levelScope,
-                                                 ValueListProperty: 'level'
-                                             },
-                                             {
-                                                 $Type            : 'Common.ValueListParameterOut',
-                                                 ValueListProperty: 'name',
-                                                 LocalDataProperty: 'items'
-                                             },
-                                         ]
-                                     }
-                                 })
-                                 @title:'Items to include/exclude'
-                                 items : many String);
-            @Core.OperationAvailable: {$edmJson: {$Not: {$Path: 'in/IsActiveEntity'}}}
-            @Common.SideEffects     : {TargetEntities: [in]}
-            action setServiceItems(
-                                   @(Common:{
-                                       ValueListWithFixedValues: false,
-                                       ValueList               : {
-                                           CollectionPath: 'ServiceAndMetricNames',
-                                           Parameters    : [
-                                               {
-                                                   $Type            : 'Common.ValueListParameterIn',
-                                                   LocalDataProperty: in.serviceScope,
-                                                   ValueListProperty: 'level'
-                                               },
-                                               {
-                                                   $Type            : 'Common.ValueListParameterOut',
-                                                   ValueListProperty: 'name',
-                                                   LocalDataProperty: 'items'
-                                               },
-                                           ]
-                                       }
-                                   })
-                                   @title:'Items to include/exclude'
-                                   items : many String);
+            (active = true ? 3 : 1) as activeCriticality : Integer
+        }
+        actions {
             @cds.odata.bindingparameter.collection
             action getDefaultValues() returns Alerts;
-
-            @Core.OperationAvailable: in.IsActiveEntity
-            action testAlert()        returns String;
         };
 
     entity AlertThresholds        as
@@ -82,46 +27,46 @@ service ManageAlertsService {
 
     @readonly
     entity LevelNames             as
-            select
-                key level,
-                key name
-            from (
-                (
-                    select
-                    level,
-                    name
-                    from db.CommercialMeasures
-                ) union(
-                    select
-                        level,
-                        name
-                    from db.TechnicalMeasures
-                )
-            )
-            group by
-                level,
-                name;
+        projection on db.AccountStructureItems {
+            ID as id,
+            level,
+            name
+        }
+        order by
+            name;
 
     @readonly
     entity ServiceAndMetricNames  as
-            select
-                key level,
-                key name
+            select distinct
+                key id,
+                    level,
+                    name
             from (
                 (
                     select
-                    'Service'   as level    : String,
-                    serviceName as name     : String
+                        'Service'               as level : String,
+                        'service_' || serviceId as id    : String,
+                        serviceName             as name  : String
                     from db.BTPServices
-                ) union(
+                ) union (
                     select
-                        'Metric'   as level : String,
-                        metricName as name  : String
+                        'Commercial Metric'     as level : String,
+                        'cmetric_' || measureId as id    : String,
+                        metricName              as name  : String
                     from db.CommercialMetrics
+                    where
+                        measureId <> '_combined_'
+                ) union (
+                    select
+                        'Technical Metric'      as level : String,
+                        'tmetric_' || measureId as id    : String,
+                        metricName              as name  : String
+                    from db.TechnicalMetrics
+                    where
+                        measureId <> '_combined_'
                 )
             )
-            group by
-                level,
+            order by
                 name;
 
     @readonly
@@ -132,5 +77,8 @@ service ManageAlertsService {
     entity CL_AlertTypes          as projection on CodeLists[list = 'AlertTypes'];
     entity CL_ThresholdProperties as projection on CodeLists[list = 'ThresholdProperties'];
     entity CL_ThresholdOperators  as projection on CodeLists[list = 'ThresholdOperators'];
-    entity CL_AlertIncludeModes   as projection on CodeLists[list = 'AlertIncludeModes'];
+
+    entity CL_AlertIncludeModes   as projection on CodeLists[list = 'AlertIncludeModes']
+                                     order by
+                                         description desc;
 }

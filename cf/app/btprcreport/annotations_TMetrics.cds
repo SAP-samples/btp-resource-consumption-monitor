@@ -23,15 +23,19 @@ annotate service.TechnicalMetrics with @(UI: {
             ![@HTML5.CssDefaults]: {width: '30rem'}
         },
         {
-            Value                : tmByGlobalAccount.measure_usage,
+            Value                : tmByCustomer.plans,
             ![@HTML5.CssDefaults]: {width: '14rem'}
         },
         {
-            Value                : tmByGlobalAccount.delta_measure_usage,
+            Value                : tmByCustomer.measure_usage,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
+            Value                : tmByCustomer.delta_measure_usage,
             ![@HTML5.CssDefaults]: {width: '10rem'}
         },
         {
-            Value                : tmByGlobalAccount.unit,
+            Value                : tmByCustomer.unit,
             ![@HTML5.CssDefaults]: {width: '16rem'}
         }
     ],
@@ -75,18 +79,22 @@ annotate service.TechnicalMetrics with @(UI: {
         },
         {
             Value                : metricName,
-            ![@HTML5.CssDefaults]: {width: '30rem'}
+            ![@HTML5.CssDefaults]: {width: '25rem'}
         },
         {
-            Value                : tmByGlobalAccount.measure_usage,
+            Value                : tmByCustomer.plans,
             ![@HTML5.CssDefaults]: {width: '14rem'}
         },
         {
-            Value                : tmByGlobalAccount.delta_measure_usage,
+            Value                : tmByCustomer.measure_usage,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
+            Value                : tmByCustomer.delta_measure_usage,
             ![@HTML5.CssDefaults]: {width: '10rem'}
         },
         {
-            Value                : tmByGlobalAccount.unit,
+            Value                : tmByCustomer.unit,
             ![@HTML5.CssDefaults]: {width: '12rem'}
         },
         {
@@ -95,7 +103,8 @@ annotate service.TechnicalMetrics with @(UI: {
             Action               : 'PresentationService.deleteTechnicalMetric',
             IconUrl              : 'sap-icon://delete',
             Inline               : true,
-            ![@HTML5.CssDefaults]: {width: '4rem'}
+            ![@HTML5.CssDefaults]: {width: '4rem'},
+            ![@UI.Importance]    : #High
         }
     ]
 });
@@ -127,6 +136,11 @@ annotate service.TechnicalMetrics with @(UI: {
             Label : 'Daily Change'
         },
         {
+            $Type        : 'UI.ReferenceFacet',
+            Target       : 'tmByGlobalAccount/@UI.Chart#ComparisonByGlobalAccount',
+            ![@UI.Hidden]: hideGlobalAccountDistribution
+        },
+        {
             $Type : 'UI.ReferenceFacet',
             Target: 'tmByDirectory/@UI.Chart#ComparisonByDirectory'
         },
@@ -149,14 +163,25 @@ annotate service.TechnicalMetrics with @(UI: {
                     ![@UI.Hidden]: true
                 },
                 {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'By Global Account',
+                    Target       : 'tmByGlobalAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetric',
+                    ![@UI.Hidden]: hideGlobalAccountDistribution
+                },
+                {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Directory',
-                    Target: 'tmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetric'
+                    Target: 'tmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Sub Account',
-                    Target: 'tmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetric'
+                    Target: 'tmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
+                },
+                {
+                    $Type : 'UI.ReferenceFacet',
+                    Label : 'By Space',
+                    Target: 'tmBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
@@ -173,35 +198,32 @@ annotate service.TechnicalMetrics with @(UI: {
         {
             $Type : 'UI.ReferenceFacet',
             Target: '@UI.FieldGroup#Tags',
-            Label : 'Tags'
+            Label : 'Platform Tags'
         }
     ],
     FieldGroup #Metadata      : {Data: [
-        {
-            Value: tmByGlobalAccount.name,
-            Label: 'Account'
-        },
-        {Value: toService.serviceName},
-        {Value: toService.retrieved}
+        {Value: measureId},
+        {Value: toService.retrieved},
+        {Value: tmByCustomer.plans}
     ]},
     FieldGroup #Tags          : {Data: [{Value: tagStrings}]},
     FieldGroup #UsageThisMonth: {Data: [
         {
-            Value: tmByGlobalAccount.measure_usage,
+            Value: tmByCustomer.measure_usage,
             Label: 'Usage to date'
         },
-        {Value: tmByGlobalAccount.unit}
+        {Value: tmByCustomer.unit}
     ]},
-    FieldGroup #DeltaChange  : {Data: [
+    FieldGroup #DeltaChange   : {Data: [
         {
-            Value                    : tmByGlobalAccount.delta_measure_usagePct,
-            Criticality              : tmByGlobalAccount.deltaActualsCriticality,
+            Value                    : tmByCustomer.delta_measure_usagePct,
+            Criticality              : tmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Usage change'
         },
         {
-            Value                    : tmByGlobalAccount.delta_measure_usage,
-            Criticality              : tmByGlobalAccount.deltaActualsCriticality,
+            Value                    : tmByCustomer.delta_measure_usage,
+            Criticality              : tmByCustomer.deltaActualsCriticality,
             CriticalityRepresentation: #WithoutIcon,
             Label                    : 'Usage change'
         }

@@ -1,0 +1,96 @@
+{
+    "_version": "3.2.0",
+    "identification": {
+        "id": "saas_approuter_measuresforyearbytags",
+        "title": "Report showing BTP Credit Allocations",
+        "entityType": "businessapp",
+        "description": "",
+        "providerId": "saas_approuter"
+    },
+    "payload": {
+        "visualizations": {
+            "tile": {
+                "vizType": "sap.ushell.StaticAppLauncher",
+                "vizConfig": {
+                    "sap.ui": {
+                        "icons": {
+                            "icon": "sap-icon://tree"
+                        }
+                    },
+                    "sap.app": {
+                        "id": "measuresforyearbytags",
+                        "title": "Cost Allocation",
+                        "subTitle": "By Year and Tag"
+                    },
+                    "sap.flp": {
+                        "target": {
+                            "type": "IBN",
+                            "inboundId": "measuresforyearbytags-display"
+                        }
+                    }
+                }
+            }
+        },
+        "commonAppConfig": {
+            "sap.app": {
+                "dataSources": {
+                    "mainService": {
+                        "uri": "/odata/v2/analytics/",
+                        "type": "OData",
+                        "settings": {
+                            "annotations": [],
+                            "odataVersion": "2.0"
+                        }
+                    }
+                }
+            }
+        },
+        "targetAppConfig": {
+            "sap.ui": {
+                "technology": "URL",
+                "deviceTypes": {
+                    "phone": true,
+                    "tablet": true,
+                    "desktop": true
+                }
+            },
+            "sap.app": {
+                "crossNavigation": {
+                    "inbounds": {
+                        "measuresforyearbytags-display": {
+                            "semanticObject": "measuresforyearbytags",
+                            "action": "display",
+                            "title": "Cost Allocation",
+                            "subTitle": "By Year and Tag",
+                            "icon": "sap-icon://tree",
+                            "signature": {
+                                "parameters": {},
+                                "additionalParameters": "allowed"
+                            }
+                        }
+                    }
+                },
+                "providerId": "saas_approuter",
+                "destination": "saas_approuter"
+            },
+            "sap.ui5": {
+                "componentName": "measuresforyearbytags"
+            },
+            "sap.integration": {
+                "navMode": "inplace",
+                "urlTemplateId": "urltemplate.fiori-cf-ars",
+                "urlTemplateParams": {
+                    "appId": "measuresforyearbytags",
+                    "query": {
+                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
+                        "saasApprouter": "true"
+                    }
+                }
+            }
+        },
+        "systemAlias": {
+            "id": "saas_approuter",
+            "https": {}
+        }
+    }
+}

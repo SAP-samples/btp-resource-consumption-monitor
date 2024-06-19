@@ -1,5 +1,24 @@
 using ManageAlertsService as service from '../../srv/manageAlertsService';
 
+annotate service.Alerts with @(Common.SideEffects #runSimulation: {
+    SourceProperties: [
+        alertType,
+        levelScope,
+        levelMode,
+        serviceScope,
+        serviceMode
+    ],
+    SourceEntities  : [
+        levelItems,
+        serviceItems,
+        thresholds
+    ],
+    TargetProperties: [
+        'simulation_table',
+        'simulation_json'
+    ]
+});
+
 // Code lists
 annotate service.Alerts with {
     levelScope   @(Common: {
@@ -24,6 +43,11 @@ annotate service.Alerts with {
         ValueList               : {
             CollectionPath: 'CL_ServiceScopes',
             Parameters    : [
+                {
+                    $Type            : 'Common.ValueListParameterIn',
+                    ValueListProperty: 'context',
+                    LocalDataProperty: 'alertType'
+                },
                 {
                     $Type            : 'Common.ValueListParameterOut',
                     ValueListProperty: 'code',
@@ -53,8 +77,10 @@ annotate service.Alerts with {
             ]
         }
     });
+
     levelMode    @(Common: {
         ValueListWithFixedValues: true,
+        // ValueListWithFixedValues.@Common.ValueListShowValuesImmediately:true, // Do not use - does not trigger Side Effects for now
         ValueList               : {
             CollectionPath: 'CL_AlertIncludeModes',
             Parameters    : [
@@ -72,6 +98,7 @@ annotate service.Alerts with {
     });
     serviceMode  @(Common: {
         ValueListWithFixedValues: true,
+        // ValueListWithFixedValues.@Common.ValueListShowValuesImmediately:true, // Do not use - does not trigger Side Effects for now
         ValueList               : {
             CollectionPath: 'CL_AlertIncludeModes',
             Parameters    : [
@@ -87,18 +114,62 @@ annotate service.Alerts with {
             ]
         }
     });
-    levelItems   @(Common: {
-        ValueListWithFixedValues: false,
-        ValueList               : {
-            CollectionPath: 'LevelNames',
-            Parameters    : [{
-                $Type            : 'Common.ValueListParameterOut',
-                ValueListProperty: 'name',
-                LocalDataProperty: 'levelItems'
-            }]
-        }
-    })
+}
 
+annotate service.AlertServiceItems with {
+    itemID @(
+        title : 'Filter Items',
+        Common: {
+            ValueListWithFixedValues: true,
+            ValueList               : {
+                CollectionPath: 'ServiceAndMetricNames',
+                Parameters    : [
+                    {
+                        $Type            : 'Common.ValueListParameterIn',
+                        LocalDataProperty: toAlert.serviceScope,
+                        ValueListProperty: 'level'
+                    },
+                    {
+                        $Type            : 'Common.ValueListParameterDisplayOnly',
+                        ValueListProperty: 'name'
+                    },
+                    {
+                        $Type            : 'Common.ValueListParameterInOut',
+                        LocalDataProperty: itemID,
+                        ValueListProperty: 'id'
+                    }
+                ]
+            }
+        }
+    )
+}
+
+annotate service.AlertLevelItems with {
+    itemID @(
+        title : 'Filter Items',
+        Common: {
+            ValueListWithFixedValues: true,
+            ValueList               : {
+                CollectionPath: 'LevelNames',
+                Parameters    : [
+                    {
+                        $Type            : 'Common.ValueListParameterIn',
+                        LocalDataProperty: toAlert.levelScope,
+                        ValueListProperty: 'level'
+                    },
+                    {
+                        $Type            : 'Common.ValueListParameterDisplayOnly',
+                        ValueListProperty: 'name'
+                    },
+                    {
+                        $Type            : 'Common.ValueListParameterInOut',
+                        LocalDataProperty: itemID,
+                        ValueListProperty: 'id'
+                    }
+                ]
+            }
+        }
+    )
 }
 
 annotate service.AlertThresholds with {
@@ -111,6 +182,11 @@ annotate service.AlertThresholds with {
                     $Type            : 'Common.ValueListParameterOut',
                     ValueListProperty: 'code',
                     LocalDataProperty: 'property'
+                },
+                {
+                    $Type            : 'Common.ValueListParameterIn',
+                    ValueListProperty: 'context',
+                    LocalDataProperty: toAlert.alertType
                 },
                 {
                     $Type            : 'Common.ValueListParameterDisplayOnly',
@@ -149,8 +225,7 @@ annotate service.Alerts with @(UI: {
     SelectionFields    : [
         active,
         alertType,
-        levelScope,
-        serviceScope
+        levelScope
     ],
     LineItem           : [
         {
@@ -198,11 +273,6 @@ annotate service.Alerts with @(UI: {
         Target: '@UI.FieldGroup#Metadata',
         Label : 'Alert Details'
     }],
-    Identification      : [{
-        $Type : 'UI.DataFieldForAction',
-        Action: 'ManageAlertsService.testAlert',
-        Label : 'Test Alert ...'
-    }],
     Facets              : [
         {
             $Type : 'UI.ReferenceFacet',
@@ -210,14 +280,20 @@ annotate service.Alerts with @(UI: {
             Label : 'General',
         },
         {
-            $Type : 'UI.ReferenceFacet',
-            Target: '@UI.FieldGroup#Level',
-            Label : 'Hierarchy'
-        },
-        {
-            $Type : 'UI.ReferenceFacet',
-            Target: '@UI.FieldGroup#Service',
-            Label : 'Level of detail'
+            $Type : 'UI.CollectionFacet',
+            Label : 'Scope',
+            Facets: [
+                {
+                    $Type : 'UI.ReferenceFacet',
+                    Target: '@UI.FieldGroup#Level',
+                    Label : 'Account Structure'
+                },
+                {
+                    $Type : 'UI.ReferenceFacet',
+                    Target: '@UI.FieldGroup#Service',
+                    Label : 'Service Scope'
+                }
+            ]
         },
         {
             $Type : 'UI.ReferenceFacet',
@@ -249,12 +325,7 @@ annotate service.Alerts with @(UI: {
         Data : [
             {Value: levelScope},
             {Value: levelMode},
-            {Value: levelItemsText},
-            {
-                $Type : 'UI.DataFieldForAction',
-                Label : 'Set Items',
-                Action: 'ManageAlertsService.setLevelItems'
-            },
+            {Value: levelItems.itemID}
         ]
     },
     FieldGroup #Service : {
@@ -262,12 +333,7 @@ annotate service.Alerts with @(UI: {
         Data : [
             {Value: serviceScope},
             {Value: serviceMode},
-            {Value: serviceItemsText},
-            {
-                $Type : 'UI.DataFieldForAction',
-                Label : 'Set Items',
-                Action: 'ManageAlertsService.setServiceItems'
-            },
+            {Value: serviceItems.itemID}
         ]
     }
 });

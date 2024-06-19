@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+specVersion: "3.2"
+metadata:
+  name: measurestotal
+type: application
+builder:
+  customTasks:
+  - name: ui5-task-zipper
+    afterTask: generateCachebusterInfo
+    configuration:
+      archiveName: measurestotal
+      additionalFiles:
+      - xs-app.json

@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_3_sac.technicalallocation",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Technical Allocation  Dashboard"
+    },
+    "rows": [
+      {
+        "id": "page_sac.technicalallocation-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_sac.technicalallocation-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_sac.technicalallocation-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_sac.technicalallocation-1111",
+                    "viz": {
+                      "appId": "cards.sac.technicalallocation.app",
+                      "vizId": "cards.sac.technicalallocation.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

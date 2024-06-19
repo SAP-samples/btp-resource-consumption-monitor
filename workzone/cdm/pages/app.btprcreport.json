@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_app.btprcreport",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Service Manager"
+    },
+    "rows": [
+      {
+        "id": "page_app.btprcreport-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_app.btprcreport-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_app.btprcreport-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_app.btprcreport-1111",
+                    "viz": {
+                      "appId": "cards.app.btprcreport.app",
+                      "vizId": "cards.app.btprcreport.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

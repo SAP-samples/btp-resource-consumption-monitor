@@ -1,0 +1,8 @@
+{
+  "name": "cards.app.billingdifferences",
+  "version": "2.0.0",
+  "description": "",
+  "scripts": {
+    "build": "node scripts/build.js"
+  }
+}

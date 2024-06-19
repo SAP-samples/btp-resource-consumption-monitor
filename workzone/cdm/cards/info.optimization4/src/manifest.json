@@ -1,0 +1,72 @@
+{
+	"_version": "1.15.0",
+	"sap.app": {
+		"id": "cards.info.optimization4",
+		"type": "card",
+		"title": "Cost Optimization 4",
+		"subTitle": "",
+        "description": "{{description}}",
+        "i18n": "i18n/i18n.properties",
+		"applicationVersion": {
+            "version": "2.0.0"
+		}
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"deviceTypes": {
+			"desktop": true,
+			"phone": true,
+			"tablet": true
+		}
+	},
+	"sap.card": {
+		"extension": "./extension",
+		"configuration": {
+			"enableMarkdown": true
+		},
+		"header": {
+			"title": "Leverage Labels for Cross-Charging",
+			"subTitle": "Cost Optimization Strategy #4",
+			"icon": {
+				"src": "sap-icon://blank-tag"
+			}
+		},
+		"type": "AdaptiveCard",
+		"content": {
+			"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+			"type": "AdaptiveCard",
+			"version": "1.2",
+			"body": [
+				{
+					"type": "TextBlock",
+					"text": "Adopt labeling in your cost-tracking routine to refine and automate the cross-charging mechanism. It allows precise automated distribution of costs among various projects, departments, or business units.",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "This practice ensures a transparent and accurate billing process, where expenses are correctly allocated to relevant internal entities. The result is simplified budget management and enhanced financial planning, making labels an invaluable asset for transparent financial operations and effective cost allocation within intricate organizational frameworks.",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "**Account Structure Oversight** monitors the structure of accounts:\r- Tag Definition: Allows defining tags based on cross-charging requirements.\r- Tags can be defined not only by the line of business but also with specific percentages when multiple lines of business are involved.\r- Each account level can have tags managed according to the specific requirements of the line of business, facilitating the cross-charging process.",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "**Tagging for Exclusion:**\r- Ability to tag instances, subaccounts or spaces as 'Excluded' for exclusion from the cross-charging process.\r- Includes filtering capabilities to view accounts as either excluded or not excluded.",
+					"wrap": true
+				}
+			],
+			"actions": [
+				{
+					"type": "Action.Submit",
+					"title": "Read More ...",
+					"data":{
+						"url":"https://raw.githubusercontent.com/SAP-samples/btp-resource-consumption-monitor/main/docs/snippets/info.optimization4.md"
+					}
+				}
+			]
+		}
+	}
+}

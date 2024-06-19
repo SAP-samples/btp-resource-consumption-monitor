@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_2_app.measuresforyears",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Cost Breakdown (Monthly)"
+    },
+    "rows": [
+      {
+        "id": "page_app.measuresforyears-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_app.measuresforyears-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_app.measuresforyears-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_app.measuresforyears-1111",
+                    "viz": {
+                      "appId": "cards.app.measuresforyears.app",
+                      "vizId": "cards.app.measuresforyears.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

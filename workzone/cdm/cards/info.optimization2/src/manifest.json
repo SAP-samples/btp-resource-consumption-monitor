@@ -1,0 +1,62 @@
+{
+	"_version": "1.15.0",
+	"sap.app": {
+		"id": "cards.info.optimization2",
+		"type": "card",
+		"title": "Cost Optimization 2",
+		"subTitle": "",
+        "description": "{{description}}",
+        "i18n": "i18n/i18n.properties",
+		"applicationVersion": {
+            "version": "2.0.0"
+		}
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"deviceTypes": {
+			"desktop": true,
+			"phone": true,
+			"tablet": true
+		}
+	},
+	"sap.card": {
+		"extension": "./extension",
+		"configuration": {
+			"enableMarkdown": true
+		},
+		"header": {
+			"title": "Terminate Unused Resources",
+			"subTitle": "Cost Optimization Strategy #2",
+			"icon": {
+				"src": "sap-icon://bells"
+			}
+		},
+		"type": "AdaptiveCard",
+		"content": {
+			"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+			"type": "AdaptiveCard",
+			"version": "1.2",
+			"body": [
+				{
+					"type": "TextBlock",
+					"text": "Achieve significant cost reductions by proactively identifying and terminating compute or networking setups and services that are no longer needed.",
+					"wrap": true
+				},
+				{
+					"type": "TextBlock",
+					"text": "Regularly auditing and shutting down these unused assets ensures that you're investing only in resources that **deliver real value to your organization**, optimizing your cloud spend efficiently.",
+					"wrap": true
+				}
+			],
+			"actions": [
+				{
+					"type": "Action.Submit",
+					"title": "Read More ...",
+					"data":{
+						"url":"https://raw.githubusercontent.com/SAP-samples/btp-resource-consumption-monitor/main/docs/snippets/info.optimization2.md"
+					}
+				}
+			]
+		}
+	}
+}

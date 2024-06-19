@@ -1,0 +1,156 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "measurestotal",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "${version}"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "ui5template.smartTemplate",
+      "version": "1.40.12"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "odata/v2/analytics/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "odataVersion": "2.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "measurestotal-display": {
+          "semanticObject": "measurestotal",
+          "action": "display",
+          "title": "{{appTitle}}",
+          "subTitle": "{{appSubTitle}}",
+          "icon": "sap-icon://tree",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "sap.btp.resourceconsumption"
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.platform.cf": {
+    "ui5VersionNumber": "1.124.1"
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.124.1",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ushell": {},
+        "sap.fe.templates": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "measurestotal.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "@i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      }
+    },
+    "resources": {
+      "css": []
+    },
+    "extends": {
+      "component": "sap.suite.ui.generic.template.ListReport",
+      "extensions": {
+        "sap.ui.controllerExtensions": {
+          "sap.suite.ui.generic.template.ListReport.view.ListReport": {
+            "controllerName": "measurestotal.ext.controller.ListReportExt"
+          }
+        },
+        "sap.ui.viewExtensions": {
+          "sap.suite.ui.generic.template.ListReport.view.ListReport": {
+            "TreeTableColumnsExtension|CommercialMeasures": {
+              "className": "sap.ui.core.Fragment",
+              "fragmentName": "measurestotal.ext.fragments.columns",
+              "type": "XML"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.ui.generic.app": {
+    "_version": "1.3.0",
+    "pages": {
+      "ListReport|measurestotal": {
+        "entitySet": "CommercialMeasures",
+        "component": {
+          "name": "sap.suite.ui.generic.template.ListReport",
+          "list": true,
+          "settings": {
+            "condensedTableLayout": false,
+            "smartVariantManagement": true,
+            "tableType": "TreeTable",
+            "enableTableFilterInPageVariant": true,
+            "dataLoadSettings": {
+              "loadDataOnAppLaunch": "never"
+            },
+            "filterSettings": {
+              "dateSettings": {
+                "useDateRange": true
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [],
+    "archeType": "transactional"
+  }
+}

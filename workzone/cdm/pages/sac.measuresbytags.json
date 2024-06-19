@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_3_sac.measuresbytags",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Dashboard (Daily)"
+    },
+    "rows": [
+      {
+        "id": "page_sac.measuresbytags-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_sac.measuresbytags-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_sac.measuresbytags-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_sac.measuresbytags-1111",
+                    "viz": {
+                      "appId": "cards.sac.measuresbytags.app",
+                      "vizId": "cards.sac.measuresbytags.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

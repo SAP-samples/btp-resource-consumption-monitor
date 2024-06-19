@@ -4,11 +4,15 @@ import {
     dateToYearMonth,
     flattenObject,
     formatTags,
-    addRequiredColumns
+    addRequiredColumns,
+    reportYearMonthToText
 } from './functions'
 
 import {
-    BTPAccountMeasures,
+    AggregatedCommercialMeasures
+} from '#cds-models/AnalyticsService';
+
+import {
     BTPService,
     BTPServices,
     CommercialMeasure,
@@ -23,7 +27,8 @@ import {
     proxy_deleteAllData,
     proxy_resetForecastSettings,
     proxy_calculateCommercialForecasts,
-    Card_HighestForecastServices,
+    proxy_resetTechnicalAllocations,
+    Card_HighestForecastServices
 } from '#cds-models/PresentationService'
 
 import {
@@ -33,6 +38,7 @@ import {
     downloadMeasuresForToday,
     downloadMeasuresForPastMonths,
     resetForecastSettings,
+    resetTechnicalAllocations,
 } from '#cds-models/RetrievalService'
 
 import {
@@ -44,9 +50,12 @@ import {
 } from '#cds-models/types'
 
 import {
+    AllocationSetting,
+    AllocationSettings,
     ForecastSetting,
     ForecastSettings,
 } from '#cds-models/db'
+import { Settings } from './settings'
 
 const info = cds.log('presentationService').info
 
@@ -64,13 +73,14 @@ export default class PresentationService extends cds.ApplicationService {
          * Handlers for BTPServices
          */
         this.before('READ', BTPServices, req => {
-            addRequiredMeasureColumns<BTPService>(req.query, 'cmByGlobalAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            addRequiredMeasureColumns<BTPService>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            addSortMeasureColumns<BTPService>(req.query, 'cmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<BTPService>(req.query, 'cmByDirectory', 'measure_cost', true)
             addSortMeasureColumns<BTPService>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
         this.after('READ', BTPServices, items => {
             items?.forEach(each => {
-                const measure = (each as BTPService).cmByGlobalAccount
+                const measure = (each as BTPService).cmByCustomer
                 if (measure) {
                     addBulletChartValues(measure)
                     if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
@@ -82,6 +92,8 @@ export default class PresentationService extends cds.ApplicationService {
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
                 }
+                each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
+                each.hideCommercialSpaceAllocation = !Settings.appConfiguration.distributeCostsToSpaces
             })
         })
 
@@ -90,13 +102,14 @@ export default class PresentationService extends cds.ApplicationService {
          * Handlers for CommercialMetrics
          */
         this.before('READ', CommercialMetrics, req => {
-            addRequiredMeasureColumns<CommercialMetric>(req.query, 'cmByGlobalAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            addRequiredMeasureColumns<CommercialMetric>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            addSortMeasureColumns<CommercialMetric>(req.query, 'cmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmByDirectory', 'measure_cost', true)
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
         this.after('READ', CommercialMetrics, items => {
             items?.forEach(each => {
-                const measure = (each as CommercialMetric).cmByGlobalAccount
+                const measure = (each as CommercialMetric).cmByCustomer
                 if (measure) {
                     addBulletChartValues(measure)
                     if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
@@ -104,9 +117,15 @@ export default class PresentationService extends cds.ApplicationService {
                     if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                     //@ts-ignore
                     if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
-
                 }
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
+                each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
+                each.hideCommercialSpaceAllocation = !Settings.appConfiguration.distributeCostsToSpaces
+
+                if ('technicalMetricForAllocation' in each && each.technicalMetricForAllocation == null) {
+                    // Create virtual entry to show text so there is a button for the user
+                    each.technicalMetricForAllocation = { metricName: '(not allocated)' }
+                }
             })
         })
 
@@ -114,18 +133,20 @@ export default class PresentationService extends cds.ApplicationService {
          * Handlers for TechnicalMetrics
          */
         this.before('READ', TechnicalMetrics, req => {
+            addRequiredColumns<TechnicalMetric>(req.query, ['tags'])
+            addSortMeasureColumns<TechnicalMetric>(req.query, 'tmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmByDirectory', 'measure_usage', true)
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmBySubAccount', 'measure_usage', true)
-            addRequiredColumns<TechnicalMetric>(req.query, ['tags'])
         })
         this.after('READ', TechnicalMetrics, items => {
             items?.forEach(each => {
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
-                const measure = (each as TechnicalMetric).tmByGlobalAccount
+                const measure = (each as TechnicalMetric).tmByCustomer
                 if (measure) {
                     //@ts-ignore
                     if (measure.delta_measure_usagePct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
                 }
+                each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
             })
         })
 
@@ -134,7 +155,7 @@ export default class PresentationService extends cds.ApplicationService {
          */
         this.after('READ', Card_HighestForecastServices, items => {
             items?.forEach(each => {
-                const measure = (each as BTPService).cmByGlobalAccount
+                const measure = (each as BTPService).cmByCustomer
                 if (measure) {
                     if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
                     //@ts-ignore
@@ -150,19 +171,20 @@ export default class PresentationService extends cds.ApplicationService {
         this.on(proxy_downloadMeasuresForPastMonths, async (req) => req.info(await retrievalService.send(downloadMeasuresForPastMonths.toString(), { fromDate: Number(req.data.fromDate) })))
         this.on(proxy_deleteAllData, async (req) => req.info(await retrievalService.send(deleteAllData.toString())))
         this.on(proxy_resetForecastSettings, async (req) => req.notify(await retrievalService.send(resetForecastSettings.toString())))
+        this.on(proxy_resetTechnicalAllocations, async (req) => req.notify(await retrievalService.send(resetTechnicalAllocations.toString())))
         this.on(proxy_calculateCommercialForecasts, async (req) => req.notify(await retrievalService.send(calculateCommercialForecasts.toString())))
 
         // Received from UI when Forecast Settings are changed
         this.on(CommercialMetric.actions.SetForecastSetting, async (req) => {
-            const serviceName = (req.params[0] as BTPService).serviceName
-            const metricName = (req.params[1] as CommercialMetric).metricName
+            const serviceId = (req.params[0] as BTPService).serviceId
+            const measureId = (req.params[1] as CommercialMetric).measureId
             const { method, degressionFactor } = req.data
 
-            info(`Setting forecast config for service [${serviceName}], metric [${metricName}] to ${method} with factor ${degressionFactor}`)
+            info(`Setting forecast config for service [${serviceId}], metric [${measureId}] to ${method} with factor ${degressionFactor}`)
 
             const forecastSetting: ForecastSetting = {
-                serviceName,
-                metricName,
+                serviceId,
+                measureId,
                 method: method as TForecastMethod,
                 degressionFactor
             }
@@ -171,7 +193,39 @@ export default class PresentationService extends cds.ApplicationService {
             info(status)
 
             // Trigger a recalculation of the forecasts for this Service            
-            await retrievalService.send(calculateCommercialForecastsForService.toString(), { serviceName: serviceName })
+            await retrievalService.send(calculateCommercialForecastsForService.toString(), { serviceId: serviceId })
+
+            return status
+        })
+
+        // Received from UI when Allocation Settings are changed
+        this.on(CommercialMetric.actions.SetTechnicalMetricForAllocation, async (req) => {
+            const serviceId = (req.params[0] as BTPService).serviceId
+            const cMeasureId = (req.params[1] as CommercialMetric).measureId
+            const { tMeasureId, metricName } = req.data
+
+            let nbItems = 0
+            if (tMeasureId) {
+                info(`Setting technical allocation for service [${serviceId}], metric [${cMeasureId}] to ${tMeasureId}`)
+                const allocationSetting: AllocationSetting = {
+                    serviceId,
+                    cMeasureId,
+                    mode: 'usage',// placeholder to deviate later
+                    tServiceId: serviceId, // placeholder to deviate later
+                    tMeasureId,
+                    metricName
+                }
+                nbItems = await UPSERT.into(AllocationSettings).entries(allocationSetting)
+            } else {
+                info(`Removing technical allocation for service [${serviceId}], metric [${cMeasureId}]`)
+                nbItems = await DELETE.from(AllocationSettings, {
+                    serviceId,
+                    cMeasureId
+                })
+            }
+
+            const status = `${nbItems} records updated in the database.`
+            info(status)
 
             return status
         })
@@ -179,14 +233,12 @@ export default class PresentationService extends cds.ApplicationService {
         this.on(BTPService.actions.deleteBTPService, async req => {
             const item = req.params.slice(-1)[0] as BTPService
             await DELETE(BTPServices, item)
-            await retrievalService.send(calculateCommercialForecastsForService.toString(), { serviceName: item.serviceName })
+            await retrievalService.send(calculateCommercialForecastsForService.toString(), { serviceId: item.serviceId })
         })
         this.on(CommercialMetric.actions.deleteCommercialMetric, async req => {
             const item = req.params.slice(-1)[0] as CommercialMetric
-            console.log(item);
-
             await DELETE(CommercialMetrics, item)
-            await retrievalService.send(calculateCommercialForecastsForService.toString(), { serviceName: item.toService_serviceName })
+            await retrievalService.send(calculateCommercialForecastsForService.toString(), { serviceId: item.toService_serviceId })
         })
         this.on(TechnicalMetric.actions.deleteTechnicalMetric, async req => {
             const item = req.params.slice(-1)[0] as TechnicalMetric
@@ -195,12 +247,13 @@ export default class PresentationService extends cds.ApplicationService {
 
         this.on(getLatestBTPAccountMeasure, async req => {
             const data = await SELECT.one
-                .from(BTPAccountMeasures)
+                .from(AggregatedCommercialMeasures)
                 .where({
                     interval: TInterval.Daily,
-                    level: TAggregationLevel.GlobalAccount
+                    level: TAggregationLevel.Customer
                 })
                 .orderBy('retrieved desc')
+            data.reportYearMonth = reportYearMonthToText(data.reportYearMonth!)
             return data
         })
 
@@ -208,10 +261,10 @@ export default class PresentationService extends cds.ApplicationService {
         this.on(getTileInfo, async (req) => {
             const thisMonth = dateToYearMonth()
             const info = await SELECT.one
-                .from(BTPAccountMeasures)
+                .from(AggregatedCommercialMeasures)
                 .where({
                     interval: TInterval.Daily,
-                    level: TAggregationLevel.GlobalAccount
+                    level: TAggregationLevel.Customer
                 })
                 .orderBy('retrieved desc')
             const tile: TDynamicAppLauncher = {
@@ -224,7 +277,7 @@ export default class PresentationService extends cds.ApplicationService {
                 numberDigits: 2,
                 numberFactor: '',
                 numberState: 'Neutral',
-                numberUnit: `${thisMonth} forecast`,
+                numberUnit: `${reportYearMonthToText(thisMonth)} forecast`,
                 stateArrow: ''
             }
             return tile
@@ -238,15 +291,15 @@ export default class PresentationService extends cds.ApplicationService {
  * Make sure that any query that expands into any measurements has the required columns to calculate the values and criticality of the chart.
  * This is a coding alternative to RequestAtLeast annotation which only applies to List Views and not to Object Pages.
  * @param query the SELECT request query
- * @param entity name of the expand which needs to be have the additional columns
+ * @param entity id of the expand which needs to be have the additional columns
  * @param requiredColumns columns to add (if not in the expand already)
  * @example
  *      refColumns sample:
  *          [
- *              { ref: ['toService_serviceName'] },
- *              { ref: ['metricName'] },
+ *              { ref: ['toService_serviceId'] },
+ *              { ref: ['measureId'] },
  *              { ref: ['level'] },
- *              { ref: ['name'] },
+ *              { ref: ['id'] },
  *              { ref: ['measure_actualUsage'] },
  *              ...
  *          ]

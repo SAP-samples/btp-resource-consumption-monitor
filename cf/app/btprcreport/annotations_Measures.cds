@@ -2,12 +2,12 @@ using PresentationService as service from '../../srv/presentationService';
 using from './charts';
 
 annotate service.CommercialMeasures with @(UI: {
-    HeaderInfo                                               : {
+    HeaderInfo                                                             : {
         $Type         : 'UI.HeaderInfoType',
         TypeName      : 'Measure',
         TypeNamePlural: 'Measures'
     },
-    PresentationVariant #ServiceEmbeddedBreakdown            : {
+    PresentationVariant #ServiceEmbeddedBreakdown                          : {
         $Type         : 'UI.PresentationVariantType',
         Visualizations: ['@UI.LineItem#ServiceEmbeddedBreakdown'],
         GroupBy       : [name],
@@ -16,23 +16,31 @@ annotate service.CommercialMeasures with @(UI: {
             {Property: toMetric.metricName}
         ]
     },
-    PresentationVariant #ServiceEmbeddedBreakdownSingleMetric: {
+    PresentationVariant #ServiceEmbeddedBreakdownSingleMetric              : {
         $Type         : 'UI.PresentationVariantType',
         Visualizations: ['@UI.LineItem#ServiceEmbeddedBreakdown'],
         SortOrder     : [{Property: name}]
     },
-    LineItem #ServiceEmbeddedBreakdown                       : [
+    LineItem #ServiceEmbeddedBreakdown                                     : [
         {
             Value                : name,
-            ![@HTML5.CssDefaults]: {width: '14rem'}
+            ![@HTML5.CssDefaults]: {width: '15rem'}
         },
         {
             Value                : toMetric.metricName,
             ![@HTML5.CssDefaults]: {width: '19rem'}
         },
         {
+            Value                : plans,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
             Value                : measure_cost,
             ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
+            Value                : delta_measure_cost,
+            ![@HTML5.CssDefaults]: {width: '10rem'}
         },
         {
             Value                : measure_usage,
@@ -51,15 +59,65 @@ annotate service.CommercialMeasures with @(UI: {
             ![@HTML5.CssDefaults]: {width: '12rem'}
         }
     ],
+    PresentationVariant #ServiceEmbeddedBreakdownSingleMetricGroupedByLabel: {
+        $Type         : 'UI.PresentationVariantType',
+        Visualizations: ['@UI.LineItem#ServiceEmbeddedBreakdownGroupedByLabel'],
+        SortOrder     : [{Property: name}],
+        GroupBy       : [accountStructureItem.toParent.label]
+    },
+    LineItem #ServiceEmbeddedBreakdownGroupedByLabel                       : [
+        {
+            Value                : name,
+            ![@HTML5.CssDefaults]: {width: '15rem'}
+        },
+        {
+            Value                : toMetric.metricName,
+            ![@HTML5.CssDefaults]: {width: '19rem'}
+        },
+        {
+            Value                : plans,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
+            Value                : measure_cost,
+            ![@HTML5.CssDefaults]: {width: '11rem'}
+        },
+        {
+            Value                : delta_measure_cost,
+            ![@HTML5.CssDefaults]: {width: '10rem'}
+        },
+        {
+            Value                : measure_usage,
+            ![@HTML5.CssDefaults]: {width: '8rem'}
+        },
+        {
+            Value                : measure_actualUsage,
+            ![@HTML5.CssDefaults]: {width: '8rem'}
+        },
+        {
+            Value                : measure_chargedBlocks,
+            ![@HTML5.CssDefaults]: {width: '8rem'}
+        },
+        {
+            Value                : unit,
+            ![@HTML5.CssDefaults]: {width: '12rem'}
+        },
+        {
+            Value                : accountStructureItem.toParent.label,
+            Label                : 'Parent',
+            ![@HTML5.CssDefaults]: {width: '50rem'}, // Very wide so it falls off the screen and is 'hidden'
+            ![@UI.Importance]    : #Low
+        }
+    ]
 });
 
 annotate service.TechnicalMeasures with @(UI: {
-    HeaderInfo                                               : {
+    HeaderInfo                                                             : {
         $Type         : 'UI.HeaderInfoType',
         TypeName      : 'Measure',
         TypeNamePlural: 'Measures'
     },
-    PresentationVariant #ServiceEmbeddedBreakdown            : {
+    PresentationVariant #ServiceEmbeddedBreakdown                          : {
         $Type         : 'UI.PresentationVariantType',
         Visualizations: ['@UI.LineItem#ServiceEmbeddedBreakdown'],
         GroupBy       : [name],
@@ -68,27 +126,73 @@ annotate service.TechnicalMeasures with @(UI: {
             {Property: toMetric.metricName}
         ]
     },
-    PresentationVariant #ServiceEmbeddedBreakdownSingleMetric: {
+    PresentationVariant #ServiceEmbeddedBreakdownSingleMetric              : {
         $Type         : 'UI.PresentationVariantType',
         Visualizations: ['@UI.LineItem#ServiceEmbeddedBreakdown'],
         SortOrder     : [{Property: name}]
     },
-    LineItem #ServiceEmbeddedBreakdown                       : [
+    LineItem #ServiceEmbeddedBreakdown                                     : [
         {
             Value                : name,
-            ![@HTML5.CssDefaults]: {width: '14rem'}
+            ![@HTML5.CssDefaults]: {width: '15rem'}
         },
         {
             Value                : toMetric.metricName,
             ![@HTML5.CssDefaults]: {width: '30rem'}
         },
         {
+            Value                : plans,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
             Value                : measure_usage,
             ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
+            Value                : delta_measure_usage,
+            ![@HTML5.CssDefaults]: {width: '10rem'}
         },
         {
             Value                : unit,
             ![@HTML5.CssDefaults]: {width: '16rem'}
         }
     ],
+    PresentationVariant #ServiceEmbeddedBreakdownSingleMetricGroupedByLabel: {
+        $Type         : 'UI.PresentationVariantType',
+        Visualizations: ['@UI.LineItem#ServiceEmbeddedBreakdownGroupedByLabel'],
+        SortOrder     : [{Property: name}],
+        GroupBy       : [accountStructureItem.toParent.label]
+    },
+    LineItem #ServiceEmbeddedBreakdownGroupedByLabel                       : [
+        {
+            Value                : name,
+            ![@HTML5.CssDefaults]: {width: '15rem'}
+        },
+        {
+            Value                : toMetric.metricName,
+            ![@HTML5.CssDefaults]: {width: '30rem'}
+        },
+        {
+            Value                : plans,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
+            Value                : measure_usage,
+            ![@HTML5.CssDefaults]: {width: '14rem'}
+        },
+        {
+            Value                : delta_measure_usage,
+            ![@HTML5.CssDefaults]: {width: '10rem'}
+        },
+        {
+            Value                : unit,
+            ![@HTML5.CssDefaults]: {width: '16rem'}
+        },
+        {
+            Value                : accountStructureItem.toParent.label,
+            Label                : 'Parent',
+            ![@HTML5.CssDefaults]: {width: '50rem'}, // Very wide so it falls off the screen and is 'hidden'
+            ![@UI.Importance]    : #Low
+        }
+    ]
 });

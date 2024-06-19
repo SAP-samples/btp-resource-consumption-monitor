@@ -1,0 +1,20 @@
+{
+  "_version": "3.1.0",
+  "identification": {
+    "id": "space_3_costbreakdown",
+    "title": "Cost Breakdown",
+    "entityType": "space"
+  },
+  "payload": {
+    "contentNodes": [
+      {
+        "type": "workpage",
+        "id": "page_1_app.measurestotal"
+      },
+      {
+        "type": "workpage",
+        "id": "page_2_app.measuresforyears"
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "ui5-cc-md",
+  "version": "0.0.7",
+  "description": "UI5 custom (notepad) control rendering markdown into html on-the-fly",
+  "main": "Markdown.js",
+  "scripts": {
+    "test": "jest",
+    "test:manual": "cd test/ui5-app && ui5 serve",
+    "release": "standard-version"
+  },
+  "keywords": [
+    "ui5",
+    "custom control",
+    "notepad control"
+  ],
+  "author": "Volker Buzek <volker.buzek@js-soft.com>",
+  "contributors": [
+    "Peter Muessig",
+    "Matthias Oßwald",
+    "Marco Beier"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ui5-community/ui5-cc-md.git"
+  },
+  "license": "Beerware",
+  "dependencies": {
+    "marked": "^4.0.14"
+  },
+  "devDependencies": {
+    "eslint": "^8.13.0",
+    "eslint-plugin-jest": "^26.1.4",
+    "jest": "^27.5.1",
+    "jest-puppeteer": "^6.1.0",
+    "npm-run-all": "^4.1.5",
+    "puppeteer": "^13.5.2",
+    "standard-version": "^9.3.2"
+  }
+}

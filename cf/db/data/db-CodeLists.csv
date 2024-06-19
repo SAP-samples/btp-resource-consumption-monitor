@@ -1,46 +1,73 @@
-list,code,description
-AggregationLevels,GlobalAccount,Alert for the entire Global Account
-AggregationLevels,SubAccount,Alert for 1 or more Sub Accounts
-AggregationLevels,Directory,Alert for 1 or more Directories
-AggregationLevels,Datacenter,Alert for 1 or more Datacenters
-AlertTypes,Commercial,Alert on Commercial Measurement values
-AlertTypes,Technical,Alert on Technical Measurement values
-ServiceScopes,Service,Alert on Measurement values on Service level (combined Metrics)
-ServiceScopes,Metric,Alert on Measurement values on individual Metric level
-ThresholdProperties,measure_cost,Actual/current Cost (for Commercial measures)
-ThresholdProperties,measure_usage,Actual/current Usage (for Commercial/Technical measures)
-ThresholdProperties,measure_actualUsage,Actual/current Actual Usage (for Commercial measures)
-ThresholdProperties,measure_chargedBlocks,Actual/current Charged Blocks (for Commercial measures)
-ThresholdProperties,forecast_cost,Forecasted Cost (for Commercial measures)
-ThresholdProperties,forecast_usage,Forecasted Usage (for Commercial measures)
-ThresholdProperties,forecast_actualUsage,Forecasted Actual Usage (for Commercial measures)
-ThresholdProperties,forecast_chargedBlocks,Forecasted Charged Blocks (for Commercial measures)
-ThresholdProperties,delta_measure_cost,Daily change of Actual/current Cost (for Commercial measures)
-ThresholdProperties,delta_measure_usage,Daily change of Actual/current Usage (for Commercial/Technical measures)
-ThresholdProperties,delta_measure_actualUsage,Daily change of Actual/current Actual Usage (for Commercial measures)
-ThresholdProperties,delta_measure_chargedBlocks,Daily change of Actual/current Charged Blocks (for Commercial measures)
-ThresholdProperties,delta_forecast_cost,Daily change of Forecasted Cost (for Commercial measures)
-ThresholdProperties,delta_forecast_usage,Daily change of Forecasted Usage (for Commercial measures)
-ThresholdProperties,delta_forecast_actualUsage,Daily change of Forecasted Actual Usage (for Commercial measures)
-ThresholdProperties,delta_forecast_chargedBlocks,Daily change of Forecasted Charged Blocks (for Commercial measures)
-ThresholdProperties,delta_measure_costPct,Daily change of Actual/current Cost % (for Commercial measures)
-ThresholdProperties,delta_measure_usagePct,Daily change of Actual/current Usage % (for Commercial/Technical measures)
-ThresholdProperties,delta_measure_actualUsagePct,Daily change of Actual/current Actual Usage % (for Commercial measures)
-ThresholdProperties,delta_measure_chargedBlocksPct,Daily change of Actual/current Charged Blocks % (for Commercial measures)
-ThresholdProperties,delta_forecast_costPct,Daily change of Forecasted Cost % (for Commercial measures)
-ThresholdProperties,delta_forecast_usagePct,Daily change of Forecasted Usage % (for Commercial measures)
-ThresholdProperties,delta_forecast_actualUsagePct,Daily change of Forecasted Actual Usage % (for Commercial measures)
-ThresholdProperties,delta_forecast_chargedBlocksPct,Daily change of Forecasted Charged Blocks % (for Commercial measures)
-ThresholdProperties,forecastPct,Forecasted Cost as % (for Commercial measures)
-ThresholdProperties,max_cost,Max Cost over the past periods (for Commercial measures)
-ThresholdOperators,>,Greater Than
-ThresholdOperators,<,Lower Than
-ThresholdOperators,>=,Greater or Equal To
-ThresholdOperators,<=,Lower or Equal To
-ThresholdOperators,<>,Not Equal To
-ThresholdOperators,=,Equal To
-AlertIncludeModes,Include,"Only include the items which are listed"
-AlertIncludeModes,Exclude,"Include all the items, except those listed"
-ForecastMethods,Excluded,Excluded
-ForecastMethods,TimeLinear,TimeLinear
-ForecastMethods,TimeDegressive,TimeDegressive
+list,context,code,description
+AggregationLevels,default,Global Account,Alert for 1 or more Global Accounts
+AggregationLevels,default,Sub Account,Alert for 1 or more Sub Accounts
+AggregationLevels,default,Directory,Alert for 1 or more Directories
+AggregationLevels,default,Datacenter,Alert for 1 or more Datacenters
+AlertTypes,default,Commercial,Alert on Commercial Measurement values
+AlertTypes,default,Technical,Alert on Technical Measurement values
+ServiceScopes,Commercial,Service,Alert on Measurement values on Service level (combined Metrics)
+ServiceScopes,Technical,Service,Alert on Measurement values on Service level (combined Metrics)
+ServiceScopes,Commercial,Commercial Metric,Alert on Measurement values on individual Metric level
+ServiceScopes,Technical,Technical Metric,Alert on Measurement values on individual Metric level
+ThresholdProperties,Commercial,measure_cost,Actual/current Cost
+ThresholdProperties,Commercial,measure_paygCost,Part of actual/current cost: Out-of-credits surcharge
+ThresholdProperties,Commercial,measure_cloudCreditsCost,Part of actual/current cost: covered with credits
+ThresholdProperties,Commercial,measure_usage,Actual/current Usage
+ThresholdProperties,Commercial,measure_actualUsage,Actual/current Actual Usage
+ThresholdProperties,Commercial,measure_chargedBlocks,Actual/current Charged Blocks
+ThresholdProperties,Commercial,forecast_cost,Forecasted Cost
+ThresholdProperties,Commercial,forecast_usage,Forecasted Usage
+ThresholdProperties,Commercial,forecast_actualUsage,Forecasted Actual Usage
+ThresholdProperties,Commercial,forecast_chargedBlocks,Forecasted Charged Blocks
+ThresholdProperties,Commercial,delta_measure_cost,Daily change of Actual/current Cost
+ThresholdProperties,Commercial,delta_measure_usage,Daily change of Actual/current Usage
+ThresholdProperties,Commercial,delta_measure_actualUsage,Daily change of Actual/current Actual Usage
+ThresholdProperties,Commercial,delta_measure_chargedBlocks,Daily change of Actual/current Charged Blocks
+ThresholdProperties,Commercial,delta_forecast_cost,Daily change of Forecasted Cost
+ThresholdProperties,Commercial,delta_forecast_usage,Daily change of Forecasted Usage
+ThresholdProperties,Commercial,delta_forecast_actualUsage,Daily change of Forecasted Actual Usage
+ThresholdProperties,Commercial,delta_forecast_chargedBlocks,Daily change of Forecasted Charged Blocks
+ThresholdProperties,Commercial,delta_measure_costPct,Daily change of Actual/current Cost %
+ThresholdProperties,Commercial,delta_measure_usagePct,Daily change of Actual/current Usage %
+ThresholdProperties,Commercial,delta_measure_actualUsagePct,Daily change of Actual/current Actual Usage %
+ThresholdProperties,Commercial,delta_measure_chargedBlocksPct,Daily change of Actual/current Charged Blocks %
+ThresholdProperties,Commercial,delta_forecast_costPct,Daily change of Forecasted Cost %
+ThresholdProperties,Commercial,delta_forecast_usagePct,Daily change of Forecasted Usage %
+ThresholdProperties,Commercial,delta_forecast_actualUsagePct,Daily change of Forecasted Actual Usage %
+ThresholdProperties,Commercial,delta_forecast_chargedBlocksPct,Daily change of Forecasted Charged Blocks %
+ThresholdProperties,Commercial,forecastPct,Forecasted Cost as %
+ThresholdProperties,Commercial,max_cost,Max Cost over the past periods
+ThresholdProperties,Technical,measure_usage,Actual/current Usage
+ThresholdProperties,Technical,delta_measure_usage,Daily change of Actual/current Usage
+ThresholdProperties,Technical,delta_measure_usagePct,Daily change of Actual/current Usage %
+ThresholdOperators,default,>,Greater Than
+ThresholdOperators,default,<,Lower Than
+ThresholdOperators,default,>=,Greater or Equal To
+ThresholdOperators,default,<=,Lower or Equal To
+ThresholdOperators,default,<>,Not Equal To
+ThresholdOperators,default,=,Equal To
+AlertIncludeModes,default,Include,"Only include the items which are listed"
+AlertIncludeModes,default,Exclude,"Include all the items, except those listed"
+ForecastMethods,default,Excluded,Excluded
+ForecastMethods,default,TimeLinear,TimeLinear
+ForecastMethods,default,TimeDegressive,TimeDegressive
+TagsLifecycles,default,Development,Development
+TagsLifecycles,default,Testing,Testing
+TagsLifecycles,default,Production,Production
+TagsLifecycles,default,Unset,Unset
+TagLevels,default,Customer,Customer
+TagLevels,default,Global Account,Global Account
+TagLevels,default,Directory,Directory
+TagLevels,default,Datacenter,Datacenter
+TagLevels,default,Sub Account,Sub Account
+TagLevels,default,Space,Space
+TagLevels,default,Instance,Instance
+TagEnvironments,default,CF,CF
+TagEnvironments,default,Neo,Neo
+TagEnvironments,default,Kyma,Kyma
+TagEnvironments,default,ABAP,ABAP
+PasteTagModes,default,Both,Both Managed and Custom tags
+PasteTagModes,default,Only1ManagedTags,Only Managed tags
+PasteTagModes,default,Only2CustomTags,Only Custom tags
+ManagedTagNames,default,Line of Business,Line of Business
+ManagedTagNames,default,Cost Center,Cost Center

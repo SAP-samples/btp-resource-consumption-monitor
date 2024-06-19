@@ -1,0 +1,182 @@
+{
+    "_version": "1.15.0",
+    "sap.app": {
+        "id": "cards.creditburndown",
+        "type": "card",
+        "i18n": "i18n/i18n.properties",
+        "title": "{{title}}",
+        "description": "{{description}}",
+        "applicationVersion": {
+            "version": "2.0.0"
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "deviceTypes": {
+            "desktop": true,
+            "phone": true,
+            "tablet": true
+        },
+        "icons": {
+            "icon": "sap-icon://compare-2"
+        }
+    },
+    "sap.card": {
+        "type": "Analytical",
+        "designtime": "dt/configuration",
+        "header": {
+            "type": "Numeric",
+            "data": {
+                "request": {
+                    "url": "{{destinations.btprc-srv}}/odata/v4/contracts/Card_CreditBurnDownHeaders",
+                    "withCredentials": true,
+                    "parameters": {
+                        "$filter": "globalAccountId eq '{filters>/account/selectedItem/additionalText}'"
+                    }
+                },
+                "path": "/value/0"
+            },
+            "title": "{{title}}",
+            "subTitle": "{{subtitle}}",
+            "details": "Phase start: {Credits_phaseStartDate}",
+            "mainIndicator": {
+                "number": "{= format.currency(${Credits_balance}, ${currency}, {currencyCode:true})}",
+                "state": "Good"
+            },
+            "sideIndicators": [
+                {
+                    "title": "Contract Value",
+                    "number": "{= format.currency(${Credits_cloudCreditsForPhase}, ${currency}, {currencyCode:true})}"
+                },
+                {
+                    "title": "Used in {month}",
+                    "number": "{= format.currency(${Measures_cloudCreditsCost}, ${currency}, {currencyCode:true})}"
+                }
+            ],
+            "actions": []
+        },
+        "content": {
+            "data": {
+                "request": {
+                    "url": "{{destinations.btprc-srv}}/odata/v4/contracts/Card_CreditBurnDowns",
+                    "withCredentials": true,
+                    "parameters": {
+                        "$filter": "globalAccountId eq '{filters>/account/selectedItem/additionalText}'"
+                    }
+                },
+                "path": "/value"
+            },
+            "chartType": "stacked_combination",
+            "chartProperties": {
+                "title": {
+                    "visible": false
+                },
+                "legend": {
+                    "visible": true
+                },
+                "plotArea": {
+                    "dataLabel": {
+                        "visible": true
+                    },
+                    "colorPalette": [
+                        "darkgreen",
+                        "darkblue",
+                        "lightgreen",
+                        "lightblue"
+                    ]
+                },
+                "categoryAxis": {
+                    "title": {
+                        "visible": false
+                    }
+                },
+                "valueAxis": {
+                    "title": {
+                        "visible": false
+                    }
+                }
+            },
+            "dimensions": [
+                {
+                    "name": "Month",
+                    "value": "{month}"
+                },
+                {
+                    "name": "Status",
+                    "value": "{Credits_status}"
+                }
+            ],
+            "measures": [
+                {
+                    "name": "Balance",
+                    "value": "{chartBalance}"
+                },
+                {
+                    "name": "Contract",
+                    "value": "{Credits_cloudCreditsForPhase}"
+                }
+            ],
+            "feeds": [
+                {
+                    "uid": "valueAxis",
+                    "type": "Measure",
+                    "values": [
+                        "Balance",
+                        "Contract"
+                    ]
+                },
+                {
+                    "uid": "categoryAxis",
+                    "type": "Dimension",
+                    "values": [
+                        "Month"
+                    ]
+                },
+                {
+                    "uid": "color",
+                    "type": "Dimension",
+                    "values": [
+                        "Status"
+                    ]
+                }
+            ]
+        },
+        "configuration": {
+            "filters": {
+                "account": {
+                    "selectedKey": "1",
+                    "type": "ComboBox",
+                    "label": "Global Account",
+                    "placeholder": "account",
+                    "data": {
+                        "request": {
+                            "url": "{{destinations.btprc-srv}}/odata/v4/contracts/unique_globalAccountNames",
+                            "withCredentials": true,
+                            "parameters": {
+                                "$orderby": "name"
+                            }
+                        },
+                        "path": "/value"
+                    },
+                    "item": {
+                        "path": "/value",
+                        "template": {
+                            "key": "{position}",
+                            "title": "{name}",
+                            "additionalText": "{ID}"
+                        }
+                    }
+                }
+            },
+            "destinations": {
+                "btprc-srv": {
+                    "name": "btprc-srv",
+                    "defaultUrl": "/odata/v4/contracts/Card_CreditBurnDowns"
+                }
+            }
+        }
+    },
+    "sap.platform.mobilecards": {
+        "compatible": false
+    }
+}

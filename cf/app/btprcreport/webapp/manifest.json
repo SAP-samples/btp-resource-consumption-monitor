@@ -68,12 +68,12 @@
     }
   },
   "sap.platform.cf": {
-    "ui5VersionNumber": "1.121.1"
+    "ui5VersionNumber": "1.124.1"
   },
   "sap.ui5": {
     "flexEnabled": true,
     "dependencies": {
-      "minUI5Version": "1.121.1",
+      "minUI5Version": "1.124.1",
       "libs": {
         "sap.m": {},
         "sap.ui.core": {},
@@ -164,6 +164,7 @@
                       "menu": [
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_downloadMeasuresForToday",
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_downloadMeasuresForPastMonths",
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_resetTechnicalAllocations",
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_deleteAllData"
                       ]
                     },
@@ -272,7 +273,8 @@
             }
           }
         }
-      }
+      },
+      "config": {}
     }
   },
   "sap.fiori": {

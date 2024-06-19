@@ -1,0 +1,101 @@
+{
+    "_version": "3.2.0",
+    "identification": {
+        "id": "saas_approuter_btprcreport",
+        "title": "Report showing BTP Credit consumption",
+        "entityType": "businessapp",
+        "description": "",
+        "providerId": "saas_approuter"
+    },
+    "payload": {
+        "visualizations": {
+            "tile": {
+                "vizType": "sap.ushell.DynamicAppLauncher",
+                "vizConfig": {
+                    "sap.ui": {
+                        "icons": {
+                            "icon": "sap-icon://list"
+                        }
+                    },
+                    "sap.app": {
+                        "id": "btprcreport",
+                        "title": "BTP Resource Consumption",
+                        "subTitle": "Report"
+                    },
+                    "sap.flp": {
+                        "target": {
+                            "type": "IBN",
+                            "inboundId": "services-display"
+                        },
+                        "indicatorDataSource": {
+                            "path": "getTileInfo()",
+                            "refresh": 600,
+                            "dataSource": "mainService"
+                        }
+                    }
+                }
+            }
+        },
+        "commonAppConfig": {
+            "sap.app": {
+                "dataSources": {
+                    "mainService": {
+                        "uri": "/odata/v4/presentation/",
+                        "type": "OData",
+                        "settings": {
+                            "annotations": [],
+                            "odataVersion": "4.0"
+                        }
+                    }
+                }
+            }
+        },
+        "targetAppConfig": {
+            "sap.ui": {
+                "technology": "URL",
+                "deviceTypes": {
+                    "phone": true,
+                    "tablet": true,
+                    "desktop": true
+                }
+            },
+            "sap.app": {
+                "crossNavigation": {
+                    "inbounds": {
+                        "services-display": {
+                            "icon": "sap-icon://list",
+                            "title": "BTP Resource Consumption",
+                            "semanticObject": "services",
+                            "action": "display",
+                            "subTitle": "Report",
+                            "signature": {
+                                "parameters": {},
+                                "additionalParameters": "allowed"
+                            }
+                        }
+                    }
+                },
+                "providerId": "saas_approuter",
+                "destination": "saas_approuter"
+            },
+            "sap.ui5": {
+                "componentName": "btprcreport"
+            },
+            "sap.integration": {
+                "navMode": "inplace",
+                "urlTemplateId": "urltemplate.fiori-cf-ars",
+                "urlTemplateParams": {
+                    "appId": "btprcreport",
+                    "query": {
+                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
+                        "saasApprouter": "true"
+                    }
+                }
+            }
+        },
+        "systemAlias": {
+            "id": "saas_approuter",
+            "https": {}
+        }
+    }
+}

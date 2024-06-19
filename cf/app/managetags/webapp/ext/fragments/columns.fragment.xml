@@ -1,0 +1,19 @@
+<core:FragmentDefinition
+       xmlns:core="sap.ui.core"
+       xmlns:table="sap.ui.table"
+       xmlns="sap.m">
+       <table:Column id="c1" width="25rem">
+              <Label id="l1" text="Hierarchy" />
+              <table:customData>
+                     <core:CustomData key="p13nData"
+                            value='\{"autoColumnWidth": "true", "columnKey": "icon", "leadingProperty": "label", "columnIndex": "0" }' />
+              </table:customData>
+              <table:template>
+                     <FlexBox id="f1" alignItems="Center" justifyContent="Start">
+                            <core:Icon id="_IDGenIcon1" src="{icon}"
+                                   class="sapUiSmallMarginEnd" />
+                            <Label id="_IDGenLabel1" text="{label}" tooltip="ID: {ID}"/>
+                     </FlexBox>
+              </table:template>
+       </table:Column>
+</core:FragmentDefinition>

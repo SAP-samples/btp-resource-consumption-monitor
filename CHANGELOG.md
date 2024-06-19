@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## Version 2.0.0 - 2024-06-20
+- New major version. Not backward compatible, deploy as new installation.
+
+
 ## Version 1.1.0 - 2024-05-27
 ### Added
 - Enabled previous-day delta calculations on measures and forecasts
