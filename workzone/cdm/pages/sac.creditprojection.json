@@ -1,0 +1,41 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_2_sac.creditprojection",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": "Credits Projection"
+    },
+    "rows": [
+      {
+        "id": "page_sac.creditprojection-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_sac.creditprojection-11",
+            "columnConfig": {
+              "columnWidth": 24
+            },
+            "cells": [
+              {
+                "id": "page_sac.creditprojection-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_sac.creditprojection-1111",
+                    "viz": {
+                      "appId": "cards.sac.creditprojection.app",
+                      "vizId": "cards.sac.creditprojection.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

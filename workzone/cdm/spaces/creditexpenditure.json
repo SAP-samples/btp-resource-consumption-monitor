@@ -9,7 +9,11 @@
     "contentNodes": [
       {
         "type": "workpage",
-        "id": "page_app.billingdifferences"
+        "id": "page_1_app.billingdifferences"
+      },
+      {
+        "type": "workpage",
+        "id": "page_2_sac.creditprojection"
       }
     ]
   }

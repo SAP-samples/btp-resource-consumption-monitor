@@ -131,10 +131,11 @@ In order for the SAC dashboards to connect to your data, it needs a connection t
     6. [Measures for Year by Tags app](./workzone/cdm/apps/measuresforyearbytags.json#L85)
     7. [Measures for Years app](./workzone/cdm/apps/measuresforyears.json#L85)
     8. [Measures Total app](./workzone/cdm/apps/measurestotal.json#L85)
-- *(Only if you are activating the SAC content)* Configure your **SAC Story url** in SAC card configuration files of the multiple widgets by searching for "<YOUR_SAC_STORY_URL>" in each of the below files. Doing a search-and-replace should give you 3 matches. The resulting SAC URL **deviates slightly** from the URL shown in SAC, so be careful in composing it correctly. Your final URL (which is the same for all 3 files) should be: `https://<YOUR_HOST>.sapanalytics.cloud/sap/fpa/ui/tenants/<YOUR_TENANT>/app.html#/story2?shellMode=embed&/s2/<YOUR_STORY>/?url_api=true&pageBar=disable&view_id=story2`. Files to be changed:
-    1. [SAC Measures by Tags](./workzone/cdm/cards/sac.measuresbytags/src/manifest.json#L31)
-    2. [SAC Measures for Year by Tags](./workzone/cdm/cards/sac.measuresforyearbytags/src/manifest.json#L31)
-    3. [SAC Technical Allocation](./workzone/cdm/cards/sac.technicalallocation/src/manifest.json#L31)
+- *(Only if you are activating the SAC content)* Configure your **SAC Story url** in SAC card configuration files of the multiple widgets by searching for "<YOUR_SAC_STORY_URL>" in each of the below files. Doing a search-and-replace should give you 4 matches. The resulting SAC URL **deviates slightly** from the URL shown in SAC, so be careful in composing it correctly. Your final URL (which is the same for all 4 files) should be: `https://<YOUR_HOST>.sapanalytics.cloud/sap/fpa/ui/tenants/<YOUR_TENANT>/app.html#/story2?shellMode=embed&/s2/<YOUR_STORY>/?url_api=true&pageBar=disable&view_id=story2`. Files to be changed:
+    1. [SAC Measures by Tags](./workzone/cdm/cards/sac.measuresbytags/src/manifest.json#L33)
+    2. [SAC Measures for Year by Tags](./workzone/cdm/cards/sac.measuresforyearbytags/src/manifest.json#L33)
+    3. [SAC Technical Allocation](./workzone/cdm/cards/sac.technicalallocation/src/manifest.json#L33)
+    4. [SAC Credit Projection](./workzone/cdm/cards/sac.creditprojection/src/manifest.json#L33)
 
 #### Step 1. Build
 ```cmd

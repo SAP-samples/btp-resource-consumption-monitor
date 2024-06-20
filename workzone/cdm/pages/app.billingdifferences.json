@@ -1,12 +1,12 @@
 {
   "_version": "3.2.0",
   "identification": {
-    "id": "page_app.billingdifferences",
+    "id": "page_1_app.billingdifferences",
     "entityType": "workpage"
   },
   "payload": {
     "workpageConfig": {
-      "title": ""
+      "title": "Credits Consumption"
     },
     "rows": [
       {

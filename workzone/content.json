@@ -132,6 +132,13 @@
       "content": "info.optimization.json"
     }
   },
+  "page-sac.creditprojection": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "sac.creditprojection.json"
+    }
+  },
   "page-sac.measuresbytags": {
     "type": "workpage",
     "src": {
@@ -284,6 +291,15 @@
     "src": {
       "from": "cdm/cards/info.optimization4",
       "package": "cards.info.optimization4.zip",
+      "manifest": "src/manifest.json",
+      "build": "npm i && npm run-script build"
+    }
+  },
+  "card-sac.creditprojection": {
+    "type": "card",
+    "src": {
+      "from": "cdm/cards/sac.creditprojection",
+      "package": "cards.sac.creditprojection.zip",
       "manifest": "src/manifest.json",
       "build": "npm i && npm run-script build"
     }
