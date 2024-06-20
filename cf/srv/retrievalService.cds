@@ -82,7 +82,7 @@ service RetrievalService {
             key '_combined_'  as toMetric_measureId              : String,
             key level,
             key id,
-                name,
+                min(name)     as name                            : String,
                 currency,
                 ''            as unit                            : String,
                 ''            as plans                           : String,
@@ -157,7 +157,6 @@ service RetrievalService {
             toMetric.toService,
             level,
             id,
-            name,
             currency;
 
     entity prepareTechnicalAllocations              as
