@@ -9,7 +9,7 @@ Application to monitor and alert on commercial and technical consumption of BTP 
 See also:
 
 1. March 2024: [SAP Blog: Prototype: Keep Track of those BTP Credits](https://community.sap.com/t5/technology-blogs-by-sap/prototype-keep-track-of-those-btp-credits/ba-p/13626545).
-2. June 2024: SAP Blog: (pending)
+2. June 2024: [SAP Blog: BTP FinOps: Keeping Track of your Credits](https://community.sap.com/t5/technology-blogs-by-sap/btp-finops-keeping-track-of-your-credits/ba-p/13737793).
 
 
 ![Screenshot of a the solution](./screenshot.png)
