@@ -55,13 +55,6 @@
       "content": "monitoringalerting.json"
     }
   },
-  "space_tagmanager": {
-    "type": "space",
-    "src": {
-      "from": "cdm/spaces",
-      "content": "tagmanager.json"
-    }
-  },
   "space_costbreakdown": {
     "type": "space",
     "src": {

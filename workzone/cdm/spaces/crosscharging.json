@@ -9,6 +9,10 @@
     "contentNodes": [
       {
         "type": "workpage",
+        "id": "page_0_app.managetags"
+      },
+      {
+        "type": "workpage",
         "id": "page_1_app.measuresbytags"
       },
       {

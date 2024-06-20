@@ -1,12 +1,12 @@
 {
   "_version": "3.2.0",
   "identification": {
-    "id": "page_app.managetags",
+    "id": "page_0_app.managetags",
     "entityType": "workpage"
   },
   "payload": {
     "workpageConfig": {
-      "title": ""
+      "title": "Manage Tags"
     },
     "rows": [
       {
