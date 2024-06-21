@@ -11,7 +11,7 @@ sap.ui.define([
         contactSAP: function (oEvent) {
             const data = oEvent.getSource().getBindingContext().getObject()
 
-            const address = 'billing@sap.com'
+            const address = 'SAPBalanceStatement@sap.com'
             const subject = `Info request (${data.globalAccountName})`
             const body = `Dear,
 
