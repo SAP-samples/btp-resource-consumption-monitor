@@ -187,13 +187,13 @@ export const Settings = {
     tagConfiguration: {
         // specifies the level on which to create the default tags, if any. Value should be from 'TAccountStructureLevels'
         defaultTagLevel: 'Sub Account',
-        // defaultTags: [], // To remove default tags
-        defaultTags: [
-            { name: 'Line of Business', value: 'HR', pct: 35 },
-            { name: 'Line of Business', value: 'Finance', pct: 20 },
-            { name: 'Line of Business', value: 'Sales', pct: 45 },
-            { name: 'Cost Center', value: '100800', pct: 100 }
-        ],
+        defaultTags: [], // To remove default tags
+        // defaultTags: [
+        //     { name: 'Line of Business', value: 'HR', pct: 35 },
+        //     { name: 'Line of Business', value: 'Finance', pct: 20 },
+        //     { name: 'Line of Business', value: 'Sales', pct: 45 },
+        //     { name: 'Cost Center', value: '100800', pct: 100 }
+        // ],
         // specifies the tags in the individual columns shown on the Manage Tags application. Acts as a filter for tag name
         mappings: {
             managedTag0: 'Line of Business',
