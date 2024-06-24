@@ -71,7 +71,7 @@ In **Business Application Studio**, make sure to have a `Development Space` of k
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.0.0.mtar -e mtaext_notifications.mtaext
+cf deploy ./mta_archives/btp-resource-consumption_2.0.1.mtar -e mtaext_notifications.mtaext
 ```
 
 #### Option B. Deploy without changing any Alert Notification configuration (incremental deployments):
@@ -80,7 +80,7 @@ cf deploy ./mta_archives/btp-resource-consumption_2.0.0.mtar -e mtaext_notificat
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.0.0.mtar
+cf deploy ./mta_archives/btp-resource-consumption_2.0.1.mtar
 ```
 
 ### 2. SAC Content

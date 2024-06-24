@@ -5,6 +5,20 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## Version 2.0.1 - 2024-06-24
+### Added
+- Credit projection dashboard (SAC) in Credit Expenditure
+
+### Changed
+- Disabled default managed tags in settings.ts
+
+### Fixed
+- Corrected app embedding link for sites that do not use an alias
+- Corrected Credit Expenditure chart where the contract end is more than 3 years in the future
+- Corrected deployment order of the database before the application
+- Corrected data inconsistency when identical services with different names are active at the same time
+
+
 ## Version 2.0.0 - 2024-06-20
 - New major version. Not backward compatible, deploy as new installation.
 
