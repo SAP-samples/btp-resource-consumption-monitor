@@ -10,11 +10,15 @@ sap.ui.define([
         },
 
         onCardReady: function () {
-            const { origin, pathname } = window.location
-            const iCard = this.getCard()
-            iCard.getModel().setProperty('/basePath', `${origin}${pathname}?sap-ushell-config=headerless`)
+            const { origin, pathname, search } = window.location
+            const path = (search && search.length > 0)
+                ? `${origin}${pathname}${search}&sap-ushell-config=headerless`
+                : `${origin}${pathname}?sap-ushell-config=headerless`
 
-            console.log('Set base path to', origin, pathname)
+            const iCard = this.getCard()
+            iCard.getModel().setProperty('/basePath', path)
+
+            console.log('Set base path to', path)
         }
 
     })
