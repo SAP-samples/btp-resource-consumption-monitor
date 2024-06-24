@@ -65,7 +65,11 @@ service ContractsService {
         where
                 Credits_phaseStartDate is not null
             and reportYearMonth        >=     (
-                select max(reportYearMonth)-300 from AnalyticsService.CloudCreditConsumptions
+                    select coalesce(
+                        max(reportYearMonth)-300, 0
+                    ) from AnalyticsService.CloudCreditConsumptions
+                    where
+                        Credits_status = 'Actual'
                 )
             order by
                 globalAccountName,
