@@ -52,13 +52,13 @@
       </calculatedAttribute>
   </calculatedAttributes>
   <baseMeasures>
-    <measure id="CREDITS_CLOUDCREDITSFORPHASE" order="5" semanticType="amount" aggregationType="max" measureType="amount">
+    <measure id="CREDITS_CLOUDCREDITSFORPHASE" order="5" semanticType="amount" aggregationType="sum" measureType="amount">
       <descriptions defaultDescription="Total Credits"/>
       <unitCurrencyAttribute attributeName="CURRENCY"/>
       <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_CLOUDCREDITSFORPHASE"/>
       <exceptionAggregationMetadata/>
     </measure>
-    <measure id="CREDITS_BALANCE" order="6" semanticType="amount" aggregationType="min" measureType="amount">
+    <measure id="CREDITS_BALANCE" order="6" semanticType="amount" aggregationType="sum" measureType="amount">
       <descriptions defaultDescription="Balance"/>
       <unitCurrencyAttribute attributeName="CURRENCY"/>
       <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="CREDITS_BALANCE"/>
@@ -113,7 +113,7 @@
       <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="FORECAST_COST"/>
       <exceptionAggregationMetadata/>
     </measure>
-    <measure id="PREDICTED_CREDITS_BALANCE" order="19" semanticType="amount" aggregationType="min" measureType="amount">
+    <measure id="PREDICTED_CREDITS_BALANCE" order="19" semanticType="amount" aggregationType="sum" measureType="amount">
       <descriptions defaultDescription="Predicted Credits"/>
       <unitCurrencyAttribute attributeName="CURRENCY"/>
       <measureMapping columnObjectName="ANALYTICSSERVICE_CLOUDCREDITCONSUMPTIONS" columnName="PREDICTED_CREDITS_BALANCE"/>
