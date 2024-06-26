@@ -173,6 +173,9 @@ It is suggested to configure the application and modify the 'Forecasting Configu
 ## Run Locally
 To run the application locally, you need to bind to the cloud service instances and run the application in hybrid mode. 
 ```
+# from the project root folder:
+cd cf
+npm install -g ts-node
 cds bind -2 btprc-uas,btprc-db,btprc-dest
 cds-ts watch --profile hybrid
 ```
@@ -229,14 +232,13 @@ If you do not wish to use this feature, you can switch it off in [settings.ts](/
 ## Configuring Tags
 The Tag Manager is used to assign tags. If a given level (Directory, Sub Account, Space, ...) is anotated with a tag, any costs that are generated on that level are reported for that tag. `Managed Tags` can have a percentage-wise distribution, whereas `Custom Tags` receive always 100% of the costs of the tagged item.
 
-**Important:** Given that tags receive all costs of the level they are associated with, it is possible to mistakenly double-up costs when tagging *sub-items* as well as *parent-items* with the same tag. Make sure to only have a single level of tagging in each lineage to the root `Customer` element. Levels can be mixed however if they don't overlap in the hierarchy tree (e.g. Sub Account A tags on Service level, whereas Sub Account B tags on Sub Account level)
-
-Default tags are created on Sub Account level. To Change the default tags, modify [settings.ts](./cf/srv/settings.ts#L190).
+**Important:** Given that tags receive all costs of the level they are associated with, it is possible to mistakenly double-up costs when tagging *sub-items* as well as *parent-items* with the same tag. Make sure to only have a single level of tagging in each lineage to the root `Customer` element for each tag. Levels can be mixed however if they don't overlap in the hierarchy tree (e.g. Sub Account A tags on Service level, whereas Sub Account B tags on Sub Account level), or if the tag name itself is different (e.g. Sub Account A = 'Cost Center: 100', and Service X in Sub Account A = 'Line of Business: HR').
 
 Up to 10 `Managed Tags` can be configured. 2 are configured by default: **Line of Business** and **Cost Center**. In order to add/change the available managed tags:
 1. Update the csv data for `ManagedTagNames` in [db-CodeLists.csv](./cf/db/data/db-CodeLists.csv#L72). This will steer the available options in the dropdown selection in the Configure Tags application.
 2. Update the mapping in [settings.ts](./cf/srv/settings.ts#L197). This will filter the tags to show in columns 1-10 in the Configure Tags list view.
 3. Update the titles in [schema.cds](./cf/db/schema.cds#L315). This will steer the titles of the columns in the Configure Tags list view.
+4. In case you enable more than 2 managed tags, you will have to 'un-hide' additional columns by setting the `@UI.Hidden` value to `false` in the [annotations](./cf/app/managetags/annotations.cds#L114) file, for each of the *tagTextManaged(x)* columns you want to use.
 
 ## Switching/Multiple Global Accounts
 The application can be connected to a different/multiple Global Accounts to monitor their consumption instead of/in addition to the Global Account where the application is deployed in (default).
