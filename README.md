@@ -76,6 +76,8 @@ mbt build
 cf deploy ./mta_archives/btp-resource-consumption_2.0.1.mtar -e mtaext_notifications.mtaext
 ```
 
+***Note:*** This deployment will trigger an **initial activation email** to your email address asking for your consent to receive further emails. Make sure to action this email to ensure you receive the notifications from this application!
+
 #### Option B. Deploy without changing any Alert Notification configuration (incremental deployments):
 ```cmd
 # from the project root folder:
