@@ -167,8 +167,14 @@ export default class PresentationService extends cds.ApplicationService {
             })
         })
 
-        this.on(proxy_downloadMeasuresForToday, async (req) => req.info(await retrievalService.send(downloadMeasuresForToday.toString())))
-        this.on(proxy_downloadMeasuresForPastMonths, async (req) => req.info(await retrievalService.send(downloadMeasuresForPastMonths.toString(), { fromDate: Number(req.data.fromDate) })))
+        this.on(proxy_downloadMeasuresForToday, async (req) => {
+            //@ts-ignore
+            req.messages = await retrievalService.send(downloadMeasuresForToday.toString())
+        })
+        this.on(proxy_downloadMeasuresForPastMonths, async (req) => {
+            //@ts-ignore
+            req.messages = await retrievalService.send(downloadMeasuresForPastMonths.toString(), { fromDate: Number(req.data.fromDate) })
+        })
         this.on(proxy_deleteAllData, async (req) => req.info(await retrievalService.send(deleteAllData.toString())))
         this.on(proxy_resetForecastSettings, async (req) => req.notify(await retrievalService.send(resetForecastSettings.toString())))
         this.on(proxy_resetTechnicalAllocations, async (req) => req.notify(await retrievalService.send(resetTechnicalAllocations.toString())))

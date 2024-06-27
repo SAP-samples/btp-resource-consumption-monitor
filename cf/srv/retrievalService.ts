@@ -110,19 +110,49 @@ export default class RetrievalService extends cds.ApplicationService {
          * This function can be called every day and retrieves current/ongoing's months measures only
          */
         this.on(downloadMeasuresForToday, async req => {
-            let status = []
-
             const thisMonth = Number(dateToYearMonth())
-            status.push(await retrieveTechnicalData({ fromDate: thisMonth, toDate: thisMonth }, TInterval.Daily))
-            status.push(await retrieveCommercialData({ fromDate: thisMonth, toDate: thisMonth }, TInterval.Daily))
-            status.push(await updateCommercialMetricForecasts())
-            status.push(await updateCommercialServiceForecasts())
-            status.push(await updateDailyDeltaMeasures())
-            status.push(await updateMonthlyDeltaMeasures())
-            status.push(await retrieveCreditDetails())
-            status.push(await sendNotification())
 
-            return status.join('\r\n')
+            await cds.tx(async () => {
+                let status = ['Data Retrieval:']
+                try {
+                    status.push(await retrieveTechnicalData({ fromDate: thisMonth, toDate: thisMonth }, TInterval.Daily))
+                    status.push(await retrieveCommercialData({ fromDate: thisMonth, toDate: thisMonth }, TInterval.Daily))
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+            await cds.tx(async () => {
+                let status = ['Forecast Calculations:']
+                try {
+                    status.push(await updateCommercialMetricForecasts())
+                    status.push(await updateCommercialServiceForecasts())
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+            await cds.tx(async () => {
+                let status = ['Delta Calculations:']
+                try {
+                    status.push(await updateDailyDeltaMeasures())
+                    status.push(await updateMonthlyDeltaMeasures())
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+            await cds.tx(async () => {
+                let status = ['Contract Information:']
+                try {
+                    status.push(await retrieveCreditDetails())
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+            await cds.tx(async () => {
+                let status = ['Alert Notifications:']
+                try {
+                    status.push(await sendNotification())
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+
+            //@ts-ignore
+            return req.messages
         })
 
         /**
@@ -134,17 +164,35 @@ export default class RetrievalService extends cds.ApplicationService {
          *     202402 has to become 202401 = -1
          */
         this.on(downloadMeasuresForPastMonths, async req => {
-            let status = []
-
             const pastMonth = getPreviousMonth()
-            status.push(await retrieveTechnicalData({ fromDate: req.data.fromDate || pastMonth, toDate: pastMonth }, TInterval.Monthly))
-            status.push(await retrieveCommercialData({ fromDate: req.data.fromDate || pastMonth, toDate: pastMonth }, TInterval.Monthly))
-            status.push(await updateCommercialMetricForecasts())
-            status.push(await updateCommercialServiceForecasts())
-            status.push(await updateDailyDeltaMeasures())
-            status.push(await updateMonthlyDeltaMeasures())
 
-            return status.join('\r\n')
+            await cds.tx(async () => {
+                let status = ['Data Retrieval:']
+                try {
+                    status.push(await retrieveTechnicalData({ fromDate: req.data.fromDate || pastMonth, toDate: pastMonth }, TInterval.Monthly))
+                    status.push(await retrieveCommercialData({ fromDate: req.data.fromDate || pastMonth, toDate: pastMonth }, TInterval.Monthly))
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+            await cds.tx(async () => {
+                let status = ['Forecast Calculations:']
+                try {
+                    status.push(await updateCommercialMetricForecasts())
+                    status.push(await updateCommercialServiceForecasts())
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+            await cds.tx(async () => {
+                let status = ['Delta Calculations:']
+                try {
+                    status.push(await updateDailyDeltaMeasures())
+                    status.push(await updateMonthlyDeltaMeasures())
+                    req.notify(status.join('\r\n'))
+                } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
+            })
+
+            //@ts-ignore
+            return req.messages
         })
 
         /**
@@ -933,7 +981,7 @@ async function retrieveCreditDetails() {
                                     currency: contract.currency,
                                     phaseStartDate: stringToCdsDate(phase.phaseStartDate!),
                                     phaseEndDate: stringToCdsDate(phase.phaseEndDate!),
-                                    yearMonth: update.phaseUpdatedOn && getPreviousMonth(new Date(update.phaseUpdatedOn)).toString(),
+                                    yearMonth: update.phaseUpdatedOn && getPreviousMonth(new Date(update.phaseUpdatedOn)).toString() || '',
                                     phaseUpdatedOn: stringToCdsDate(update.phaseUpdatedOn!),
                                     cloudCreditsForPhase: update.cloudCreditsForPhase,
                                     balance: update.balance,

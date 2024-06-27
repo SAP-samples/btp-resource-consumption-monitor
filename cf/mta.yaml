@@ -20,7 +20,7 @@ modules:
     parameters:
       buildpack: nodejs_buildpack
       disk-quota: 512M
-      memory: 256M
+      memory: 512M
     build-parameters:
       builder: npm
       ignore:

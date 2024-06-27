@@ -386,10 +386,11 @@ entity PhasesResponseObjects {
 
 // Raw API data
 entity PhaseUpdates {
-    key toPhasesResponseObject : Association to PhasesResponseObjects;
+    key ID                     : UUID @Core.Computed;
+        toPhasesResponseObject : Association to PhasesResponseObjects;
         balance                : Decimal(20, 2);
         cloudCreditsForPhase   : Decimal(20, 2);
-    key phaseUpdatedOn         : String;
+        phaseUpdatedOn         : String;
 }
 
 // Generated actual values from raw API data

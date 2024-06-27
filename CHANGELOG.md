@@ -5,6 +5,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## Version 2.0.x - Future
+### Changed
+- Improved error handling during data retrieval and calculations
+- Increased default memory allocation for service application to 512MB
+
+### Fixed
+- Corrected data model for multiple contract phase updates on the same day
+- Corrected aggregation methods in SAC CV for multi global account configurations
+
 ## Version 2.0.1 - 2024-06-24
 ### Added
 - Credit projection dashboard (SAC) in Credit Expenditure
