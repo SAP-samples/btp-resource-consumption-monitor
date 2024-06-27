@@ -29,6 +29,8 @@ See also:
 
 ## Requirements
 
+You need to have access to a `Sub Account`, in which *Cloud Foundry* is enabled, and you have created a `Space` (***note***: the name of this `Space` can not contain a space (' ') but you can use underscores: ('_') or hypens: ('-')).
+
 The following **Subscriptions** are required to deploy and use this application:
 - SAP HANA Cloud (you can re-use an existing instance)
 - SAP Work Zone (Standard edition is sufficient)
@@ -86,6 +88,7 @@ cf deploy ./mta_archives/btp-resource-consumption_2.0.1.mtar
 ### 2. SAC Content
 
 This component is optional but provides additional insights.
+***Temporary note: The current content package requires SAC version 2024.13 or later. We are looking at options to lower this dependency to 2024.08***
 
 #### Step 1. Define connection
 In order for the SAC dashboards to connect to your data, it needs a connection to your HDI container. The name of this connection has to be `BTPRCHDI`.
@@ -149,9 +152,20 @@ This will create a `/workzone/package.zip` file which you can download to your l
 
 #### Step 2. Deploy the package
 In the **Work Zone Site Manager**, open the `Channel Manager` and:
-1. Synchronize your HTML5 Repository
-2. Click on `+ New`, `Content Package` and upload the generated `/workzone/package.zip` file, specifying `btprc-srv` as Runtime Destination
-3. Navigate to the `Site Directory` and make sure you have a site with the `view` setting set to `Spaces and Pages - New Experience`, and which has both the `BTP Resource Consumption Role` role and `BTP Resource Consumption SAC add-on` role assigned.
+1. Synchronize your HTML5 Repository by clicking on the `refresh icon`
+2. Click on `+ New`, `Content Package` and upload the generated `/workzone/package.zip` file, specifying `btprc-srv` as Runtime Destination. You can keep the other default values.
+3. The import will take up to 30 seconds to complete
+
+#### Step 3. Configure your site
+In the **Work Zone Site Manager**, open the `Site Directory` and:
+1. Create a new site (or use the `default` one)
+2. (optionally) Configure an alias by clicking on the 3-dots icon and select `Manage Site Alias`
+3. Click on the *gear icon* to open the `Site Settings`, and click on `Edit`
+4. In the `Display` section, change the `View Mode` to `Spaces and Pages - New Experience`
+5. In the right-hand side `Assignments` panel, make sure that the following 2 roles are enabled by clicking on their `+ icon`:
+    - BTP Resource Consumption Role
+    - BTP Resource Consumption SAC add-on
+6. Save and close
 
 
 ## Role Assignments
@@ -165,8 +179,7 @@ In case you activated the SAC content as well, make sure that each user that wil
 User who would *only* use the SAC interface do not need any of the role assignments and can access the SAC story directly.
 
 ## Access the application
-
-Open the Work Zone site and navigate to the `Overview` page.
+In the **Work Zone Site Manager**, open the `Site Directory` and click on the *Go To Site icon* to open your site.
 
 It is suggested to configure the application and modify the 'Forecasting Configuration' individually for each of the services to make sure the forecast is calculated correctly. Until this is set correctly, the forecasted costs might be unrealisticly high.
 
