@@ -165,7 +165,8 @@
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_downloadMeasuresForToday",
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_downloadMeasuresForPastMonths",
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_resetTechnicalAllocations",
-                        "DataFieldForAction::PresentationService.EntityContainer::proxy_deleteAllData"
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_deleteAllData",
+                        "DataFieldForAction::PresentationService.EntityContainer::proxy_deleteStructureAndTagData"
                       ]
                     },
                     "ForecastActions": {

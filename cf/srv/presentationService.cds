@@ -220,6 +220,8 @@ service PresentationService {
     @Common.IsActionCritical
     action   proxy_deleteAllData();
 
+    @Common.IsActionCritical
+    action   proxy_deleteStructureAndTagData();
 
     /**
      * For Work Zone cards

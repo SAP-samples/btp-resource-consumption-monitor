@@ -6,13 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
 ## Version 2.0.x - Future
+### Added
+- New Data Management menu button to remove all account structure items and managed/custom tags
+
 ### Changed
 - Improved error handling during data retrieval and calculations
 - Increased default memory allocation for service application to 512MB
+- Increased UI timeout to 60 seconds to allow correct multi-global account data retrieval
 
 ### Fixed
 - Corrected data model for multiple contract phase updates on the same day
 - Corrected aggregation methods in SAC CV for multi global account configurations
+
 
 ## Version 2.0.1 - 2024-06-24
 ### Added

@@ -66,6 +66,8 @@ import {
     AccountStructureItems as dbAccountStructureItems,
     ContractCreditValue,
     CloudCreditsDetailsResponseObjects,
+    CustomTags,
+    ManagedTagAllocations,
 } from '#cds-models/db'
 
 import {
@@ -77,6 +79,7 @@ import {
     downloadMeasuresForToday,
     downloadMeasuresForPastMonths,
     deleteAllData,
+    deleteStructureAndTagData,
     resetForecastSettings,
     calculateCommercialForecasts,
     prepareCommercialMeasureMetricForecasts,
@@ -204,6 +207,13 @@ export default class RetrievalService extends cds.ApplicationService {
             return `All consumption data has been removed from the database.`
         })
 
+        this.on(deleteStructureAndTagData, async req => {
+            await DELETE.from(CustomTags)
+            await DELETE.from(ManagedTagAllocations)
+            await DELETE.from(dbAccountStructureItems)
+            return `All account structure data and tags have been removed from the database.`
+        })
+
         this.on(resetTechnicalAllocations, async req => {
             await DELETE.from(AllocationSettings)
             return `All technical allocations have been reset.`
@@ -215,11 +225,15 @@ export default class RetrievalService extends cds.ApplicationService {
         this.on(resetForecastSettings, async req => {
             let status = []
 
+            await db.run(`DELETE FROM ${ForecastSettings.name.replace('.', '_')} AS f WHERE NOT EXISTS (
+                SELECT DISTINCT toservice_serviceID, measureId FROM ${CommercialMetrics.name.replace('.', '_')} AS c
+	            WHERE c.toService_serviceID = f.serviceId AND c.measureId = f.measureId)`)
+
             const forecastSetting = {
                 ...Settings.defaultValues.forecastSetting
             }
-            const rows = await UPDATE(ForecastSettings).with(forecastSetting)
-            status.push(`${rows} forecast settings have been reverted to ${forecastSetting.method}, factor ${forecastSetting.degressionFactor}.`)
+            await UPDATE(ForecastSettings).with(forecastSetting)
+            status.push(`All forecast settings have been reverted to ${forecastSetting.method}, factor ${forecastSetting.degressionFactor}.`)
 
             status.push(await updateCommercialMetricForecasts())
             status.push(await updateCommercialServiceForecasts())

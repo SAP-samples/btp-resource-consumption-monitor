@@ -30,11 +30,14 @@ export async function api_monthlyUsage(queryParameters: { fromDate: number, toDa
     let data: MonthlyUsageResponseList = { content: [] }
     for (const binding of serviceBindingNames) {
         info(`Querying binding ${binding}...`)
-        const serviceDestination = await getServiceDestination(binding)
-        const result = await UsageAndCostManagementApi
-            .monthlyUsage(queryParameters)
-            .execute(serviceDestination)
-        data.content = data.content.concat(result.content)
+        try {
+            const serviceDestination = await getServiceDestination(binding)
+            const result = await UsageAndCostManagementApi
+                .monthlyUsage(queryParameters)
+                .execute(serviceDestination)
+            data.content = data.content.concat(result.content)
+        }
+        catch (e) { throw new Error(`[${binding}] ${String(e)}`) }
     }
     return data
 }
@@ -48,11 +51,14 @@ export async function api_monthlyCost(queryParameters: { fromDate: number, toDat
     let data: MonthlyCostResponseList = { content: [] }
     for (const binding of serviceBindingNames) {
         info(`Querying binding ${binding}...`)
-        const serviceDestination = await getServiceDestination(binding)
-        const result = await UsageAndCostManagementApi
-            .monthlyUsageSubaccountCost(queryParameters)
-            .execute(serviceDestination)
-        data.content = data.content.concat(result.content)
+        try {
+            const serviceDestination = await getServiceDestination(binding)
+            const result = await UsageAndCostManagementApi
+                .monthlyUsageSubaccountCost(queryParameters)
+                .execute(serviceDestination)
+            data.content = data.content.concat(result.content)
+        }
+        catch (e) { throw new Error(`[${binding}] ${String(e)}`) }
     }
     return data
 }
@@ -66,11 +72,14 @@ export async function api_creditDetails(queryParameters: { viewPhases: 'ALL' | '
     let data: CloudCreditsDetailsResponseObject[] = []
     for (const binding of serviceBindingNames) {
         info(`Querying binding ${binding}...`)
-        const serviceDestination = await getServiceDestination(binding)
-        const result = await UsageAndCostManagementApi
-            .cloudCreditsDetails(queryParameters)
-            .execute(serviceDestination)
-        data = data.concat(result)
+        try {
+            const serviceDestination = await getServiceDestination(binding)
+            const result = await UsageAndCostManagementApi
+                .cloudCreditsDetails(queryParameters)
+                .execute(serviceDestination)
+            data = data.concat(result)
+        }
+        catch (e) { throw new Error(`[${binding}] ${String(e)}`) }
     }
     return data
 }

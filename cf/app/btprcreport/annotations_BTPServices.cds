@@ -87,6 +87,11 @@ annotate service.BTPServices with @(UI: {
         },
         {
             $Type : 'UI.DataFieldForAction',
+            Label : 'Delete account structure and all tags',
+            Action: 'PresentationService.EntityContainer/proxy_deleteStructureAndTagData'
+        },
+        {
+            $Type : 'UI.DataFieldForAction',
             Label : 'Revert all forecast settings to default',
             Action: 'PresentationService.EntityContainer/proxy_resetForecastSettings'
         },

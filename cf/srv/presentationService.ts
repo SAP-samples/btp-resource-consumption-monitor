@@ -28,7 +28,8 @@ import {
     proxy_resetForecastSettings,
     proxy_calculateCommercialForecasts,
     proxy_resetTechnicalAllocations,
-    Card_HighestForecastServices
+    Card_HighestForecastServices,
+    proxy_deleteStructureAndTagData
 } from '#cds-models/PresentationService'
 
 import {
@@ -39,6 +40,7 @@ import {
     downloadMeasuresForPastMonths,
     resetForecastSettings,
     resetTechnicalAllocations,
+    deleteStructureAndTagData,
 } from '#cds-models/RetrievalService'
 
 import {
@@ -176,6 +178,7 @@ export default class PresentationService extends cds.ApplicationService {
             req.messages = await retrievalService.send(downloadMeasuresForPastMonths.toString(), { fromDate: Number(req.data.fromDate) })
         })
         this.on(proxy_deleteAllData, async (req) => req.info(await retrievalService.send(deleteAllData.toString())))
+        this.on(proxy_deleteStructureAndTagData, async (req) => req.info(await retrievalService.send(deleteStructureAndTagData.toString())))
         this.on(proxy_resetForecastSettings, async (req) => req.notify(await retrievalService.send(resetForecastSettings.toString())))
         this.on(proxy_resetTechnicalAllocations, async (req) => req.notify(await retrievalService.send(resetTechnicalAllocations.toString())))
         this.on(proxy_calculateCommercialForecasts, async (req) => req.notify(await retrievalService.send(calculateCommercialForecasts.toString())))
