@@ -146,6 +146,12 @@
                         "criticality"
                       ]
                     }
+                  },
+                  "actions": {
+                    "openHelp": {
+                      "press": "billingdifferences.ext.help.openHelp",
+                      "text": "Show Help Documentation"
+                    }
                   }
                 }
               }
