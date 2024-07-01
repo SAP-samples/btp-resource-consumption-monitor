@@ -24,7 +24,7 @@
         "header": {},
         "content": {
             "src": "{/basePath}#measuresforyears-display?sap-ui-app-id-hint=btprc.cpkg_saas_approuter_measuresforyears",
-            "sandbox": "allow-same-origin allow-scripts allow-popups allow-forms allow-modals",
+            "sandbox": "allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-downloads",
             "minHeight": "57rem"
         }
     }

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixed
 - Corrected data model for multiple contract phase updates on the same day
 - Corrected aggregation methods in SAC CV for multi global account configurations
+- Allowed downloads (export to Excel) for embedded apps
 
 
 ## Version 2.0.1 - 2024-06-24
