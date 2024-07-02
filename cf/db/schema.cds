@@ -386,7 +386,7 @@ entity PhasesResponseObjects {
 
 // Raw API data
 entity PhaseUpdates {
-    key ID                     : UUID @Core.Computed;
+    key ID                     : UUID default SYSUUID() @Core.Computed;
         toPhasesResponseObject : Association to PhasesResponseObjects;
         balance                : Decimal(20, 2);
         cloudCreditsForPhase   : Decimal(20, 2);
