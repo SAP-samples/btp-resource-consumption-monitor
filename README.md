@@ -125,7 +125,7 @@ Due to the export/import process of SAC, there might be misalignments between ou
 - Navigate to the `Stories` section and try to open the story. In case of a user privilege error, refer to the 'Known Issues' section below.
 
 #### Step 5. Get Story URL
-1. In your SAC tenant, navigate to `Files`, `Public/BTPRC` (or the folder name you chose in previous step).
+1. In your SAC tenant, navigate to `Files`, `Public/BTPRC_FinOps` (or the folder name you chose in previous step).
 2. Open the `BTP FinOps` story (whose data might look empty for now), and click `File`, `Share`.
 3. Take note of the URL shown as it contains your **host**, **tenant** and **story id** in the following format: `https://<YOUR_HOST>.sapanalytics.cloud/sap/fpa/ui/tenants/<YOUR_TENANT>/bo/story/<YOUR_STORY>`.
 4. Keep this screen open, as this information will be used to configure the Work Zone content (next module) correctly.
