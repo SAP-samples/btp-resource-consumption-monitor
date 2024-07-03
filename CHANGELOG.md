@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Improved error handling during data retrieval and calculations
 - Increased default memory allocation for service application to 512MB
 - Increased UI timeout to 60 seconds to allow correct multi-global account data retrieval
+- Changed SAC content to be compatible with SAC version 2024.08
 
 ### Fixed
 - Corrected data model for multiple contract phase updates on the same day

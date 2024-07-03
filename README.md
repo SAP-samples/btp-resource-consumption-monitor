@@ -91,7 +91,8 @@ cf deploy ./mta_archives/btp-resource-consumption_2.0.1.mtar
 
 This component is optional but provides additional insights.
 
-***Temporary note: The current content package requires SAC version 2024.13 or later. We are looking at options to lower this dependency to 2024.08***
+The current content package requires at least **SAC version 2024.08**
+<!-- ***Temporary note: The current content package requires SAC version 2024.13 or later. We are looking at options to lower this dependency to 2024.08*** -->
 
 #### Step 1. Define connection
 In order for the SAC dashboards to connect to your data, it needs a connection to your HDI container. The name of this connection has to be `BTPRCHDI`.
@@ -118,7 +119,12 @@ In order for the SAC dashboards to connect to your data, it needs a connection t
 1. In your SAC tenant, navigate to `System`, `Administration`, `App Integration`.
 2. In the section of `Trusted Origins`, add an entry to your Work Zone site to allow your site to embed the SAC Story. You can use wildcards (e.g. `https://*.launchpad.eu20.hana.ondemand.com`)
 
-#### Step 4. Get Story URL
+#### Step 4. Validate imported artifacts
+Due to the export/import process of SAC, there might be misalignments between our development environment where the content was exported from, and your environment where you import it in. A quick validation can help in making sure there are no issues in accessing the story from the application:
+- Navigate to the `Modeler` and try to open each of the 3 models. In case of a Schema error, remap the models to the correct Calculation View from your BTPRCHDI connection via the `Change Data Source` menu option.
+- Navigate to the `Stories` section and try to open the story. In case of a user privilege error, refer to the 'Known Issues' section below.
+
+#### Step 5. Get Story URL
 1. In your SAC tenant, navigate to `Files`, `Public/BTPRC` (or the folder name you chose in previous step).
 2. Open the `BTP FinOps` story (whose data might look empty for now), and click `File`, `Share`.
 3. Take note of the URL shown as it contains your **host**, **tenant** and **story id** in the following format: `https://<YOUR_HOST>.sapanalytics.cloud/sap/fpa/ui/tenants/<YOUR_TENANT>/bo/story/<YOUR_STORY>`.
