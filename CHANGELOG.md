@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
 ## Version 2.0.x - Future
+
+
+## Version 2.0.2 - 2024-07-03
 ### Added
 - New Data Management menu button to remove all account structure items and managed/custom tags
 - New Help button in the Credit Expenditure application
