@@ -6,6 +6,9 @@
     "entityType": "space"
   },
   "payload": {
+    "spaceConfig": {
+      "sortNumber": 100
+    },
     "contentNodes": [
       {
         "type": "workpage",
