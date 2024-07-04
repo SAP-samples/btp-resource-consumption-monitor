@@ -29,12 +29,12 @@ See also:
 
 ## Requirements
 
-You need to have access to a `Sub Account`, in which *Cloud Foundry* is enabled, and you have created a `Space` (***note***: the name of this `Space` can not contain a space (' ') but you can use underscores ('_') or hypens ('-')).
+You need to have access to a `Sub Account`, in which *Cloud Foundry* is enabled, and you have created a `Space`. ***Note***: the name of this `Space` can not contain a space (' ') but you can use underscores ('_') or hypens ('-').
 
 The following **Subscriptions** are required to deploy and use this application:
-- SAP HANA Cloud (you can re-use an existing instance)
-- SAP Work Zone (Standard edition is sufficient)
-- SAP Business Application Studio
+- SAP HANA Cloud (you can re-use an existing instance. **Note**: this instance can sit in *any subaccount within the same region*)
+- SAP Work Zone (Standard edition is sufficient. **Note**: this subscription should be in the *same subaccount* as where the CF application will be deployed)
+- SAP Business Application Studio (**Note**: this subscription can sit in *any subaccount*)
 <!-- - Your user needs to have either the `Global Account Viewer` or `Global Account Administrator` role *(TBC)* -->
 
 The following **Entitlements** need to be available to use this application:
@@ -47,8 +47,8 @@ The following **Entitlements** need to be available to use this application:
 - Usage Data Management Service: reporting-ga-admin
 - Application Logging Service: standard (optional service)
 
-The following components are **optional** as an add-on:
-- SAP Analytics Cloud
+The following components are **optional but recommended** as an add-on:
+- SAP Analytics Cloud version 2024.08+ (**Note:** this SAC tenant can reside *anywhere*, it doesn't have to sit in the same global account)
 
 ## Download and Installation
 
@@ -58,7 +58,7 @@ This solution contains 3 installable components:
 3. A frontend package (content package) to be deployed to SAP Work Zone (WZ)
 
 ### 1. CF Application
-In **Business Application Studio**, make sure to have a `Development Space` of kind `Full Stack Cloud Application` with the additional `Development Tools for SAP Build Work Zone` extension enabled.
+In **Business Application Studio**, make sure to have a `Development Space` of kind `Full Stack Cloud Application` with the additional `Development Tools for SAP Build Work Zone` extension enabled. Alternatively, you can use Visual Studio Code or any other preferred IDE where NodeJs, [@sap/cds-dk](https://cap.cloud.sap/docs/get-started/jumpstart#_2-install-cap-s-cds-dk) and [mbt](https://github.com/SAP/cloud-mta-build-tool) is installed.
 
 `Clone` this repository in your environment and open the project.
 
@@ -89,7 +89,7 @@ cf deploy ./mta_archives/btp-resource-consumption_2.0.2.mtar
 
 ### 2. SAC Content
 
-This component is optional but provides additional insights.
+This component is optional but provides additional insights. It could act as the recommended *interface for cost owners* (after cross-charging) to consult their individual charges. In that case there is no need to provide them Work Zone access to the entire application but just to the focussed SAC Story.
 
 The current content package requires at least **SAC version 2024.08**
 <!-- ***Temporary note: The current content package requires SAC version 2024.13 or later. We are looking at options to lower this dependency to 2024.08*** -->
