@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Version 2.0.x - Future
 ### Changed
 - Work Zone release 2024-07-11 will make changes the default sorting of spaces, which is now pre-empted in the application to keep the correct sort order
+- Improved handling of account structure to allow for changes in sub account naming and hierarchies
 
 
 ## Version 2.0.2 - 2024-07-03

@@ -765,6 +765,17 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
     const existingStructureItems = (await SELECT.from(dbAccountStructureItems).columns('ID')).map(x => x.ID)
     const newStructureItems = structureItems.filter(x => !existingStructureItems.includes(x.ID))
     newStructureItems.length > 0 && await INSERT.into(AccountStructureItems).entries(newStructureItems)
+
+    // To cater for changes in the account structure (moving of subaccounts into directories, renaming subaccounts, ...), we need to update the account structure, while preserving the data elements already changed by the user
+    const updatedStructureItems = structureItems.filter(x => existingStructureItems.includes(x.ID))
+    updatedStructureItems.forEach(x => {
+        // remove items already updated by the user from the update query
+        delete x.lifecycle
+        delete x.excluded
+        delete x.managedTagAllocations
+        delete x.customTags
+    })
+    updatedStructureItems.length > 0 && await UPSERT.into(AccountStructureItems).entries(updatedStructureItems) // using UPSERT until array UPDATE is available
 }
 
 /**
