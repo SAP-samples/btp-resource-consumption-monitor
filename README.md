@@ -27,6 +27,12 @@ See also:
 - **Cost Optimization**: Provides food for thought on how to control your spend and get the most out of your BTP investment.
 
 
+## Installation Video
+Watch our installation video on YouTube:
+
+[![YouTube video](https://img.youtube.com/vi/Q0X_XF1QuAg/0.jpg)](https://www.youtube.com/watch?v=Q0X_XF1QuAg)
+
+
 ## Requirements
 
 You need to have access to a `Sub Account`, in which *Cloud Foundry* is enabled, and you have created a `Space`. ***Note***: the name of this `Space` can not contain a space (' ') but you can use underscores ('_') or hypens ('-').
