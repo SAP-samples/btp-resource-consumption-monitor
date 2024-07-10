@@ -127,7 +127,7 @@ In order for the SAC dashboards to connect to your data, it needs a connection t
 
 #### Step 4. Validate imported artifacts
 Due to the export/import process of SAC, there might be misalignments between our development environment where the content was exported from, and your environment where you import it in. A quick validation can help in making sure there are no issues in accessing the story from the application:
-- Navigate to the `Modeler` and try to open each of the 3 models. In case of a Schema error, remap the models to the correct Calculation View from your BTPRCHDI connection via the `Change Data Source` menu option.
+- Navigate to the `Modeler` and try to open each of the 3 models. In case of a Schema error, remap the models to the correct Calculation View from your BTPRCHDI connection via the `Change Data Source` menu option. A different error? See *Known Issues* below.
 - Navigate to the `Stories` section and try to open the story. In case of a user privilege error, refer to the 'Known Issues' section below.
 
 #### Step 5. Get Story URL
@@ -297,7 +297,9 @@ For demo and test purposes it is possible to implement this solution using Free 
 - **Dynamic Tile**: In case the dynamic tile of the Report application does not show your forecasted CPEA credit for this month (but shows 3 dots instead), you will need to manually create a system mapping. In the `Work Zone Site Manager`, navigate to the `Settings` menu and go to `Alias Mapping`. Add a new alias with the following settings: Aliases = `sid(BTPRC.CPKG)` and Runtime Destination = `btprc-srv`. If this mapping already exists and the error is still present, `edit` and `save` this mapping without making changes to re-trigger it.
 - **Cachebuster error 500**: In case your applications do not open from the launchpad because of a failed call to `/cachebusterTokens.json`, you can correct this from the `Work Zone Channel Manager`. Use the `Update content` button of the `HTML5 Apps` entry **2 times** (refresh the content twice consecutively), which will create the cache records in the background and then your apps should open correctly.
 - **SAC "Can't read the view: BTPRC_MONITORING:..."**: It is possible that even after you remapped all 3 models to the correct connection, opening the story keeps on displaying this error while still showing the data at the same time. To get rid of this (un-needed) error, open your SAC story, click on `edit` and `save`. This should remove the error the next time you open the story.
-- **SAC "You have no authorization to the model" or "Insufficient Privileges"**: In case the SAC story can not load because of an error stating "You have no authorization to the model", and opening the SAC model directly gives "Insufficient privileges", use the `HANA Cloud Cockpit` to assign the missing Object Privileges to the user used to connect to the HDI. A known suspect here is the `_SYS_BI::BIMC_PROPERTIES` table which needs `SELECT` privileges.
+- **SAC "You have no authorization to the model" or "Insufficient Privileges"**: In case the SAC story can not load because of an error stating "You have no authorization to the model", and opening the SAC model directly gives "Insufficient privileges", you have 2 options. Either:
+    - update your HANA Cloud to 2024.14 (QRC 2/2024) which changes the PUBLIC profile to include the required analytical privileges (see [SAP Note 2944642](https://me.sap.com/notes/2944642/E));
+    - or, without updating HANA Cloud: use the `HANA Cloud Cockpit` to assign the missing Object Privileges to the user used to connect to the HDI. The missing privilege is the `_SYS_BI::BIMC_PROPERTIES` `table` which needs `SELECT` privileges.
 
 ## How to obtain support
 [Create an issue](https://github.com/SAP-samples/btp-resource-consumption-monitor/issues) in this repository if you find a bug or have questions about the content.
