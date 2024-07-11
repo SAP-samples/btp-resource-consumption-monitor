@@ -33,7 +33,7 @@ cds.on('served', async (services) => {
             jobId: 0,
             active: true,
             name: 'Default_UpdateDailyUsage',
-            description: 'Default generated recurring job to update the daily resource usage using the CPEA Spike Alert application',
+            description: 'Default generated recurring job to update the daily resource usage',
             jobType: 'HTTP_ENDPOINT',
             httpMethod: 'GET',
             action: urlDaily,
@@ -62,7 +62,7 @@ cds.on('served', async (services) => {
             jobId: 0,
             active: true,
             name: 'Default_UpdateHistoricUsage',
-            description: 'Default generated once-off job to update the historic resource usage using the CPEA Spike Alert application',
+            description: 'Default generated once-off job to update the historic resource usage',
             jobType: 'HTTP_ENDPOINT',
             httpMethod: 'GET',
             action: urlHistoric,
@@ -75,14 +75,14 @@ cds.on('served', async (services) => {
         {
             jobId: 0,
             active: true,
-            name: 'Default_UpdateMonthlyUsage',
-            description: 'Default generated recurring job to update the past month\'s resource usage using the CPEA Spike Alert application',
+            name: 'Default_UpdateMonthlyUsage_v2.0.3', // Name changed to ensure creation of the job when upgrading from previous versions
+            description: 'Default generated recurring job to update the past month\'s resource usage',
             jobType: 'HTTP_ENDPOINT',
             httpMethod: 'GET',
             action: urlMonthly,
             schedules: [{
-                description: 'Monthly, Every 1st day at 1am and 3am UTC',
-                cron: '* * 1 * 1,3 0 0',
+                description: 'Daily, every first 5 days of the month at 00.30am UTC',
+                cron: '* * 1:5 * 0 30 0',
                 active: true
             }]
         }
