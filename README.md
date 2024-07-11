@@ -35,7 +35,7 @@ Watch our installation video on YouTube:
 
 ## Requirements
 
-You need to have access to a `Sub Account`, in which *Cloud Foundry* is enabled, and you have created a `Space`. ***Note***: the name of this `Space` can not contain a space (' ') but you can use underscores ('_') or hypens ('-').
+You need to have access to a `Sub Account`, in which *Cloud Foundry* is enabled, and you have created a `Space`. ***Note***: the name of this `Space` can *not* contain spaces (' ') or hypens ('-') but you *can* use underscores ('_').
 
 The following **Subscriptions** are required to deploy and use this application:
 - SAP HANA Cloud (you can re-use an existing instance. **Note**: this instance can sit in *any subaccount within the same region*)
