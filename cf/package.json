@@ -31,7 +31,7 @@
     "build:clean": "rimraf @cds-models resources mta_archives gen",
     "build:cf-sqlite": "npm run build:cds && npm run build:models && npm run build:ts && npm run build:copy_models && npm run build:db",
     "build:cds": "cds build --production",
-    "build:models": "npx cds-typer '*' --outputDirectory @cds-models",
+    "build:models": "npx cds-typer \"*\" --outputDirectory @cds-models",
     "build:ts": "tsc",
     "build:copy_models": "cp -r @cds-models gen/srv",
     "build:db": "cds deploy -2 sqlite:gen/srv/db.sqlite",
