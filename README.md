@@ -289,8 +289,8 @@ For demo and test purposes it is possible to implement this solution using Free 
 
 - Resources:
     - Cloud Foundry runtime: free tier plan is available and can be used. Create your CF Organisation with the 'free' option before deploying the application.
-    - SAP Alert Notification service: free tier plan is available and can be used. Switch your MTA to plan 'free' instead of 'standard' [here](/cf/mta.yaml#L186).
-    - SAP Application Logging service: there is no free plan, but this is an optional service, so you can just remove it from your MTA, both [here](/cf/mta.yaml#L34) and [here](/cf/mta.yaml#L240).
+    - SAP Alert Notification service: free tier plan is available and can be used. Switch your MTA to plan 'free' instead of 'standard' [here](/cf/mta.yaml#L279).
+    - SAP Application Logging service: there is no free plan, but this is an optional service, so you can just remove it from your MTA, both [here](/cf/mta.yaml#L36) and [here](/cf/mta.yaml#L333).
     - SAP Job Scheduling service: no free plan available. For an indicative pricing, see [here](https://discovery-center.cloud.sap/serviceCatalog/job-scheduling-service?region=all&tab=service_plan).
 
 ## Known Issues
