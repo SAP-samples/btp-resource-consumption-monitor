@@ -17,6 +17,7 @@
     },
     "peerDependencies": {
         "@ui5/cli": ">=3",
-        "mbt": ">=1"
+        "mbt": ">=1",
+        "axios": "^1.7.4"
     }
 }

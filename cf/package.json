@@ -7,8 +7,8 @@
   "private": true,
   "dependencies": {
     "@cap-js-community/odata-v2-adapter": "^1.12.11",
-    "@sap-cloud-sdk/connectivity": "^3.15.0",
-    "@sap-cloud-sdk/openapi": "^3.15.0",
+    "@sap-cloud-sdk/connectivity": "^3.18.1",
+    "@sap-cloud-sdk/openapi": "^3.18.1",
     "@sap/cds": "^7.9.3",
     "@sap/cds-hana": "^2.0.0",
     "@sap/xssec": "^3.6",
@@ -16,11 +16,11 @@
   },
   "devDependencies": {
     "@cap-js/cds-typer": "^0.20.2",
-    "@cap-js/sqlite": "^1.7.2",
-    "@sap-cloud-sdk/openapi-generator": "^3.15.0",
-    "@sap/cds-dk": "^7.9.4",
+    "@cap-js/sqlite": "^1.7.3",
+    "@sap-cloud-sdk/openapi-generator": "^3.18.1",
+    "@sap/cds-dk": "^7.9.7",
     "@sap/eslint-plugin-cds": "^3.0.4",
-    "@sap/ux-specification": "^1.120.13",
+    "@sap/ux-specification": "^1.120.17",
     "@types/node": "^20.14.9",
     "eslint": "^9.5.0",
     "rimraf": "^5.0.7"
