@@ -16,8 +16,7 @@
         "ui5-task-zipper": "^3.1.4"
     },
     "peerDependencies": {
-        "@ui5/cli": ">=3",
-        "mbt": ">=1",
-        "axios": "^1.7.4"
+        "@ui5/cli": ">=4",
+        "mbt": ">=1"
     }
 }

@@ -11,12 +11,12 @@
     "validate": "node scripts/validate.js"
   },
   "devDependencies": {
-    "@ui5/cli": "^3.10.3",
+    "@ui5/cli": "^4",
     "bestzip": "^2.2.1",
     "fs-extra": "^11.2.0",
-    "glob": "^10.4.2",
+    "glob": "^11",
     "handlebars": "^4.7.8",
     "properties-reader": "^2.3.0",
-    "rimraf": "^5.0.7"
+    "rimraf": "^6.0.1"
   }
 }

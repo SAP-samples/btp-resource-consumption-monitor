@@ -2,7 +2,7 @@
   "name": "db-deployer",
   "version": "1.0.0",
   "dependencies": {
-    "@sap/hdi-deploy": "^5.2"
+    "@sap/hdi-deploy": "^5.3"
   },
   "scripts": {
     "start": "node node_modules/@sap/hdi-deploy/deploy.js"
