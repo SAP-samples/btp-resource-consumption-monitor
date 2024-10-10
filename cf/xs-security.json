@@ -25,7 +25,7 @@
   ],
   "role-collections": [
     {
-      "name": "BTPResouceConsumption Viewer",
+      "name": "BTPResourceConsumption Viewer",
       "description": "View the BTP Global Account credits report",
       "role-template-references": [
         "$XSAPPNAME.Viewer"
