@@ -62,8 +62,12 @@ The following components are **optional but recommended** as an add-on:
 
 ## Upgrading from version 2.0 to 2.1
 
-You can upgrade your 2.0.x version to 2.1.x in Cloud Foundry. Upgrades do not apply to Kyma deployments as they are new from v2.1.0 onwards.
-To upgrade your existing installation, just follow the below installation steps again using your existing target. The SAC package has not been changed.
+You can upgrade your 2.0.x version to 2.1.0 in Cloud Foundry. Upgrades do not apply to Kyma deployments as they are new from v2.1.0 onwards.
+To upgrade your existing installation, just follow the below installation steps again using your existing target.
+
+From 2.0.2 to 2.1.0, only the Backend and Fiori applications have been changed, the SAC package has not been changed.
+
+After the upgrade, make sure to assign the backend role again to the end users.
 
 ## Download and Installation
 
@@ -231,6 +235,8 @@ In the **Work Zone Site Manager**, open the `Site Directory` and:
     - BTP Resource Consumption Role
     - BTP Resource Consumption SAC add-on
 6. Save and close
+
+**For Kyma deployments:** Note: the destination used in the Work Zone package (`btprc-srv`) is created when the backend application starts for the first time, and is populated with the credentials from the xsuaa instance at that point in time. In case of redeployments, the xsuaa credentials will be regenerated, but the destination will not be updated with these new credentials. In order to synchronize the credentials again, remove the destination via the BTP Cockpit and delete the `btprc-srv` pod in Kyma so it restarts and can recreate the destination during its startup.
 
 
 ## Role Assignments
