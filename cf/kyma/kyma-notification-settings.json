@@ -1,0 +1,42 @@
+{
+  "configuration": {
+    "actions": [
+      {
+        "type": "EMAIL",
+        "name": "send_email",
+        "state": "ENABLED",
+        "description": "Sends a simple email with the alert",
+        "properties": {
+          "destination": "<your@email.com>",
+          "useHtml": "true",
+          "subjectTemplate": "{subject}",
+          "payloadTemplate": "<!DOCTYPE html>\n<html>\n<body>\n<h1>BTP Resource Consumption notification</h1>\n<p>The following alerts have been generated:</p>\n<span style=\"font-family: 'Courier New', Courier, monospace; font-size: small;\">\n<pre>{body}</pre>\n</span>\n<p>Thank you</p>\n<p>Disclaimer: {ans-disclaimer}</p>\n</body>\n</html>"
+        }
+      }
+    ],
+    "conditions": [
+      {
+        "name": "if_alert",
+        "mandatory": false,
+        "propertyKey": "eventType",
+        "predicate": "EQUALS",
+        "propertyValue": "BTPResourceConsumptionWarning",
+        "labels": [],
+        "description": "If it is an alert"
+      }
+    ],
+    "subscriptions": [
+      {
+        "name": "email_if_alert",
+        "conditions": [
+          "if_alert"
+        ],
+        "actions": [
+          "send_email"
+        ],
+        "state": "ENABLED",
+        "description": "Send an email when an alert has been received"
+      }
+    ]
+  }
+}

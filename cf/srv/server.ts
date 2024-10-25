@@ -1,15 +1,19 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
 import { getAllDestinationsFromDestinationService } from '@sap-cloud-sdk/connectivity'
+import { DestinationsOnSubaccountLevelApi, Destination } from './external/SAP_CP_CF_Connectivity_Destination'
 import { randomUUID as uuidv4 } from 'node:crypto'
+import { getServiceDestination } from './functions'
+import { filterServices } from '@sap/xsenv'
 
 import {
     JobApi,
     JobSchedulerServiceJobCreate,
     JobSchedulerServiceJob
 } from './external/APIJobSchedulerService'
+import assert from 'node:assert'
 
-const info = cds.log('server').info
+const { info, error } = cds.log('server')
 
 /**
  * Resource usage should be retrieved daily. Jobs will be used to do so.
@@ -17,10 +21,11 @@ const info = cds.log('server').info
  * If jobs exist (even if inactive or change) they will not be changed.
  */
 cds.on('served', async (services) => {
-    const host =
-        (await getAllDestinationsFromDestinationService()).find(x => x.name == 'btprc-srv-api')?.url
-        ?? 'http://dummy'
-    //@ts-ignore
+    const api = (await getAllDestinationsFromDestinationService()).find(x => x.name == 'btprc-srv-api')
+    if (!api) return error('Application starting too early, probably still waiting for the deployment of destinations. Forcing restart.')
+    const host = api!.url ?? 'http://dummy'
+
+    //@ts-expect-error
     const servicePath = services.RetrievalService.path
     info(`Host and path of service: ${host}, ${servicePath}`)
 
@@ -156,6 +161,8 @@ cds.on('served', async (services) => {
     } else {
         info(`${alerts.length} alerts exist. No action taken.`)
     }
+
+    await createSubaccountDestinationIfNotExist(host)
 })
 
 
@@ -164,20 +171,66 @@ cds.on('served', async (services) => {
  * @param job details of the job
  * @returns 
  */
-function api_createJob(job: JobSchedulerServiceJobCreate) {
+async function api_createJob(job: JobSchedulerServiceJobCreate) {
+    const serviceDestination = await getServiceDestination('UAA', 'btprc-scheduler')
     return JobApi
         .createJob(job)
-        .execute({ destinationName: 'btprc-scheduler' })
+        .execute(serviceDestination)
 }
 
 /**
  * Calls the API to retrieve all jobs
  * @returns response object containing the list of jobs in the `results` property
  */
-function api_getJobs() {
+async function api_getJobs() {
+    const serviceDestination = await getServiceDestination('UAA', 'btprc-scheduler')
     return JobApi
         .getJobs()
-        .execute({ destinationName: 'btprc-scheduler' })
+        .execute(serviceDestination)
+}
+
+/**
+ * Verifies if there is a subaccount-level destination to our application. This is needed for Work Zone.
+ * Cloud Foundry deployments will have this created from the MTA deployment, but Kyma deployment will not.
+ * For Kyma, there will only be Destination Service Instance destinations, from which we can copy the credentials to create a subaccount destination.
+ * @param host Endpoint/URL of the exposed srv application
+ */
+async function createSubaccountDestinationIfNotExist(host: string) {
+    const destinationName = 'btprc-srv'
+
+    const destinationService = filterServices({ label: 'destination' })[0]
+    assert(destinationService, `Destination service not bound.`)
+    const serviceDestination = await getServiceDestination('Destination', destinationService.name)
+
+    const subaccountDestinations = await DestinationsOnSubaccountLevelApi
+        .getSubaccountDestinations({ $filter: `Name in ('${destinationName}')` })
+        .execute(serviceDestination)
+
+    if (subaccountDestinations && subaccountDestinations.length == 1) {
+        info(`Subaccount destination "${destinationName}" found. Ok, continuing.`)
+    } else {
+        info(`Subaccount destination "${destinationName}" not found, trying to create...`)
+        const xsuaaService = filterServices({ label: 'xsuaa' })[0]
+        assert(xsuaaService, `XSUAA service not bound.`)
+        const destination: Destination = {
+            Type: 'HTTP',
+            ProxyType: 'Internet',
+            Name: destinationName,
+            URL: host,
+            Description: 'BTP Resource Consumption endpoint for Work Zone',
+            Authentication: 'OAuth2UserTokenExchange',
+            tokenServiceURL: `${xsuaaService.credentials.url}/oauth/token`,
+            tokenServiceURLType: 'Dedicated',
+            clientId: xsuaaService.credentials.clientid,
+            clientSecret: xsuaaService.credentials.clientsecret,
+            'HTML5.DynamicDestination': true,
+            'sap.cloud.service': 'sap.btp.resourceconsumption'
+        }
+        await DestinationsOnSubaccountLevelApi
+            .createSubaccountDestinations(destination)
+            .execute(serviceDestination)
+        info(`Subaccount destination "${destinationName}" created:`, destination)
+    }
 }
 
 export default cds.server

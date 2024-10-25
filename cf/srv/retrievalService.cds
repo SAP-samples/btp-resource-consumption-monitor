@@ -204,5 +204,5 @@ service RetrievalService {
     function calculateCommercialForecastsForService(serviceId : String) returns String;
     function deleteAllData()                                            returns String;
     function deleteStructureAndTagData()                                returns String;
-    function testAlert(alert : Alerts)                                  returns types.TAlertSimulation;
+    function testAlert(ID : UUID, isDraft : Boolean)                    returns types.TAlertSimulation;
 }

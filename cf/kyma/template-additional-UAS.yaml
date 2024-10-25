@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: btprc-uas-ups-account2
+stringData:
+  .metadata: |
+    { "credentialProperties": [{"name": "credentials","container": true,"format": "json"}], "metaDataProperties": [{"name": "label", "format":"text"},{"name": "type", "format":"text"}] }
+  label: uas
+  type: uas
+  credentials: |
+    {
+        "clientid": "....",
+        "clientsecret": "....",
+        ...
+    }

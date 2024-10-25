@@ -66,7 +66,7 @@ export default class ManageTagsService extends cds.ApplicationService {
                 info(`Copying tags for item ${ID}...`)
 
                 const tags: tagsClipboard = await SELECT.from(AccountStructureItems, ID)
-                    //@ts-ignore
+                    //@ts-expect-error
                     .columns(a => { a.managedTagAllocations(['name', 'value', 'pct']), a.customTags(['name', 'value']) })
 
                 const copyClipboard = {
@@ -95,7 +95,7 @@ export default class ManageTagsService extends cds.ApplicationService {
                 info(`Pasting tags in mode ${mode} to item ${ID}...`)
 
                 const existingTags: tagsClipboard & { label: string } = await SELECT.from(AccountStructureItems, ID)
-                    //@ts-ignore
+                    //@ts-expect-error
                     .columns(a => { a.label, a.managedTagAllocations(['ID', 'name', 'value']), a.customTags(['ID', 'name']) })
 
                 let nCustomTags = 0

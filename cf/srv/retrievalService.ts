@@ -10,7 +10,8 @@ import {
     getPreviousMonth,
     stringToCdsDate,
     getDaysInMonth,
-    getNextMonth
+    getNextMonth,
+    getServiceDestination
 } from './functions'
 
 import {
@@ -93,10 +94,13 @@ import {
     resetTechnicalAllocations,
 } from '#cds-models/RetrievalService'
 
+import {
+    Alerts as AlertsView
+} from '#cds-models/ManageAlertsService'
+
 import { CdsDate } from '#cds-models/_'
 
-const info = cds.log('retrievalService').info
-const warn = cds.log('retrievalService').warn
+const { info, warn } = cds.log('retrievalService')
 
 type alertTableColumn = {
     title: string
@@ -154,7 +158,7 @@ export default class RetrievalService extends cds.ApplicationService {
                 } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
             })
 
-            //@ts-ignore
+            //@ts-expect-error
             return req.messages
         })
 
@@ -194,7 +198,7 @@ export default class RetrievalService extends cds.ApplicationService {
                 } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
             })
 
-            //@ts-ignore
+            //@ts-expect-error
             return req.messages
         })
 
@@ -264,14 +268,22 @@ export default class RetrievalService extends cds.ApplicationService {
 
         // Received from ManagedAlerts service to test an alert configuration
         this.on(testAlert, async req => {
-            const { alert } = req.data
+            const { ID, isDraft } = req.data
+            const alert = await SELECT.from(isDraft ? AlertsView.drafts : AlertsView, ID ?? '').columns(a => {
+                a('*'),
+                    //@ts-expect-error
+                    a.thresholds('*'),
+                    //@ts-expect-error
+                    a.serviceItems('*'),
+                    //@ts-expect-error
+                    a.levelItems('*')
+            }) as Alert
             if (alert) {
                 const request = buildRequestForAlert(alert)
                 let table = ''
                 let measures: any[] = []
                 try {
                     measures = await request.req
-                    //@ts-ignore
                     measures.forEach(m => m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : m.metricName)
                     table = createAlertsTableCourierNew(alert, measures)
                 } catch (error) {
@@ -442,7 +454,7 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
         metrics.push(metric)
 
         const serviceGroupByParent = serviceGroup.map(x => x as MonthlyCostResponseObject & { groupId: string })
-        //@ts-ignore
+        //@ts-expect-error
         serviceGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
 
         const isCommercial = 'currency' in serviceGroup[0]
@@ -477,7 +489,7 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
             })
 
             const metricGroupByParent = metricGroup.map(x => x as MonthlyCostResponseObject & { groupId: string })
-            //@ts-ignore
+            //@ts-expect-error
             metricGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
 
             const isCommercial = 'currency' in metricGroup[0]
@@ -556,7 +568,7 @@ function aggregateMeasures(metric: Record<string, any>, measureGroups: { [key: s
 function aggregateTags(items: MonthlyCostResponseObject[] | MonthlyUsageResponseObject[], tags: string[]) {
     const aggregated = []
     for (const name of tags) {
-        //@ts-ignore
+        //@ts-expect-error
         const values = [...new Set(items.map(x => x[name]))]
             .filter(x => x != '' && x != null)
             .sort()
@@ -590,6 +602,7 @@ function generateSpaceMeasures(metric: any, technicalAllocationTable: prepareTec
                     level: TAggregationLevel.Space,
                     id: allocation.spaceID,
                     name: allocation.spaceName,
+                    //@ts-expect-error
                     measure: sums,
                     unit: parentMeasure.unit,
                     plans: parentMeasure.plans,
@@ -1056,7 +1069,12 @@ async function retrieveCreditDetails() {
     }
 
     await DELETE.from(CloudCreditsDetails)
-    await INSERT.into(CloudCreditsDetails).entries(creditDetails)
+    try {
+        creditDetails.length > 0 && await INSERT.into(CloudCreditsDetails).entries(creditDetails)
+    } catch (error) {
+        info('Attempted data insert:', creditDetails)
+        throw error
+    }
 
     status = `${creditDetails.length || 0} contract items updated in the database.`
     info(status)
@@ -1066,14 +1084,13 @@ async function retrieveCreditDetails() {
 async function sendNotification() {
     info(`Sending alerts ...`)
 
-    //@ts-ignore
     const alerts = (await SELECT.from(Alerts).columns(a => {
         a('*'),
-            //@ts-ignore
+            //@ts-expect-error
             a.thresholds('*'),
-            //@ts-ignore
+            //@ts-expect-error
             a.serviceItems('*'),
-            //@ts-ignore
+            //@ts-expect-error
             a.levelItems('*')
     }) as Alerts)
         .filter(x => x.active)
@@ -1099,11 +1116,12 @@ async function sendNotification() {
  * @param event 
  * @returns generated event
  */
-function api_sendNotification(event: CustomerResourceEvent) {
+async function api_sendNotification(event: CustomerResourceEvent) {
+    const serviceDestination = await getServiceDestination('ANS', 'btprc-notif')
     return ResourceEventsApi
         .postResourceEvent(event)
         .skipCsrfTokenFetching()
-        .execute({ destinationName: 'btprc-notif' })
+        .execute(serviceDestination)
 }
 
 async function fetchMeasuresForAlerts(alerts: Alerts): Promise<{ alert: Alert; measures: any[] }[]> {
@@ -1119,7 +1137,6 @@ async function fetchMeasuresForAlerts(alerts: Alerts): Promise<{ alert: Alert; m
             measures = [{ name: 'Please fix alert configuration' }]
         }
 
-        //@ts-ignore
         measures.forEach(m => m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : m.metricName)
         result.push({
             alert: alert as Alert,
@@ -1233,7 +1250,7 @@ function createAlertsTableCourierNew(alert: Alert, measures: CommercialMeasures 
     const header = `| ${columns.map(c => setColumnWidth(c.title, c)).join(` | `)} |`
     const line = `|${columns.map(c => '-'.repeat(c.width + 2)).join(`|`)}|`
     const rows = measures.map(m => {
-        //@ts-ignore
+        //@ts-expect-error
         const line = columns.map(c => setColumnWidth(m[c.value]?.toString() ?? '', c))
         return `| ${line.join(` | `)} | `
     })

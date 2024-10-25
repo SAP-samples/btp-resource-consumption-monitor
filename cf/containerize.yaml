@@ -1,0 +1,28 @@
+_schema-version: "1.0"
+repository: DOCKER_REGISTRY_SERVER
+tag: latest
+before-all:
+  - mbt build
+  - npm run build:kyma
+
+modules:
+  - name: btp-resource-consumption-srv
+    build-parameters:
+      buildpack:
+        buildpack: paketo-buildpacks/nodejs
+        builder: builder-jammy-base
+        path: gen/srv
+
+  - name: btp-resource-consumption-db-deployer
+    build-parameters:
+      buildpack:
+        buildpack: paketo-buildpacks/nodejs
+        builder: builder-jammy-base
+        path: gen/db
+
+  - name: btp-resource-consumption-ui-deployer
+    build-parameters:
+      buildpack:
+        buildpack: paketo-buildpacks/nodejs
+        builder: builder-jammy-base
+        path: gen/ui-deployer

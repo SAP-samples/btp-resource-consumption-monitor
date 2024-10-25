@@ -35,7 +35,11 @@ Watch our installation video on YouTube:
 
 ## Requirements
 
+**For Cloud Foundry deployments:**
 You need to have access to a `Sub Account`, in which *Cloud Foundry* is enabled, and you have created a `Space`. ***Note***: the name of this `Space` can *not* contain spaces (' ') or hypens ('-') but you *can* use underscores ('_').
+
+**For Kyma deployments:**
+You need to have access to a `Kyma Namespace`. The `name` of this namespace can *not* contain spaces (' ') or hypens ('-') but you *can* use underscores ('_').
 
 The following **Subscriptions** are required to deploy and use this application:
 - SAP HANA Cloud (you can re-use an existing instance. **Note**: this instance can sit in *any subaccount within the same region*)
@@ -51,46 +55,90 @@ The following **Entitlements** need to be available to use this application:
 - Job Scheduling Service: standard
 - SAP HANA Schemas & HDI Continers: hdi-shared
 - Usage Data Management Service: reporting-ga-admin
-- Application Logging Service: standard (optional service)
+- ~~Application Logging Service: standard (optional service)~~ *removed in v2.1.0*
 
 The following components are **optional but recommended** as an add-on:
 - SAP Analytics Cloud version 2024.08+ (**Note:** this SAC tenant can reside *anywhere*, it doesn't have to sit in the same global account)
 
+## Upgrading from version 2.0 to 2.1
+
+You can upgrade your 2.0.x version to 2.1.x in Cloud Foundry. Upgrades do not apply to Kyma deployments as they are new from v2.1.0 onwards.
+To upgrade your existing installation, just follow the below installation steps again using your existing target. The SAC package has not been changed.
+
 ## Download and Installation
 
 This solution contains 3 installable components:
-1. A backend application (CAP Typescript) to be deployed to Cloud Foundry (CF)
+1. A backend application (CAP Typescript) to be deployed to Cloud Foundry (CF) or Kyma
 2. *(optional)* An analytical package to be deployed to SAP Analytics Cloud (SAC)
 3. A frontend package (content package) to be deployed to SAP Work Zone (WZ)
 
-### 1. CF Application
+### 1. Backend Application
 In **Business Application Studio**, make sure to have a `Development Space` of kind `Full Stack Cloud Application` with the additional `Development Tools for SAP Build Work Zone` extension enabled. Alternatively, you can use Visual Studio Code or any other preferred IDE where NodeJs, [@sap/cds-dk](https://cap.cloud.sap/docs/get-started/jumpstart#_2-install-cap-s-cds-dk) and [mbt](https://github.com/SAP/cloud-mta-build-tool) is installed.
 
 `Clone` this repository in your environment and open the project.
 
 *Note:* You can use the application's default settings, or read through the rest of this document to identify the areas where you would like to use a different configuration. This relates to: default tags, available tags, multiple global accounts, currency conversions and using free tier.
 
-#### Option A. Deploy with Alert Notification configuration (initial deployment; existing configuration will be overwritten):
+#### For Cloud Foundry deployments:
+##### Option A. Deploy with Alert Notification configuration (initial deployment; existing configuration will be overwritten):
 ***Important - First change the following code lines before continuing:***
-- Configure your **email address** in the notifications configuration file [mtaext_notifications.mtaext](/cf/mtaext_notifications.mtaext#L19)
+- Configure your **email address** in the notifications configuration file [mtaext_notifications.mtaext](./cf/mtaext_notifications.mtaext#L19)
 
 ```cmd
 # from the project root folder:
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.0.2.mtar -e mtaext_notifications.mtaext
+cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar -e mtaext_notifications.mtaext
 ```
 
 ***Note:*** This deployment will trigger an **initial activation email** to your email address asking for your consent to receive further emails. Make sure to action this email to ensure you receive the notifications from this application!
 
-#### Option B. Deploy without changing any Alert Notification configuration (incremental deployments):
+##### Option B. Deploy without changing any Alert Notification configuration (incremental deployments):
 ```cmd
 # from the project root folder:
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.0.2.mtar
+cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar
+```
+
+#### For Kyma deployments:
+Set your Kyma namespace and generate a docker registry secret, e.g. `docker-registry`, and deploy it to Kyma:
+```cmd
+kubectl config set-context --current --namespace=NAMESPACE
+kubectl create secret docker-registry docker-registry --docker-server=DOCKER_REGISTRY_SERVER --docker-username=DOCKER_USER --docker-password=DOCKER_PASSWORD
+```
+
+Update the following files with your details/credentials:
+- [Chart values](./cf/chart/values.yaml#L2-L6): `KYMA_HOST` and `DOCKER_REGISTRY_SERVER`. Also update the name of your `imagePullSecret` if it is different.
+- [Containerize values](./cf/containerize.yaml#L2): `DOCKER_REGISTRY_SERVER`
+
+Build the project, create the docker containers and upload them to your docker registry:
+```cmd
+# from the project root folder:
+cd cf
+npm install
+npm run kyma:pack
+```
+
+##### Option A. Deploy with Alert Notification configuration (initial deployment; existing configuration will be overwritten):
+***Important - First change the following code lines before continuing:***
+- Configure your **email address** in the Kyma notifications configuration file [kyma-notification-settings.json](./cf/kyma/kyma-notification-settings.json#L10)
+
+Deploy the project to Kyma:
+```cmd
+# from the cf folder:
+npm run kyma:deploy-with-notif
+```
+
+***Note:*** This deployment will trigger an **initial activation email** to your email address asking for your consent to receive further emails. Make sure to action this email to ensure you receive the notifications from this application!
+
+##### Option B. Deploy without changing any Alert Notification configuration (incremental deployments):
+Deploy the project to Kyma:
+```cmd
+# from the cf folder:
+npm run kyma:deploy
 ```
 
 ### 2. SAC Content
@@ -99,6 +147,8 @@ This component is optional but provides additional insights. It could act as the
 
 The current content package requires at least **SAC version 2024.08**
 <!-- ***Temporary note: The current content package requires SAC version 2024.13 or later. We are looking at options to lower this dependency to 2024.08*** -->
+
+**For Kyma deployments:** The credentials used for the SAC connectivity below are configured for rotation every 365 days, with a 10 day overlap. Take note that every year the SAC connection will need to be updated with the new credentials. To change this rotation configuration, have a look [here](./cf/chart/values.yaml#L96).
 
 #### Step 1. Define connection
 In order for the SAC dashboards to connect to your data, it needs a connection to your HDI container. The name of this connection has to be `BTPRCHDI`.
@@ -200,17 +250,30 @@ It is suggested to configure the application and modify the 'Forecasting Configu
 
 ## Run Locally
 To run the application locally, you need to bind to the cloud service instances and run the application in hybrid mode. 
-```
+
+### For Cloud Foundry deployments:
+```cmd
 # from the project root folder:
 cd cf
 npm install -g ts-node
-cds bind -2 btprc-uas,btprc-db,btprc-dest
+cds-ts bind -2 btprc-uas,btprc-db,btprc-dest,btprc-notif,btprc-scheduler
 cds-ts watch --profile hybrid
 ```
 
 Open your browser to http://localhost:4004 where you will find the relevant `Web Applications`.
 
-**Tip:** This will connect to the HANA Cloud database. In case you want to use a local sqlite database for testing, run `cds deploy -2 sqlite`, and remove the binding to `btprc-db` from the `.cdsrc-private.json` file.
+### For Kyma deployments:
+```cmd
+# from the project root folder:
+cd cf
+npm install -g ts-node
+cds-ts bind -n k8s -2 btprc-srv-btprc-uas,btprc-srv-btprc-db,btprc-srv-btprc-destination,btprc-srv-btprc-notif,btprc-srv-btprc-scheduler
+cds-ts watch --profile hybrid
+```
+
+Open your browser to http://localhost:4004 where you will find the relevant `Web Applications`.
+
+**Tip:** This will connect to the HANA Cloud database. In case you want to use a local sqlite database for testing, run `cds-ts deploy -2 sqlite`, and remove the binding to `btprc-db` from the `.cdsrc-private.json` file.
 
 ## Architecture
 ![BTP Architecture](./btprc-architecture.png)
@@ -219,7 +282,7 @@ Open your browser to http://localhost:4004 where you will find the relevant `Web
 When started for the first time, the application creates multiple jobs in the Job Scheduling Service:
 - `Default_UpdateDailyUsage`: a recurring job to retrieve the consumption information for that day. In its default configuration, this job will run every 3 hours (*/3 UTC). Typically, the Usage Data Management API provides new data points around 6am UTC but this can vary.
 - `Default_UpdateMonthlyUsage`: a recurring job to retrieve the consumption information from the past month. In its default configuration, this job will run every 1st day of the month, at 1:00 AM and 3:00 AM UTC. It runs twice, in case the first run is not successful.
-- `Default_UpdateHistoricUsage`: a one-time job which runs after creation of the job. It is used to retrieve the consumption information of that day + the past months (default: from October 2023, see [settings.ts](/cf/srv/settings.ts#L10)). This makes sure that after deploying the application you immediately have some information in the dashboards before the scheduled jobs run.
+- `Default_UpdateHistoricUsage`: a one-time job which runs after creation of the job. It is used to retrieve the consumption information of that day + the past months (default: from October 2023, see [settings.ts](/cf/srv/settings.ts#L61)). This makes sure that after deploying the application you immediately have some information in the dashboards before the scheduled jobs run.
 
 The initial data that this last job retrieves can be refreshed/extended from the UI: in the application open the `Data Management` menu and click on `Load historic data`. Here you can specify how far back you want to retrieve the consumption information.
 
@@ -242,7 +305,7 @@ Each commercial metric of a service has a `Forecasting Configuration`. The follo
         - \> 1: the usage of the remaining days will be higher than the usage of the past days (progressive)
     - examples: SAP Integration Suite transactions (has free allowance), Mobile Services users (most users' first access will be early in the month), ...
 
-The forecasting settings can be all reset to the default value (see [settings.ts](/cf/srv/settings.ts#L14)) from the UI: menu `Forecast Management: Revert all forecast settings to default`.
+The forecasting settings can be all reset to the default value (see [settings.ts](/cf/srv/settings.ts#L65)) from the UI: menu `Forecast Management: Revert all forecast settings to default`.
 
 ## Technical Allocation
 Each commercial metric of a service has a `Technical Allocation` configuration. This caters for cost distribution to space level.
@@ -263,8 +326,8 @@ The Tag Manager is used to assign tags. If a given level (Directory, Sub Account
 **Important:** Given that tags receive all costs of the level they are associated with, it is possible to mistakenly double-up costs when tagging *sub-items* as well as *parent-items* with the same tag. Make sure to only have a single level of tagging in each lineage to the root `Customer` element for each tag. Levels can be mixed however if they don't overlap in the hierarchy tree (e.g. Sub Account A tags on Service level, whereas Sub Account B tags on Sub Account level), or if the tag name itself is different (e.g. Sub Account A = 'Cost Center: 100', and Service X in Sub Account A = 'Line of Business: HR').
 
 Up to 10 `Managed Tags` can be configured. 2 are configured by default: **Line of Business** and **Cost Center**. In order to add/change the available managed tags:
-1. Update the csv data for `ManagedTagNames` in [db-CodeLists.csv](./cf/db/data/db-CodeLists.csv#L72). This will steer the available options in the dropdown selection in the Configure Tags application.
-2. Update the mapping in [settings.ts](./cf/srv/settings.ts#L197). This will filter the tags to show in columns 1-10 in the Configure Tags list view.
+1. Update the csv data for `ManagedTagNames` in [db-CodeLists.csv](./cf/db/data/db-CodeLists.csv#L72-73). This will steer the available options in the dropdown selection in the Configure Tags application.
+2. Update the mapping in [settings.ts](./cf/srv/settings.ts#L198). This will filter the tags to show in columns 1-10 in the Configure Tags list view.
 3. Update the titles in [schema.cds](./cf/db/schema.cds#L315). This will steer the titles of the columns in the Configure Tags list view.
 4. In case you enable more than 2 managed tags, you will have to 'un-hide' additional columns by setting the `@UI.Hidden` value to `false` in the [annotations](./cf/app/managetags/annotations.cds#L114) file, for each of the *tagTextManaged(x)* columns you want to use.
 
@@ -273,11 +336,17 @@ The application can be connected to a different/multiple Global Accounts to moni
 
 To do so:
 - Manually create an instance of the `Usage Data Management Service` service of plan `reporting-ga-admin` in the other Global Account. Create a `Service Key` on that service instance, and copy its contents.
-- In the Global Account where the application is deployed, create a new `User Provided Service` in which you paste the service key contents. The *name* of this user provided service has to **start with** `btprc-uas` (use e.g. `btprc-uas-ups-account2`).
-- Adapt the `mta.yaml` on lines 35, 36 and 280, 287 to swap/add the bound standard service instance for the user-provided instance.
 - In case of multiple Global Accounts the solution will display a `Breakdown by Global Account`. To enable, activate the 'multi global account mode' in [settings.ts](./cf/srv/settings.ts#L7).
 
 **Important:** In case of using multiple Global Accounts, take note of the currencies of the accounts. The solution can only work correctly if the currencies are aligned. If different currencies are used in the different Global Accounts, enable currency conversions in [settings.ts](./cf/srv/settings.ts#L14): set a final/unified currency as `target` and provide the exchange rates of the other currencies. Make sure to set the `active` flag to `true` to enable the conversion.
+
+### For Cloud Foundry deployments:
+- In the Global Account where the application is deployed, create a new `User Provided Service` in which you paste the service key contents. The *name* of this user provided service has to contain `uas` (use e.g. `btprc-uas-ups-account2`).
+- Adapt the `cf/mta.yaml` on lines 36, 39 and 268, 275 to swap/add the bound standard service instance for the user-provided instance.
+
+### For Kyma deployments:
+- In the Global Account where the application is deployed, create a new `Secret` in which you paste the service key contents. The *name* of this user provided service has to contain `uas` (use e.g. `btprc-uas-ups-account2`). You can use this [template file](./cf/kyma/template-additional-UAS.yaml) to create the secret.
+- Adapt the `cf/kyma/values.yaml` on lines 21 and 27 to swap/add the bound standard service instance for the user-provided instance.
 
 ## Using Free Tier
 For demo and test purposes it is possible to implement this solution using Free Tier services. Be aware there are restrictions when using the Free Tier service plans.
@@ -289,8 +358,8 @@ For demo and test purposes it is possible to implement this solution using Free 
 
 - Resources:
     - Cloud Foundry runtime: free tier plan is available and can be used. Create your CF Organisation with the 'free' option before deploying the application.
-    - SAP Alert Notification service: free tier plan is available and can be used. Switch your MTA to plan 'free' instead of 'standard' [here](/cf/mta.yaml#L279).
-    - SAP Application Logging service: there is no free plan, but this is an optional service, so you can just remove it from your MTA, both [here](/cf/mta.yaml#L36) and [here](/cf/mta.yaml#L333).
+    - Kyma runtime: free tier plan is available and can be used.
+    - SAP Alert Notification service: free tier plan is available and can be used. Switch your MTA to plan 'free' instead of 'standard' [here for CF](./cf/mta.yaml#L264) or [here for Kyma](./cf/chart/values.yaml#L108).
     - SAP Job Scheduling service: no free plan available. For an indicative pricing, see [here](https://discovery-center.cloud.sap/serviceCatalog/job-scheduling-service?region=all&tab=service_plan).
 
 ## Known Issues
