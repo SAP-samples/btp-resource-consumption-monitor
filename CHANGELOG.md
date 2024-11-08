@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Version 2.1.0 - 2024-10-24
 ### Added
 - Support for Kyma deployment
-- Support from CDS 8
+- Support from CDS 8.4
+- Enabled lower level 'instances' breakdown for select services
 
 ### Changed
 - Removed dependency on Application Logging service to minimize footprint
