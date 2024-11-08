@@ -288,7 +288,7 @@ Open your browser to http://localhost:4004 where you will find the relevant `Web
 When started for the first time, the application creates multiple jobs in the Job Scheduling Service:
 - `Default_UpdateDailyUsage`: a recurring job to retrieve the consumption information for that day. In its default configuration, this job will run every 3 hours (*/3 UTC). Typically, the Usage Data Management API provides new data points around 6am UTC but this can vary.
 - `Default_UpdateMonthlyUsage`: a recurring job to retrieve the consumption information from the past month. In its default configuration, this job will run every 1st day of the month, at 1:00 AM and 3:00 AM UTC. It runs twice, in case the first run is not successful.
-- `Default_UpdateHistoricUsage`: a one-time job which runs after creation of the job. It is used to retrieve the consumption information of that day + the past months (default: from October 2023, see [settings.ts](/cf/srv/settings.ts#L61)). This makes sure that after deploying the application you immediately have some information in the dashboards before the scheduled jobs run.
+- `Default_UpdateHistoricUsage`: a one-time job which runs after creation of the job. It is used to retrieve the consumption information of that day + the past months (default: from October 2023, see [settings.ts](/cf/srv/settings.ts#L90)). This makes sure that after deploying the application you immediately have some information in the dashboards before the scheduled jobs run.
 
 The initial data that this last job retrieves can be refreshed/extended from the UI: in the application open the `Data Management` menu and click on `Load historic data`. Here you can specify how far back you want to retrieve the consumption information.
 
@@ -311,7 +311,7 @@ Each commercial metric of a service has a `Forecasting Configuration`. The follo
         - \> 1: the usage of the remaining days will be higher than the usage of the past days (progressive)
     - examples: SAP Integration Suite transactions (has free allowance), Mobile Services users (most users' first access will be early in the month), ...
 
-The forecasting settings can be all reset to the default value (see [settings.ts](/cf/srv/settings.ts#L65)) from the UI: menu `Forecast Management: Revert all forecast settings to default`.
+The forecasting settings can be all reset to the default value (see [settings.ts](/cf/srv/settings.ts#L94)) from the UI: menu `Forecast Management: Revert all forecast settings to default`.
 
 ## Technical Allocation
 Each commercial metric of a service has a `Technical Allocation` configuration. This caters for cost distribution to space level.
@@ -333,7 +333,7 @@ The Tag Manager is used to assign tags. If a given level (Directory, Sub Account
 
 Up to 10 `Managed Tags` can be configured. 2 are configured by default: **Line of Business** and **Cost Center**. In order to add/change the available managed tags:
 1. Update the csv data for `ManagedTagNames` in [db-CodeLists.csv](./cf/db/data/db-CodeLists.csv#L72-73). This will steer the available options in the dropdown selection in the Configure Tags application.
-2. Update the mapping in [settings.ts](./cf/srv/settings.ts#L198). This will filter the tags to show in columns 1-10 in the Configure Tags list view.
+2. Update the mapping in [settings.ts](./cf/srv/settings.ts#L227). This will filter the tags to show in columns 1-10 in the Configure Tags list view.
 3. Update the titles in [schema.cds](./cf/db/schema.cds#L315). This will steer the titles of the columns in the Configure Tags list view.
 4. In case you enable more than 2 managed tags, you will have to 'un-hide' additional columns by setting the `@UI.Hidden` value to `false` in the [annotations](./cf/app/managetags/annotations.cds#L114) file, for each of the *tagTextManaged(x)* columns you want to use.
 

@@ -14,6 +14,7 @@ type TAggregationLevel       : String enum {
     CustomTag           = 'Custom Tag'; //Not used so far
     ServiceInSubaccount = 'Service';
     ServiceInSpace      = 'Service (alloc.)';
+    InstanceOfService   = 'Instance'; // e.g. HANA Cloud database instance, or a Cloud Foundry Application
 }
 
 type TInterval               : String enum {
@@ -49,9 +50,10 @@ type TAccountStructureLevels : String enum {
     Datacenter;
     SubAccount          = 'Sub Account';
     Space;
-    Instance            = 'Environment';
-    ServiceInSubaccount = 'Service';
-    ServiceInSpace      = 'Service (alloc.)';
+    Instance            = 'Environment'; // e.g. Cloud Foundry Org
+    ServiceInSubaccount = 'Service'; // e.g. HANA Cloud service created in 'Other' environment
+    ServiceInSpace      = 'Service (alloc.)'; // e.g. HANA Cloud services created in a CF Space
+    InstanceOfService   = 'Instance'; // e.g. HANA Cloud database instance, or a Cloud Foundry Application
 }
 
 type TPasteMode              : String enum {

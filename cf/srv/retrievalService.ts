@@ -457,6 +457,8 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
         //@ts-expect-error
         serviceGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
 
+        const serviceGroupForInstances = serviceGroup.filter(x => Settings.appConfiguration.serviceInstancesCreationList.includes(x.serviceId))
+
         const isCommercial = 'currency' in serviceGroup[0]
         measures = [
             ...measures,
@@ -469,6 +471,9 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
             ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(serviceGroup, ['spaceId', 'spaceName']), TAggregationLevel.Space, measureAggregationProperties) : []),
             // Create Service records
             ...aggregateMeasures(metric, groupByKeys(serviceGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties),
+            // Create Service Instances
+            //@ts-ignore
+            ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(serviceGroupForInstances, ['instanceId', 'instanceId']), TAggregationLevel.InstanceOfService, measureAggregationProperties) : [])
         ]
 
         // Aggregate one additional level: per Metric
@@ -492,6 +497,8 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
             //@ts-expect-error
             metricGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
 
+            const metricGroupForInstances = metricGroup.filter(x => Settings.appConfiguration.serviceInstancesCreationList.includes(x.serviceId))
+
             const isCommercial = 'currency' in metricGroup[0]
             measures = [
                 ...measures,
@@ -504,8 +511,15 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
                 ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(metricGroup, ['spaceId', 'spaceName']), TAggregationLevel.Space, measureAggregationProperties) : []),
                 // Create Service records
                 ...aggregateMeasures(metric, groupByKeys(metricGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties),
+                // Create Service Instances
+                //@ts-ignore
+                ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(metricGroupForInstances, ['instanceId', 'instanceId']), TAggregationLevel.InstanceOfService, measureAggregationProperties) : []),
                 ...((isCommercial && Settings.appConfiguration.distributeCostsToSpaces)
-                    ? generateSpaceMeasures(metric, technicalAllocationTable, aggregateMeasures(metric, groupByKeys(metricGroup, ['subaccountId', 'subaccountName']), TAggregationLevel.SubAccount, measureAggregationProperties))
+                    ? generateTechnicalAllocationMeasures(metric, technicalAllocationTable, TAggregationLevel.Space, aggregateMeasures(metric, groupByKeys(metricGroup, ['subaccountId', 'subaccountName']), TAggregationLevel.SubAccount, measureAggregationProperties))
+                    : []
+                ),
+                ...((isCommercial && Settings.appConfiguration.serviceInstancesCreationList.includes(metric.toService.serviceId!))
+                    ? generateTechnicalAllocationMeasures(metric, technicalAllocationTable, TAggregationLevel.InstanceOfService, aggregateMeasures(metric, groupByKeys(metricGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties))
                     : []
                 )
             ]
@@ -529,8 +543,8 @@ function aggregateMeasures(metric: Record<string, any>, measureGroups: { [key: s
     const aggregatedMeasures: Record<string, any>[] = []
     for (const [groupKey, measures] of Object.entries(measureGroups)) {
         const [id, name] = JSON.parse(groupKey)
-        if (id == Settings.defaultValues.noNameErrorValue && (level == TAggregationLevel.Space || level == TAggregationLevel.Directory)) {
-            // Do not generate 'unallocated' entries for Directories (will be in Sub Accounts) and Spaces (will belong to higher level)
+        if (id == Settings.defaultValues.noNameErrorValue && (level == TAggregationLevel.Space || level == TAggregationLevel.Directory || TAggregationLevel.InstanceOfService)) {
+            // Do not generate 'unallocated' entries for Directories (will be in Sub Accounts), Spaces (will belong to higher level) and Service Instances (will belong to higher level)
         } else {
             // Sum up the mentioned properties over all measures
             const sums = measures.reduce((p, c) => {
@@ -576,8 +590,8 @@ function aggregateTags(items: MonthlyCostResponseObject[] | MonthlyUsageResponse
     }
     return aggregated
 }
-function generateSpaceMeasures(metric: any, technicalAllocationTable: prepareTechnicalAllocations, parentMeasures: Record<string, any>[]) {
-    const spaceMeasures: CommercialMeasures | TechnicalMeasures = []
+function generateTechnicalAllocationMeasures(metric: any, technicalAllocationTable: prepareTechnicalAllocations, aggregationLevel: TAggregationLevel, parentMeasures: Record<string, any>[]) {
+    const allocationMeasures: CommercialMeasures | TechnicalMeasures = []
 
     const allocationForService = technicalAllocationTable.filter(x =>
         x.serviceId == metric.toService.serviceId
@@ -585,6 +599,7 @@ function generateSpaceMeasures(metric: any, technicalAllocationTable: prepareTec
         && x.retrieved == metric.toService.retrieved
         && x.interval == metric.toService.interval
         && x.cMeasureId == metric.measureId
+        && x.level == aggregationLevel
     )
 
     parentMeasures.forEach(parentMeasure => {
@@ -595,37 +610,38 @@ function generateSpaceMeasures(metric: any, technicalAllocationTable: prepareTec
             const sums = { ...parentMeasure.measure }
             const { paygCost, cloudCreditsCost, ...defaultForecastValues } = sums
             Object.keys(sums).forEach(k => sums[k] = fixDecimals(Number(sums[k]) * allocationPct))
-            spaceMeasures.push(
-                // Create Space record
-                {
+            // Create Space/Instance record
+            allocationMeasures.push({
+                toMetric: parentMeasure.toMetric,
+                level: aggregationLevel,
+                id: allocation.targetID,
+                name: allocation.targetName,
+                //@ts-expect-error
+                measure: sums,
+                unit: parentMeasure.unit,
+                plans: parentMeasure.plans,
+                currency: parentMeasure.currency,
+                ...(metric.toService.interval == TInterval.Monthly) && { forecast: defaultForecastValues, forecastPct: 100 } // monthly readings default to 100% forecast
+            })
+            if (aggregationLevel == TAggregationLevel.Space) {
+                // Create Service in Space record
+                allocationMeasures.push({
                     toMetric: parentMeasure.toMetric,
-                    level: TAggregationLevel.Space,
-                    id: allocation.spaceID,
-                    name: allocation.spaceName,
+                    level: TAggregationLevel.ServiceInSpace,
+                    id: `${allocation.targetID}_${allocation.serviceId}`,
+                    name: allocation.serviceId, // no serviceName available. Required?
                     //@ts-expect-error
                     measure: sums,
                     unit: parentMeasure.unit,
                     plans: parentMeasure.plans,
                     currency: parentMeasure.currency,
                     ...(metric.toService.interval == TInterval.Monthly) && { forecast: defaultForecastValues, forecastPct: 100 } // monthly readings default to 100% forecast
-                },
-                // Create Service record
-                {
-                    toMetric: parentMeasure.toMetric,
-                    level: TAggregationLevel.ServiceInSpace,
-                    id: `${allocation.spaceID}_${allocation.serviceId}`,
-                    name: allocation.serviceId, // no serviceName available. Required?
-                    measure: sums,
-                    unit: parentMeasure.unit,
-                    plans: parentMeasure.plans,
-                    currency: parentMeasure.currency,
-                    ...(metric.toService.interval == TInterval.Monthly) && { forecast: defaultForecastValues, forecastPct: 100 } // monthly readings default to 100% forecast
-                }
-            )
+                })
+            }
         })
     })
 
-    return spaceMeasures
+    return allocationMeasures
 }
 
 async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
@@ -746,7 +762,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
             })
         });
 
-    // Service records
+    // Service records: service item under Sub Account, or service (alloc) under space
     [...new Set(data.filter(x => x.serviceId !== null).map(x => x.serviceId))]
         .forEach(id => {
             const spaceItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => x.spaceId), ['serviceId', 'spaceId'])
@@ -768,10 +784,29 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                     level: itemLevel,
                     parentID: itemParentID,
                     treeLevel: item?.directoryId ? (isSpaceLevel ? 5 : 4) : (isSpaceLevel ? 4 : 3),
-                    treeState: 'leaf',
+                    treeState: (!isSpaceLevel && Settings.appConfiguration.serviceInstancesCreationList.includes(item?.serviceId)) ? 'expanded' : 'leaf',
                     managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == itemLevel ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
                     customTags: [{ name: 'Hierarchy', value: `${isSpaceLevel ? 5 : 4}-${itemLevel}` }]
                 })
+            }
+            // new level under Service (under Sub Account): instances
+            if (Settings.appConfiguration.serviceInstancesCreationList.includes(id)) {
+                [...new Set(data.filter(x => x.serviceId == id).filter(x => x.instanceId !== null).map(x => x.instanceId))]
+                    .forEach(id => {
+                        const item = data.find(x => x.instanceId == id)
+                        item?.instanceId && structureItems.push({
+                            ID: item?.instanceId,
+                            region: item?.dataCenterName,
+                            name: item?.instanceId,
+                            environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                            level: TAccountStructureLevels.InstanceOfService,
+                            parentID: `${item?.subaccountId}_${item?.serviceId}`,
+                            treeLevel: item?.directoryId ? 5 : 4,
+                            treeState: 'leaf',
+                            managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.InstanceOfService ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
+                            customTags: [{ name: 'Hierarchy', value: `5-Instance` }]
+                        })
+                    });
             }
         });
 

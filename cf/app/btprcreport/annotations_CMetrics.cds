@@ -265,17 +265,23 @@ annotate service.CommercialMetrics with @(UI: {
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Directory',
-                    Target: 'cmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
+                    Target: 'cmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel'
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Sub Account',
-                    Target: 'cmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
+                    Target: 'cmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel'
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'By Instance',
+                    Target       : 'cmByInstance/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByDoubleParentLabel',
+                    ![@UI.Hidden]: hideServiceInstanceDistribution
                 },
                 {
                     $Type        : 'UI.ReferenceFacet',
                     Label        : 'By Space',
-                    Target       : 'cmBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel',
+                    Target       : 'cmBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel',
                     ![@UI.Hidden]: hideCommercialSpaceAllocation
                 },
                 {

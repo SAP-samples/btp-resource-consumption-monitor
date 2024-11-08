@@ -171,17 +171,23 @@ annotate service.TechnicalMetrics with @(UI: {
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Directory',
-                    Target: 'tmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
+                    Target: 'tmByDirectory/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel'
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Sub Account',
-                    Target: 'tmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
+                    Target: 'tmBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel'
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'By Instance',
+                    Target       : 'tmByInstance/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByDoubleParentLabel',
+                    ![@UI.Hidden]: hideServiceInstanceDistribution
                 },
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Space',
-                    Target: 'tmBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByLabel'
+                    Target: 'tmBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel'
                 },
                 {
                     $Type : 'UI.ReferenceFacet',

@@ -48,7 +48,36 @@ export const Settings = {
          */
         billingVerification: {
             allowedDifferenceThreshold: 10
-        }
+        },
+        /**
+         * List of services for which a lower level should be created with instanceIds. To disable, provide empty list.
+         * Technical metrics will be populated by default, commercial metrics will only be populated if Technical Allocation has been configured for the service.
+         * 
+         * Not all BTP Services have the concept of 'instances', e.g. SAP Integration Suite or SAP Work Zone are not 'instances' because they are 'subscriptions' where there is only 1 per sub account.
+         */
+        serviceInstancesCreationList: [
+            'abap',
+            'build-code',
+            'adobeforms',
+            'data-analytics', // SAP Datasphere
+            'data-attribute-recommendation',
+            'data-intelligence',
+            'document-information-extraction',
+            'documentservice',
+            'enterprisemessaging',
+            'hana-base', // SAP HANA on SAP DC
+            'hana-cloud', // SAP HANA Cloud
+            'integration-suite-advanced-event-mesh',
+            'iot',
+            'jobscheduler',
+            'linux-container', // Cloud Foundry Runtime
+            'mobileservices',
+            'objectstore',
+            'postgresql-db',
+            'sap-analytics-cloud-embedded-edition',
+            'sap-build-apps',
+            'translationhub'
+        ]
     },
     defaultValues: {
         /**

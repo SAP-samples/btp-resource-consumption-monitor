@@ -76,15 +76,19 @@ export default class PresentationService extends cds.ApplicationService {
                 const measure = (each as BTPService).cmByCustomer
                 if (measure) {
                     addBulletChartValues(measure)
-                    if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
+                    measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
+                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    // if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
                 }
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
                 each.hideCommercialSpaceAllocation = !Settings.appConfiguration.distributeCostsToSpaces
+                each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.serviceId!)
             })
         })
 
@@ -103,13 +107,17 @@ export default class PresentationService extends cds.ApplicationService {
                 const measure = (each as CommercialMetric).cmByCustomer
                 if (measure) {
                     addBulletChartValues(measure)
-                    if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
+                    measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
+                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    // if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
                 }
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
                 each.hideCommercialSpaceAllocation = !Settings.appConfiguration.distributeCostsToSpaces
+                each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.toService_serviceId!)
 
                 if ('technicalMetricForAllocation' in each && each.technicalMetricForAllocation == null) {
                     // Create virtual entry to show text so there is a button for the user
@@ -132,9 +140,11 @@ export default class PresentationService extends cds.ApplicationService {
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
                 const measure = (each as TechnicalMetric).tmByCustomer
                 if (measure) {
-                    if (measure.delta_measure_usagePct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
+                    measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
+                    // if (measure.delta_measure_usagePct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
                 }
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
+                each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.toService_serviceId!)
             })
         })
 
@@ -145,8 +155,10 @@ export default class PresentationService extends cds.ApplicationService {
             items?.forEach(each => {
                 const measure = (each as BTPService).cmByCustomer
                 if (measure) {
-                    if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
+                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
+                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
@@ -387,7 +399,7 @@ function addBulletChartValues(measure: CommercialMeasure): void {
  * Calculate the criticality value for the a delta measure
  * @param value value that will be compared to thresholds
  */
-function getForecastCriticality(value?: number): number {
+function getForecastCriticality(value?: number | null): number {
     let criticality = statusMap.Neutral
     if (value) {
         if (value <= multipliers.Normal) criticality = statusMap.Good
@@ -401,7 +413,7 @@ function getForecastCriticality(value?: number): number {
  * Calculate the criticality value for the a delta measure
  * @param value value that will be compared to thresholds
  */
-function getDeltaCriticality(value?: number): number {
+function getDeltaCriticality(value?: number | null): number {
     let criticality = statusMap.Neutral
     if (value) {
         if (value <= deltaThresholds.Normal) criticality = statusMap.Good
