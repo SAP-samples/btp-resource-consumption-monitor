@@ -89,7 +89,7 @@ modules:
               TokenServiceKeyName: btprc-auth-key
               URL: ~{srv-api/srv-url}
               sap.cloud.service: sap.btp.resourceconsumption
-              HTML5.Timeout: 60000
+              HTML5.Timeout: 120000
             - Name: btprc-repo-host
               ServiceInstanceName: btprc-repo-host
               ServiceKeyName: btprc-repo-host-key
