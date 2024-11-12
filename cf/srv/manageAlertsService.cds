@@ -38,7 +38,8 @@ service ManageAlertsService {
     @readonly
     entity ServiceAndMetricNames  as
             select distinct
-                key id,
+                key id || level || name as uniqueid      : String, // Useless UUID for uniqueness as key for paging
+                    id,
                     level,
                     name
             from (
