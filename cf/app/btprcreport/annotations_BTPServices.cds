@@ -354,6 +354,12 @@ annotate service.BTPServices with @(UI: {
                 },
                 {
                     $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Instance',
+                    Target       : 'cmByMetricByInstance/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideServiceInstanceDistribution
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
                     Label        : 'Breakdown By Space',
                     Target       : 'cmByMetricBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
                     ![@UI.Hidden]: hideCommercialSpaceAllocation
@@ -397,6 +403,12 @@ annotate service.BTPServices with @(UI: {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'Breakdown By Sub Account',
                     Target: 'tmByMetricBySubAccount/@UI.PresentationVariant#ServiceEmbeddedBreakdown'
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Instance',
+                    Target       : 'tmByMetricByInstance/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideServiceInstanceDistribution
                 },
                 {
                     $Type : 'UI.ReferenceFacet',

@@ -7,6 +7,16 @@ import {
     ManagedTagAllocations
 } from '#cds-models/db'
 
+import {
+    getDestinationFromServiceBinding,
+    serviceToken,
+    decodeJwt,
+    HttpDestination,
+    Service,
+    ServiceBindingTransformOptions,
+    DestinationAuthToken
+} from '@sap-cloud-sdk/connectivity'
+
 const info = cds.log('functions').info
 
 export function fixDecimals(n: number | string | undefined, scale: number = 2): number {
@@ -67,9 +77,9 @@ export function groupByKeys<T>(items: T[], keys: (keyof T)[]): { [key: string]: 
     }, {} as { [key: string]: T[] })
 }
 
-export function flattenObject(object: Record<string, any>, parent?: string) {
+export function flattenObject(object: Record<string, any> | null, parent?: string) {
     const flattened: Record<string, any> = {}
-    for (const [k, v] of Object.entries(object)) {
+    for (const [k, v] of Object.entries(object ?? {})) {
         if (typeof v === 'object' && !Array.isArray(v) && v !== null) {
             Object.assign(flattened, flattenObject(v, parent ? `${parent}_${k}` : k))
         } else {
@@ -173,4 +183,69 @@ export function reportYearMonthToTextShort(reportYearMonth: string): string {
     ]
     const month = Number(reportYearMonth.slice(4, 6)) - 1
     return month < months.length ? (`${months[month]} ${reportYearMonth.slice(0, 4)}`) : reportYearMonth
+}
+
+/**
+ * Retrieves destination configuration with renewed token
+ * @returns HTTPDestination
+*/
+export async function getServiceDestination(transformation: 'ANS' | 'TargetUrl' | 'UAA' | 'Destination', ServiceBindingName: string): Promise<HttpDestination> {
+    let serviceBindingTransformFn = serviceBindingTransformFn_Destinations
+    if (transformation == 'ANS') serviceBindingTransformFn = serviceBindingTransformFn_ANS
+    if (transformation == 'TargetUrl') serviceBindingTransformFn = serviceBindingTransformFn_TargetUrl
+    if (transformation == 'UAA') serviceBindingTransformFn = serviceBindingTransformFn_UAA
+
+    return getDestinationFromServiceBinding({ destinationName: ServiceBindingName, serviceBindingTransformFn }) as Promise<HttpDestination>
+}
+async function serviceBindingTransformFn_Destinations(service: Service, options: ServiceBindingTransformOptions | undefined): Promise<HttpDestination> {
+    const token = await serviceToken(service, options)
+    const exp = decodeJwt(token).exp
+    return {
+        url: `${service.credentials.uri}/destination-configuration/v1`,
+        authentication: 'OAuth2ClientCredentials',
+        authTokens: authTokenSnippet(token, exp)
+    }
+}
+async function serviceBindingTransformFn_ANS(service: Service, options: ServiceBindingTransformOptions | undefined): Promise<HttpDestination> {
+    const token = await serviceToken({
+        ...service,
+        credentials: {
+            clientid: service.credentials.client_id,
+            clientsecret: service.credentials.client_secret,
+            url: service.credentials.oauth_url
+        }
+    }, options)
+    const exp = decodeJwt(token).exp
+    return {
+        url: service.credentials.url,
+        authentication: 'OAuth2ClientCredentials',
+        authTokens: authTokenSnippet(token, exp)
+    }
+}
+async function serviceBindingTransformFn_TargetUrl(service: Service, options: ServiceBindingTransformOptions | undefined): Promise<HttpDestination> {
+    const token = await serviceToken(service, options)
+    const exp = decodeJwt(token).exp
+    return {
+        url: service.credentials.target_url,
+        authentication: 'OAuth2ClientCredentials',
+        authTokens: authTokenSnippet(token, exp)
+    }
+}
+async function serviceBindingTransformFn_UAA(service: Service, options: ServiceBindingTransformOptions | undefined): Promise<HttpDestination> {
+    const token = await serviceToken({ ...service, credentials: { ...service.credentials.uaa } }, options)
+    const exp = decodeJwt(token).exp
+    return {
+        url: service.credentials.url,
+        authentication: 'OAuth2ClientCredentials',
+        authTokens: authTokenSnippet(token, exp)
+    }
+}
+function authTokenSnippet(token: string, exp: number | undefined): DestinationAuthToken[] {
+    return [{
+        value: token,
+        type: 'bearer',
+        expiresIn: exp && Math.floor((exp * 1000 - Date.now()) / 1000).toString(10) || '0',
+        http_header: { key: 'Authorization', value: `Bearer ${token}` },
+        error: null
+    }]
 }

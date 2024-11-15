@@ -5,12 +5,21 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
-## Version 2.0.x - Future
+## Version 2.1.0 - 2024-11-15
+### Added
+- Support for Kyma deployment
+- Support from CDS 8.4
+- Enabled lower level 'instances' breakdown for select services
+
 ### Changed
-- Work Zone release 2024-07-11 will make changes the default sorting of spaces, which is now pre-empted in the application to keep the correct sort order
+- Removed dependency on Application Logging service to minimize footprint
+- Increased UI timeout from 60s to 120s which could be required for multi-GlobalAccount setups
+- Work Zone spaces are now explicitely sorted, leveraging a new Work Zone configuration feature
 - Improved handling of account structure to allow for changes in sub account naming and hierarchies
 - Extended the sync job of the previous month from 1st of the month till 5th of the month to ensure receiving its non-estimated/final data. This will create a new job. The old job can be removed manually via the BTP Cockpit.
 
+### Fixed
+- Fixed faulty filter dropdown in configuring Alerts
 
 ## Version 2.0.2 - 2024-07-03
 ### Added

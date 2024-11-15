@@ -6,12 +6,9 @@ import {
     MonthlyUsageResponseList,
     UsageAndCostManagementApi
 } from './external/APIUasReportingService'
-import {
-    getDestinationFromServiceBinding,
-    serviceToken,
-    decodeJwt,
-    HttpDestination
-} from '@sap-cloud-sdk/connectivity'
+
+import { getServiceDestination } from './functions'
+import { filterServices } from '@sap/xsenv'
 
 const info = cds.log('UAS API').info
 
@@ -31,7 +28,7 @@ export async function api_monthlyUsage(queryParameters: { fromDate: number, toDa
     for (const binding of serviceBindingNames) {
         info(`Querying binding ${binding}...`)
         try {
-            const serviceDestination = await getServiceDestination(binding)
+            const serviceDestination = await getServiceDestination('TargetUrl', binding)
             const result = await UsageAndCostManagementApi
                 .monthlyUsage(queryParameters)
                 .execute(serviceDestination)
@@ -52,7 +49,7 @@ export async function api_monthlyCost(queryParameters: { fromDate: number, toDat
     for (const binding of serviceBindingNames) {
         info(`Querying binding ${binding}...`)
         try {
-            const serviceDestination = await getServiceDestination(binding)
+            const serviceDestination = await getServiceDestination('TargetUrl', binding)
             const result = await UsageAndCostManagementApi
                 .monthlyUsageSubaccountCost(queryParameters)
                 .execute(serviceDestination)
@@ -73,7 +70,7 @@ export async function api_creditDetails(queryParameters: { viewPhases: 'ALL' | '
     for (const binding of serviceBindingNames) {
         info(`Querying binding ${binding}...`)
         try {
-            const serviceDestination = await getServiceDestination(binding)
+            const serviceDestination = await getServiceDestination('TargetUrl', binding)
             const result = await UsageAndCostManagementApi
                 .cloudCreditsDetails(queryParameters)
                 .execute(serviceDestination)
@@ -85,43 +82,8 @@ export async function api_creditDetails(queryParameters: { viewPhases: 'ALL' | '
 }
 
 /**
- * Retrieves destination configuration with renewed token
- * @returns HTTPDestination
-*/
-async function getServiceDestination(ServiceBindingName: string) {
-    return await getDestinationFromServiceBinding({
-        destinationName: ServiceBindingName,
-        serviceBindingTransformFn: async (service, options) => {
-            const token = await serviceToken(service, options)
-            const exp = decodeJwt(token).exp
-            return {
-                url: service.credentials.target_url,
-                authentication: 'OAuth2ClientCredentials',
-                authTokens: [{
-                    value: token,
-                    type: 'bearer',
-                    expiresIn: exp && Math.floor((exp * 1000 - Date.now()) / 1000).toString(10) || '0',
-                    http_header: { key: 'Authorization', value: `Bearer ${token}` },
-                    error: null
-                }]
-            }
-        }
-    }) as HttpDestination
-}
-
-/**
  * Startup validation of required bindings
 */
-let serviceBindingNames: string[] = []
-const config: Record<string, Record<string, string>[]> = JSON.parse(process.env.VCAP_SERVICES ?? '{}');
-Object.keys(config).forEach(binding => {
-    if (config[binding]?.length > 0) {
-        serviceBindingNames = serviceBindingNames.concat(
-            config[binding]
-                .map(x => x.name)
-                .filter(x => x.match(/.*(btprc\-uas).*/))
-        )
-    }
-})
+const serviceBindingNames = filterServices(binding => /.*(uas).*/.test(binding.name)).map(x => x.name)
 assert(serviceBindingNames.length > 0, `No service instance of type UAS has been bound to the application`)
 info(`Connected to ${serviceBindingNames.length} UAS instances: ${serviceBindingNames.join(', ')}`)

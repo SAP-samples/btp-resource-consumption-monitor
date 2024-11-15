@@ -40,24 +40,24 @@ export default class AnalyticsService extends cds.ApplicationService {
         this.after('READ', CommercialMeasures, items => {
             items?.forEach(each => {
                 if (each.Measures_currency) {
-                    //@ts-ignore
+                    //@ts-expect-error
                     deltaColumns.forEach(c => each[c] ??= 0)
-                    //@ts-ignore
+                    //@ts-expect-error
                     deltaPercentColumns.forEach(c => each[c] &&= Number(each[c]))
                 }
             })
         })
 
         this.before('READ', CommercialMeasuresByTags, req => {
-            //@ts-ignore
+            //@ts-expect-error
             addRequiredColumns<CommercialMeasuresByTags>(req.query, ['Tag_pct'], 'Tag_label')
         })
         this.after('READ', CommercialMeasuresByTags, items => {
             items?.forEach(each => {
                 if (each.Measures_currency && (each.Tag_label || each.Tag_pct)) {
-                    //@ts-ignore
+                    //@ts-expect-error
                     deltaColumns.forEach(c => each[c] ??= 0)
-                    //@ts-ignore
+                    //@ts-expect-error
                     deltaPercentColumns.forEach(c => { each[c] &&= Number(each[c]) })
                 } else {
                     each.Measures_currency = null
@@ -70,11 +70,11 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (each.Measures_currency) {
                     for (let i = 1; i <= 12; i++) {
                         const month = i.toString().padStart(2, '0')
-                        //@ts-ignore
+                        //@ts-expect-error
                         each[`Measures_measure_cost_${month}`] ??= 0
-                        //@ts-ignore
+                        //@ts-expect-error
                         each[`Measures_delta_measure_cost_${month}`] ??= 0
-                        //@ts-ignore
+                        //@ts-expect-error
                         each[`Measures_delta_measure_costPct_${month}`] &&= Number(each[`Measures_delta_measure_costPct_${month}`])
                     }
                 }
@@ -87,7 +87,7 @@ export default class AnalyticsService extends cds.ApplicationService {
         })
 
         this.before('READ', CommercialMeasuresForYearByTags, req => {
-            //@ts-ignore
+            //@ts-expect-error
             addRequiredColumns<CommercialMeasuresForYearByTags>(req.query, ['Tag_pct'], 'Tag_label')
         })
         this.after('READ', CommercialMeasuresForYearByTags, items => {
@@ -95,11 +95,11 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (each.Measures_currency && (each.Tag_label || each.Tag_pct)) {
                     for (let i = 1; i <= 12; i++) {
                         const month = i.toString().padStart(2, '0')
-                        //@ts-ignore
+                        //@ts-expect-error
                         each[`Measures_measure_cost_${month}`] ??= 0
-                        //@ts-ignore
+                        //@ts-expect-error
                         each[`Measures_delta_measure_cost_${month}`] ??= 0
-                        //@ts-ignore
+                        //@ts-expect-error
                         each[`Measures_delta_measure_costPct_${month}`] &&= Number(each[`Measures_delta_measure_costPct_${month}`])
                     }
                 } else {

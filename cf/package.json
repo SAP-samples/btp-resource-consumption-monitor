@@ -1,44 +1,56 @@
 {
   "name": "btp-resource-consumption",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "BTP usage and resource consumption dashboard",
   "repository": "https://github.com/SAP-samples/btp-resource-consumption-monitor",
   "license": "Apache-2.0",
   "private": true,
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  },
   "dependencies": {
-    "@cap-js-community/odata-v2-adapter": "^1.12.11",
-    "@sap-cloud-sdk/connectivity": "^3.18.1",
-    "@sap-cloud-sdk/openapi": "^3.18.1",
-    "@sap/cds": "^7.9.3",
+    "@cap-js-community/odata-v2-adapter": "^1.13.7",
+    "@sap-cloud-sdk/connectivity": "^3.23.0",
+    "@sap-cloud-sdk/openapi": "^3.23.0",
+    "@sap/cds": "^8.4.2",
     "@sap/cds-hana": "^2.0.0",
-    "@sap/xssec": "^3.6",
-    "express": "^4.19.2"
+    "@sap/xsenv": "^5.4.0",
+    "@sap/xssec": "^4.2",
+    "express": "^4.21.1"
   },
   "devDependencies": {
-    "@cap-js/cds-typer": "^0.20.2",
-    "@cap-js/sqlite": "^1.7.3",
-    "@sap-cloud-sdk/openapi-generator": "^3.18.1",
-    "@sap/cds-dk": "^7.9.7",
-    "@sap/eslint-plugin-cds": "^3.0.4",
-    "@sap/ux-specification": "^1.120.17",
-    "@types/node": "^20.14.9",
-    "eslint": "^9.5.0",
-    "rimraf": "^5.0.7"
+    "@cap-js/cds-typer": "^0.28.1",
+    "@cap-js/cds-types": "~0.6.5",
+    "@cap-js/sqlite": "^1.7.7",
+    "@sap-cloud-sdk/openapi-generator": "^3.23.0",
+    "@sap/cds-dk": "^8.4.1",
+    "@sap/eslint-plugin-cds": "^3.1.2",
+    "@sap/ux-specification": "^1.124.5",
+    "@types/node": "^22.9.0",
+    "@types/sap__xsenv": "^3.3.2",
+    "ctz": "^0.2.4",
+    "eslint": "^9.14.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5"
   },
   "scripts": {
     "start": "cds-serve",
-    "build:cf": "npm run build:clean && npm run build:cds && npm run build:models && npm run build:ts && npm run build:copy_models",
-    "build:clean": "rimraf @cds-models resources mta_archives gen",
-    "build:cf-sqlite": "npm run build:cds && npm run build:models && npm run build:ts && npm run build:copy_models && npm run build:db",
-    "build:cds": "cds build --production",
-    "build:models": "npx cds-typer \"*\" --outputDirectory @cds-models",
-    "build:ts": "tsc",
-    "build:copy_models": "cp -r @cds-models gen/srv",
-    "build:db": "cds deploy -2 sqlite:gen/srv/db.sqlite",
-    "build:workzone": "npm run build --prefix workzone",
-    "undeploy": "cf undeploy btp-resource-consumption --delete-services --delete-service-keys --delete-service-brokers"
+    "build:cf": "rimraf @cds-models resources mta_archives gen && cds-ts build --production",
+    "build:kyma": "cp -r kyma/ui-deployer gen && cp -r resources gen/ui-deployer",
+    "cf:pack": "mbt build",
+    "cf:deploy": "cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar",
+    "cf:deploy-with-notif": "cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar -e mtaext_notifications.mtaext",
+    "cf:undeploy": "cf undeploy btp-resource-consumption --delete-services --delete-service-keys --delete-service-brokers",
+    "kyma:pack": "ctz containerize.yaml --push --log",
+    "kyma:deploy": "helm upgrade --install btprc ./gen/chart --set-file xsuaa.jsonParameters=xs-security.json",
+    "kyma:deploy-with-notif": "helm upgrade --install btprc ./gen/chart --set-file xsuaa.jsonParameters=xs-security.json  --set-file notif.jsonParameters=kyma/kyma-notification-settings.json",
+    "kyma:undeploy": "helm uninstall btprc"
   },
   "cds": {
+    "log": {
+      "format": "plain"
+    },
     "fiori": {
       "bypass_draft": true
     },
@@ -63,7 +75,7 @@
         "kind": "sqlite",
         "url": "db.sqlite"
       },
-      "auth": "dummy"
+      "html5-repo": true
     }
   },
   "imports": {

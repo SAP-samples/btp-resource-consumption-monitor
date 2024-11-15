@@ -1,0 +1,19 @@
+# Please do not modify this file. This file may be overwritten.
+
+#
+# BTPRC Application specific:
+# This is a copy of the automatically generated file, with the addition of the "HTML5.Timeout" setting to increase timeout threshold of Fiori apps when doing multi-Global Account data synchronisation.
+#
+
+{{- $cloudService := index .Values "html5-apps-deployer" "env" "SAP_CLOUD_SERVICE" -}}
+{{- $defaultParameters :=  dict "Type" "HTTP" "ProxyType" "Internet" "Authentication" "NoAuthentication" "sap.cloud.service" $cloudService "HTML5.forwardAuthToken" "true" "HTML5.Timeout" "120000" }}
+{{- $ := dict "root" . "defaultParameters" $defaultParameters "html5" true }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Release.Name }}-html5-apps-deployer-configmap"
+  namespace: "{{ .Release.Namespace }}"
+data:
+  BACKEND_DESTINATIONS: >
+    {{ include "cap.backendDestinations" $ }}

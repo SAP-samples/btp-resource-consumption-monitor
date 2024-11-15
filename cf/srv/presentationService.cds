@@ -39,6 +39,7 @@ service PresentationService {
             cmByMetricByLevel[level = 'Sub Account']    as cmByMetricBySubAccount,
             cmByMetricByLevel[level = 'Datacenter']     as cmByMetricByDatacenter,
             cmByMetricByLevel[level = 'Space']          as cmByMetricBySpace,
+            cmByMetricByLevel[level = 'Instance']       as cmByMetricByInstance,
             //
             tmByLevel[1 : level = 'Customer']           as tmByCustomer,
             tmByLevel[level = 'Global Account']         as tmByGlobalAccount,
@@ -51,7 +52,8 @@ service PresentationService {
             tmByMetricByLevel[level = 'Directory']      as tmByMetricByDirectory,
             tmByMetricByLevel[level = 'Sub Account']    as tmByMetricBySubAccount,
             tmByMetricByLevel[level = 'Datacenter']     as tmByMetricByDatacenter,
-            tmByMetricByLevel[level = 'Space']          as tmByMetricBySpace
+            tmByMetricByLevel[level = 'Space']          as tmByMetricBySpace,
+            tmByMetricByLevel[level = 'Instance']       as tmByMetricByInstance
         }
         group by
             reportYearMonth,
@@ -77,6 +79,7 @@ service PresentationService {
             commercialMeasures[level = 'Sub Account']    as cmBySubAccount,
             commercialMeasures[level = 'Datacenter']     as cmByDatacenter,
             commercialMeasures[level = 'Space']          as cmBySpace,
+            commercialMeasures[level = 'Instance']       as cmByInstance
         }
         actions {
             @Common.SideEffects: {TargetEntities: [in]}
@@ -149,7 +152,8 @@ service PresentationService {
             technicalMeasures[level = 'Directory']      as tmByDirectory,
             technicalMeasures[level = 'Sub Account']    as tmBySubAccount,
             technicalMeasures[level = 'Datacenter']     as tmByDatacenter,
-            technicalMeasures[level = 'Space']          as tmBySpace
+            technicalMeasures[level = 'Space']          as tmBySpace,
+            technicalMeasures[level = 'Instance']       as tmByInstance
         }
         actions {
             @Common.IsActionCritical

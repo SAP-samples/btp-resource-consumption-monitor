@@ -1,6 +1,6 @@
 _schema-version: "3.1"
 ID: btp-resource-consumption
-version: 2.0.2
+version: 2.1.0
 description: BTP usage and resource consumption dashboard
 parameters:
   enable-parallel-deployments: true
@@ -33,8 +33,9 @@ modules:
       - name: btprc-auth
       - name: btprc-dest
       - name: btprc-db
-      - name: btprc-log
       - name: btprc-uas
+      - name: btprc-notif
+      - name: btprc-scheduler
       # - name: btprc-uas-ups
 
   - name: BTPResourceConsumption-db-deployer
@@ -62,18 +63,10 @@ modules:
         parameters:
           service-key:
             name: btprc-auth-key
-      - name: btprc-notif
-        parameters:
-          service-key:
-            name: btprc-notif-key
       - name: btprc-repo-host
         parameters:
           service-key:
             name: btprc-repo-host-key
-      - name: btprc-scheduler
-        parameters:
-          service-key:
-            name: btprc-scheduler-key
     parameters:
       content:
         subaccount:
@@ -96,7 +89,7 @@ modules:
               TokenServiceKeyName: btprc-auth-key
               URL: ~{srv-api/srv-url}
               sap.cloud.service: sap.btp.resourceconsumption
-              HTML5.Timeout: 60000
+              HTML5.Timeout: 120000
             - Name: btprc-repo-host
               ServiceInstanceName: btprc-repo-host
               ServiceKeyName: btprc-repo-host-key
@@ -106,14 +99,6 @@ modules:
               ServiceInstanceName: btprc-auth
               ServiceKeyName: btprc-auth-key
               sap.cloud.service: sap.btp.resourceconsumption
-            - Name: btprc-notif
-              Authentication: OAuth2ClientCredentials
-              ServiceInstanceName: btprc-notif
-              ServiceKeyName: btprc-notif-key
-            - Name: btprc-scheduler
-              Authentication: OAuth2ClientCredentials
-              ServiceInstanceName: btprc-scheduler
-              ServiceKeyName: btprc-scheduler-key
           existing_destinations_policy: update
     build-parameters:
       no-source: true
@@ -329,9 +314,3 @@ resources:
         version: 1.0.0
       service-keys:
         - name: btprc-dest-key
-
-  - name: btprc-log
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: application-logs
-      service-plan: standard

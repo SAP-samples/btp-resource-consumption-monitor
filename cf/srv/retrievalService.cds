@@ -166,15 +166,18 @@ service RetrievalService {
             key tm.toMetric.toService.retrieved,
             key tm.toMetric.toService.interval,
             key a.cMeasureId,
-            key tm.id   as spaceID,
-                tm.name as spaceName,
+            key tm.level,
+            key tm.id   as targetID,
+                tm.name as targetName,
                 tm.measure.usage,
                 tm.accountStructureItem.parentID
         from db.AllocationSettings as a
         inner join db.TechnicalMeasures as tm
-            on  tm.toMetric.toService.serviceId = a.serviceId
-            and tm.toMetric.measureId           = a.tMeasureId
-            and tm.level                        = 'Space';
+            on  tm.toMetric.toService.serviceId =  a.serviceId
+            and tm.toMetric.measureId           =  a.tMeasureId
+            and tm.level                        in (
+                'Space', 'Instance'
+            );
 
     entity AccountStructureItems                    as projection on db.AccountStructureItems;
     entity CloudCreditsDetails                      as projection on db.CloudCreditsDetailsResponseObjects;
@@ -204,5 +207,5 @@ service RetrievalService {
     function calculateCommercialForecastsForService(serviceId : String) returns String;
     function deleteAllData()                                            returns String;
     function deleteStructureAndTagData()                                returns String;
-    function testAlert(alert : Alerts)                                  returns types.TAlertSimulation;
+    function testAlert(ID : UUID, isDraft : Boolean)                    returns types.TAlertSimulation;
 }

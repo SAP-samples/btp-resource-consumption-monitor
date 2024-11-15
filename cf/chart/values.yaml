@@ -1,0 +1,146 @@
+global:
+  domain: KYMA_HOST #e.g.: c-0000000.kyma.shoot.live.k8s-hana.ondemand.com
+  imagePullSecret:
+    name: docker-registry #update if different
+  image:
+    registry: DOCKER_REGISTRY_SERVER
+    tag: latest
+
+# Modules:
+
+srv:
+  image:
+    repository: btp-resource-consumption-srv
+  bindings:
+    btprc-auth:
+      serviceInstanceFullname: btprc-auth
+    btprc-destination:
+      serviceInstanceFullname: btprc-dest
+    btprc-db:
+      serviceInstanceFullname: btprc-db
+    btprc-uas:
+      serviceInstanceFullname: btprc-uas
+    btprc-scheduler:
+      serviceInstanceFullname: btprc-scheduler
+    btprc-notif:
+      serviceInstanceFullname: btprc-notif
+    # btprc-uas-ups-account2:
+    #   fromSecret: btprc-uas-ups-account2
+  resources:
+    limits:
+      ephemeral-storage: 1G
+      cpu: 1000m
+      memory: 1G
+    requests:
+      ephemeral-storage: 1G
+      cpu: 500m
+      memory: 512M
+  health:
+    liveness:
+      path: /health
+    readiness:
+      path: /health
+
+hana-deployer:
+  image:
+    repository: btp-resource-consumption-db-deployer
+  bindings:
+    btprc-db:
+      serviceInstanceFullname: btprc-db
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256M
+    requests:
+      cpu: 500m
+      memory: 256M
+
+html5-apps-deployer:
+  image:
+    repository: btp-resource-consumption-ui-deployer
+  bindings:
+    btprc-auth:
+      serviceInstanceFullname: btprc-auth
+    btprc-destination:
+      serviceInstanceFullname: btprc-dest
+    btprc-repo-host:
+      serviceInstanceFullname: btprc-repo-host
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256M
+    requests:
+      cpu: 500m
+      memory: 256M
+  env:
+    SAP_CLOUD_SERVICE: sap.btp.resourceconsumption
+  envFrom:
+    - configMapRef:
+        name: "{{ .Release.Name }}-html5-apps-deployer-configmap"
+
+backendDestinations:
+  btprc-srv-api:
+    service: srv
+
+# Resources:
+
+db:
+  serviceOfferingName: hana
+  servicePlanName: hdi-shared
+  fullnameOverride: btprc-db
+  parameters:
+    schema: BTPRC_kyma_{{ .Release.Namespace }}
+  bindings:
+    sac-key:
+      externalName: btprc-db-key
+      credentialsRotationPolicy:
+        enabled: true
+        rotationFrequency: 8760h  # 365 days
+        rotatedBindingTTL: 240h   #  10 days
+
+scheduler:
+  serviceOfferingName: jobscheduler
+  servicePlanName: standard
+  fullnameOverride: btprc-scheduler
+  parameters:
+    enable-xsuaa-support: true
+
+notif:
+  serviceOfferingName: alert-notification
+  servicePlanName: standard
+  fullnameOverride: btprc-notif
+
+uas:
+  serviceOfferingName: uas
+  servicePlanName: reporting-ga-admin
+  fullnameOverride: btprc-uas
+
+xsuaa:
+  serviceOfferingName: xsuaa
+  servicePlanName: application
+  fullnameOverride: btprc-auth
+  parameters:
+    tenant-mode: dedicated
+    xsappname: BTPRC-kyma-{{ .Release.Namespace }}
+
+dest:
+  serviceOfferingName: destination
+  servicePlanName: lite
+  fullnameOverride: btprc-dest
+  parameters:
+    HTML5Runtime_enabled: true
+    init_data:
+      instance:
+        destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+        existing_destinations_policy: update
+    version: 1.0.0
+
+repo-host:
+  serviceOfferingName: html5-apps-repo
+  servicePlanName: app-host
+  fullnameOverride: btprc-repo-host

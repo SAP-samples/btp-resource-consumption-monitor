@@ -8,132 +8,135 @@ using ManageAlertsService from '../srv/manageAlertsService';
  */
 
 entity BTPServices {
-    key reportYearMonth                       : String          @title        : 'Month';
-    key serviceId                             : String          @title        : 'ID';
-        serviceName                           : String          @title        : 'Service';
-    key retrieved                             : Date            @title        : 'Date';
-    key interval                              : types.TInterval @title        : 'Reading';
-        lastSynced                            : DateTime        @cds.on.insert: $now  @cds.on.update: $now;
-        virtual namesCommercialMetrics        : String          @Core.Computed;
-        virtual hideCommercialInfo            : Boolean;
-        virtual hideGlobalAccountDistribution : Boolean;
-        virtual hideCommercialSpaceAllocation : Boolean;
+    key reportYearMonth                         : String          @title        : 'Month';
+    key serviceId                               : String          @title        : 'ID';
+        serviceName                             : String          @title        : 'Service';
+    key retrieved                               : Date            @title        : 'Date';
+    key interval                                : types.TInterval @title        : 'Reading';
+        lastSynced                              : DateTime        @cds.on.insert: $now  @cds.on.update: $now;
+        virtual namesCommercialMetrics          : String          @Core.Computed;
+        virtual hideCommercialInfo              : Boolean;
+        virtual hideGlobalAccountDistribution   : Boolean;
+        virtual hideCommercialSpaceAllocation   : Boolean;
+        virtual hideServiceInstanceDistribution : Boolean;
 
         // Used to display History on the Object Page
-        history                               : Association to many BTPServices
-                                                    on history.serviceId = serviceId;
+        history                                 : Association to many BTPServices
+                                                      on history.serviceId = serviceId;
 
         // Composition only used to leverage delete cascade
-        commercialMetricsComposition          : Composition of many CommercialMetrics
-                                                    on commercialMetricsComposition.toService = $self;
-        technicalMetricsComposition           : Composition of many TechnicalMetrics
-                                                    on technicalMetricsComposition.toService = $self;
+        commercialMetricsComposition            : Composition of many CommercialMetrics
+                                                      on commercialMetricsComposition.toService = $self;
+        technicalMetricsComposition             : Composition of many TechnicalMetrics
+                                                      on technicalMetricsComposition.toService = $self;
 
         // Used to display list of Metrics in Object Page.
-        commercialMetrics                     : Association to many CommercialMetrics
-                                                    on  commercialMetrics.toService =  $self
-                                                    and commercialMetrics.measureId <> '_combined_';
-        commercialMetricsHistory              : Association to many CommercialMetrics
-                                                    on  commercialMetricsHistory.toService.serviceId =  serviceId
-                                                    and commercialMetricsHistory.measureId           <> '_combined_';
+        commercialMetrics                       : Association to many CommercialMetrics
+                                                      on  commercialMetrics.toService =  $self
+                                                      and commercialMetrics.measureId <> '_combined_';
+        commercialMetricsHistory                : Association to many CommercialMetrics
+                                                      on  commercialMetricsHistory.toService.serviceId =  serviceId
+                                                      and commercialMetricsHistory.measureId           <> '_combined_';
 
         // Used to display list of Metrics in Object Page.
-        technicalMetrics                      : Association to many TechnicalMetrics
-                                                    on  technicalMetrics.toService =  $self
-                                                    and technicalMetrics.measureId <> '_combined_';
-        technicalMetricsHistory               : Association to many TechnicalMetrics
-                                                    on  technicalMetricsHistory.toService.serviceId =  serviceId
-                                                    and technicalMetricsHistory.measureId           <> '_combined_';
+        technicalMetrics                        : Association to many TechnicalMetrics
+                                                      on  technicalMetrics.toService =  $self
+                                                      and technicalMetrics.measureId <> '_combined_';
+        technicalMetricsHistory                 : Association to many TechnicalMetrics
+                                                      on  technicalMetricsHistory.toService.serviceId =  serviceId
+                                                      and technicalMetricsHistory.measureId           <> '_combined_';
 
         // Used in timeline chart in Object Page:
-        cmHistoryByMetricAll                  : Association to many CommercialMeasures
-                                                    on  cmHistoryByMetricAll.toMetric.toService.serviceId =  serviceId
-                                                    and cmHistoryByMetricAll.level                        =  'Global Account'
-                                                    and cmHistoryByMetricAll.toMetric.measureId           <> '_combined_';
-        cmHistoryByMetricDaily                : Association to many CommercialMeasures
-                                                    on  cmHistoryByMetricDaily.toMetric.toService.serviceId =  serviceId
-                                                    and cmHistoryByMetricDaily.toMetric.toService.interval  =  'Daily'
-                                                    and cmHistoryByMetricDaily.level                        =  'Global Account'
-                                                    and cmHistoryByMetricDaily.toMetric.measureId           <> '_combined_';
-        cmHistoryByMetricMonthly              : Association to many CommercialMeasures
-                                                    on  cmHistoryByMetricMonthly.toMetric.toService.serviceId =  serviceId
-                                                    and cmHistoryByMetricMonthly.toMetric.toService.interval  =  'Monthly'
-                                                    and cmHistoryByMetricMonthly.level                        =  'Global Account'
-                                                    and cmHistoryByMetricMonthly.toMetric.measureId           <> '_combined_';
+        cmHistoryByMetricAll                    : Association to many CommercialMeasures
+                                                      on  cmHistoryByMetricAll.toMetric.toService.serviceId =  serviceId
+                                                      and cmHistoryByMetricAll.level                        =  'Global Account'
+                                                      and cmHistoryByMetricAll.toMetric.measureId           <> '_combined_';
+        cmHistoryByMetricDaily                  : Association to many CommercialMeasures
+                                                      on  cmHistoryByMetricDaily.toMetric.toService.serviceId =  serviceId
+                                                      and cmHistoryByMetricDaily.toMetric.toService.interval  =  'Daily'
+                                                      and cmHistoryByMetricDaily.level                        =  'Global Account'
+                                                      and cmHistoryByMetricDaily.toMetric.measureId           <> '_combined_';
+        cmHistoryByMetricMonthly                : Association to many CommercialMeasures
+                                                      on  cmHistoryByMetricMonthly.toMetric.toService.serviceId =  serviceId
+                                                      and cmHistoryByMetricMonthly.toMetric.toService.interval  =  'Monthly'
+                                                      and cmHistoryByMetricMonthly.level                        =  'Global Account'
+                                                      and cmHistoryByMetricMonthly.toMetric.measureId           <> '_combined_';
 
         // Used to display the breakdowns per level on the Object Page:
-        cmByMetricByLevel                     : Association to many CommercialMeasures
-                                                    on  cmByMetricByLevel.toMetric.toService.reportYearMonth =  reportYearMonth
-                                                    and cmByMetricByLevel.toMetric.toService.retrieved       =  retrieved
-                                                    and cmByMetricByLevel.toMetric.toService.interval        =  interval
-                                                    and cmByMetricByLevel.toMetric.toService.serviceId       =  serviceId
-                                                    and cmByMetricByLevel.toMetric.measureId                 <> '_combined_';
-        tmByMetricByLevel                     : Association to many TechnicalMeasures
-                                                    on  tmByMetricByLevel.toMetric.toService.reportYearMonth =  reportYearMonth
-                                                    and tmByMetricByLevel.toMetric.toService.retrieved       =  retrieved
-                                                    and tmByMetricByLevel.toMetric.toService.interval        =  interval
-                                                    and tmByMetricByLevel.toMetric.toService.serviceId       =  serviceId
-                                                    and tmByMetricByLevel.toMetric.measureId                 <> '_combined_';
+        cmByMetricByLevel                       : Association to many CommercialMeasures
+                                                      on  cmByMetricByLevel.toMetric.toService.reportYearMonth =  reportYearMonth
+                                                      and cmByMetricByLevel.toMetric.toService.retrieved       =  retrieved
+                                                      and cmByMetricByLevel.toMetric.toService.interval        =  interval
+                                                      and cmByMetricByLevel.toMetric.toService.serviceId       =  serviceId
+                                                      and cmByMetricByLevel.toMetric.measureId                 <> '_combined_';
+        tmByMetricByLevel                       : Association to many TechnicalMeasures
+                                                      on  tmByMetricByLevel.toMetric.toService.reportYearMonth =  reportYearMonth
+                                                      and tmByMetricByLevel.toMetric.toService.retrieved       =  retrieved
+                                                      and tmByMetricByLevel.toMetric.toService.interval        =  interval
+                                                      and tmByMetricByLevel.toMetric.toService.serviceId       =  serviceId
+                                                      and tmByMetricByLevel.toMetric.measureId                 <> '_combined_';
 
         // Used to display measures on the List View, and account name and measures and graphs on the Object Page:
-        cmByLevel                             : Association to many CommercialMeasures
-                                                    on  cmByLevel.toMetric.toService.reportYearMonth = reportYearMonth
-                                                    and cmByLevel.toMetric.toService.retrieved       = retrieved
-                                                    and cmByLevel.toMetric.toService.interval        = interval
-                                                    and cmByLevel.toMetric.toService.serviceId       = serviceId
-                                                    and cmByLevel.toMetric.measureId                 = '_combined_';
-        tmByLevel                             : Association to many TechnicalMeasures
-                                                    on  tmByLevel.toMetric.toService.reportYearMonth = reportYearMonth
-                                                    and tmByLevel.toMetric.toService.retrieved       = retrieved
-                                                    and tmByLevel.toMetric.toService.interval        = interval
-                                                    and tmByLevel.toMetric.toService.serviceId       = serviceId
-                                                    and tmByLevel.toMetric.measureId                 = '_combined_';
+        cmByLevel                               : Association to many CommercialMeasures
+                                                      on  cmByLevel.toMetric.toService.reportYearMonth = reportYearMonth
+                                                      and cmByLevel.toMetric.toService.retrieved       = retrieved
+                                                      and cmByLevel.toMetric.toService.interval        = interval
+                                                      and cmByLevel.toMetric.toService.serviceId       = serviceId
+                                                      and cmByLevel.toMetric.measureId                 = '_combined_';
+        tmByLevel                               : Association to many TechnicalMeasures
+                                                      on  tmByLevel.toMetric.toService.reportYearMonth = reportYearMonth
+                                                      and tmByLevel.toMetric.toService.retrieved       = retrieved
+                                                      and tmByLevel.toMetric.toService.interval        = interval
+                                                      and tmByLevel.toMetric.toService.serviceId       = serviceId
+                                                      and tmByLevel.toMetric.measureId                 = '_combined_';
 }
 
 entity CommercialMetrics {
-    key toService                             :      Association to BTPServices;
-    key measureId                             :      String     @title: 'ID'; // equals to '_combined_' in case multiple metrics are summed up
-        metricName                            :      String     @title: 'Metric';
-        tags                                  : many types.TTag @title: 'Platform Tags';
-        virtual tagStrings                    :      String     @title: 'Platform Tags';
-        virtual hideGlobalAccountDistribution :      Boolean;
-        virtual hideCommercialSpaceAllocation :      Boolean;
+    key toService                               :      Association to BTPServices;
+    key measureId                               :      String     @title: 'ID'; // equals to '_combined_' in case multiple metrics are summed up
+        metricName                              :      String     @title: 'Metric';
+        tags                                    : many types.TTag @title: 'Platform Tags';
+        virtual tagStrings                      :      String     @title: 'Platform Tags';
+        virtual hideGlobalAccountDistribution   :      Boolean;
+        virtual hideCommercialSpaceAllocation   :      Boolean;
+        virtual hideServiceInstanceDistribution :      Boolean;
 
-        forecastSetting                       :      Association to one ForecastSettings
-                                                         on  forecastSetting.serviceId = toService.serviceId
-                                                         and forecastSetting.measureId = measureId;
+        forecastSetting                         :      Association to one ForecastSettings
+                                                           on  forecastSetting.serviceId = toService.serviceId
+                                                           and forecastSetting.measureId = measureId;
 
         // Used to map commercial metrics to a technical metric for downstream allocation to Space level
-        technicalMetricForAllocation          :      Association to one AllocationSettings
-                                                         on  technicalMetricForAllocation.serviceId  = toService.serviceId
-                                                         and technicalMetricForAllocation.cMeasureId = measureId;
+        technicalMetricForAllocation            :      Association to one AllocationSettings
+                                                           on  technicalMetricForAllocation.serviceId  = toService.serviceId
+                                                           and technicalMetricForAllocation.cMeasureId = measureId;
 
         // Used to display measures on the Service Object Page and Metric Object Page
-        commercialMeasures                    :      Composition of many CommercialMeasures
-                                                         on commercialMeasures.toMetric = $self;
+        commercialMeasures                      :      Composition of many CommercialMeasures
+                                                           on commercialMeasures.toMetric = $self;
 
         // Used to display History on the Object Page
-        history                               :      Association to many CommercialMetrics
-                                                         on  history.toService.serviceId = toService.serviceId
-                                                         and history.measureId           = measureId;
+        history                                 :      Association to many CommercialMetrics
+                                                           on  history.toService.serviceId = toService.serviceId
+                                                           and history.measureId           = measureId;
 }
 
 entity TechnicalMetrics {
-    key toService                             :      Association to BTPServices;
-    key measureId                             :      String     @title: 'ID'; // equals to '_combined_' in case multiple metrics are summed up
-        metricName                            :      String     @title: 'Metric';
-        tags                                  : many types.TTag @title: 'Platform Tags';
-        virtual tagStrings                    :      String     @title: 'Platform Tags';
-        virtual hideGlobalAccountDistribution :      Boolean;
+    key toService                               :      Association to BTPServices;
+    key measureId                               :      String     @title: 'ID'; // equals to '_combined_' in case multiple metrics are summed up
+        metricName                              :      String     @title: 'Metric';
+        tags                                    : many types.TTag @title: 'Platform Tags';
+        virtual tagStrings                      :      String     @title: 'Platform Tags';
+        virtual hideGlobalAccountDistribution   :      Boolean;
+        virtual hideServiceInstanceDistribution :      Boolean;
 
         // Used to display measures on the Service Object Page and Metric Object Page
-        technicalMeasures                     :      Composition of many TechnicalMeasures
-                                                         on technicalMeasures.toMetric = $self;
+        technicalMeasures                       :      Composition of many TechnicalMeasures
+                                                           on technicalMeasures.toMetric = $self;
 
         // Used to display History on the Object Page
-        history                               :      Association to many TechnicalMetrics
-                                                         on  history.toService.serviceId = toService.serviceId
-                                                         and history.measureId           = measureId;
+        history                                 :      Association to many TechnicalMetrics
+                                                           on  history.toService.serviceId = toService.serviceId
+                                                           and history.measureId           = measureId;
 }
 
 entity CommercialMeasures {
@@ -328,7 +331,7 @@ entity AccountStructureItems {
         customTags                : Composition of many CustomTags
                                         on customTags.toAccountStructureItem = $self;
         label                     : String = level || ': ' || name @title: 'Hierarchy';
-        icon                      : String = (level = 'Customer' ? 'sap-icon://account' : (level = 'Global Account' ? 'sap-icon://world' : (level = 'Directory' ? 'sap-icon://folder-blank' : (level = 'Datacenter' ? 'sap-icon://building' : (level = 'Sub Account' ? 'sap-icon://product' : (level = 'Space' ? 'sap-icon://cloud' : (level = 'Environment' ? 'sap-icon://it-host' : (level = 'Service' ? 'sap-icon://action-settings' : (level = 'Service (alloc.)' ? 'sap-icon://settings' : ('sap-icon://question-mark')))))))))) stored;
+        icon                      : String = (level = 'Customer' ? 'sap-icon://account' : (level = 'Global Account' ? 'sap-icon://world' : (level = 'Directory' ? 'sap-icon://folder-blank' : (level = 'Datacenter' ? 'sap-icon://building' : (level = 'Sub Account' ? 'sap-icon://product' : (level = 'Space' ? 'sap-icon://cloud' : (level = 'Environment' ? 'sap-icon://it-host' : (level = 'Service' ? 'sap-icon://action-settings' : (level = 'Service (alloc.)' ? 'sap-icon://settings' : (level = 'Instance' ? 'sap-icon://tri-state' : ('sap-icon://question-mark'))))))))))) stored;
 }
 
 entity ManagedTagAllocations {

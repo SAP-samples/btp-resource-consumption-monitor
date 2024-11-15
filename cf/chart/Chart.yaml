@@ -1,0 +1,43 @@
+apiVersion: v2
+name: btprc
+description: BTP usage and resource consumption dashboard
+type: application
+version: 2.1.0
+appVersion: 2.1.0
+annotations:
+  app.kubernetes.io/managed-by: cds-dk/helm
+dependencies:
+
+  # Modules:
+  - name: web-application
+    alias: srv
+    version: ">0.0.0"
+  - name: content-deployment
+    alias: hana-deployer
+    version: ">0.0.0"
+  - name: content-deployment
+    alias: html5-apps-deployer
+    version: ">0.0.0"
+
+  # Resources
+  - name: service-instance
+    alias: scheduler
+    version: ">0.0.0"
+  - name: service-instance
+    alias: notif
+    version: ">0.0.0"
+  - name: service-instance
+    alias: uas
+    version: ">0.0.0"
+  - name: service-instance
+    alias: dest
+    version: ">0.0.0"
+  - name: service-instance
+    alias: xsuaa
+    version: ">0.0.0"
+  - name: service-instance
+    alias: db
+    version: ">0.0.0"
+  - name: service-instance
+    alias: repo-host
+    version: ">0.0.0"
