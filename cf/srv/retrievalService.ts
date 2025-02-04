@@ -235,7 +235,7 @@ export default class RetrievalService extends cds.ApplicationService {
 
             const forecastSetting = {
                 ...Settings.defaultValues.forecastSetting
-            }
+            } as ForecastSetting
             await UPDATE(ForecastSettings).with(forecastSetting)
             status.push(`All forecast settings have been reverted to ${forecastSetting.method}, factor ${forecastSetting.degressionFactor}.`)
 
@@ -271,11 +271,8 @@ export default class RetrievalService extends cds.ApplicationService {
             const { ID, isDraft } = req.data
             const alert = await SELECT.from(isDraft ? AlertsView.drafts : AlertsView, ID ?? '').columns(a => {
                 a('*'),
-                    //@ts-expect-error
                     a.thresholds('*'),
-                    //@ts-expect-error
                     a.serviceItems('*'),
-                    //@ts-expect-error
                     a.levelItems('*')
             }) as Alert
             if (alert) {
@@ -356,7 +353,7 @@ async function retrieveCommercialData(query: { fromDate: number, toDate: number 
             measureId,
             ...Settings.defaultValues.forecastSetting
         }
-    })
+    }) as ForecastSettings
 
     // Store in database
     services.length > 0 && await UPSERT.into(BTPServices).entries(services)
@@ -835,7 +832,7 @@ async function updateCommercialMetricForecasts(serviceId?: string) {
     info(`Updating forecast data ...`)
 
     let forecasted: CommercialMeasures = []
-    const measures = await SELECT.from(prepareCommercialMeasureMetricForecasts).where(serviceId && { serviceId: serviceId })
+    const measures = await SELECT.from(prepareCommercialMeasureMetricForecasts).where(serviceId && { serviceId: serviceId } || {})
     for (const measure of measures) {
 
         // Calculate how far in the month we are
@@ -913,7 +910,7 @@ async function updateCommercialServiceForecasts(serviceId?: string) {
         status = `${rows} data points updated in the database (optimized).`
     } else {
         // Fallback approach which routes the data via the application layer (slower)
-        const data = await SELECT.from(prepareCommercialMeasureServiceForecasts).where(serviceId && { toMetric_toService_serviceId: serviceId })
+        const data = await SELECT.from(prepareCommercialMeasureServiceForecasts).where(serviceId && { toMetric_toService_serviceId: serviceId } || {})
         data.length > 0 && await UPSERT.into(CommercialMeasures).entries(data)
         status = `${data.length} data points updated in the database.`
     }
@@ -1121,11 +1118,8 @@ async function sendNotification() {
 
     const alerts = (await SELECT.from(Alerts).columns(a => {
         a('*'),
-            //@ts-expect-error
             a.thresholds('*'),
-            //@ts-expect-error
             a.serviceItems('*'),
-            //@ts-expect-error
             a.levelItems('*')
     }) as Alerts)
         .filter(x => x.active)
@@ -1181,7 +1175,8 @@ async function fetchMeasuresForAlerts(alerts: Alerts): Promise<{ alert: Alert; m
 
     return result
 }
-function buildRequestForAlert(alert: Alert): { json: Object; sql: string; req: cds.ql.Awaitable<cds.ql.SELECT<typeof CommercialMeasures | typeof TechnicalMeasures>, CommercialMeasures | TechnicalMeasures> } {
+
+function buildRequestForAlert(alert: Alert): { json: Object; sql: string; req: cds.ql.SELECT<typeof CommercialMeasures | typeof TechnicalMeasures> } {
     const serviceItemsList = alert.serviceItems?.map(x => x.itemID?.slice(8)) || [] //Cut 'service_' or 'cmetric_' or 'tmetric_' off from the stored ID
     const levelItemsList = alert.levelItems?.map(x => x.itemID) || []
 

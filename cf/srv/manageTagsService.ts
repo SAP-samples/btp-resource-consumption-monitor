@@ -60,14 +60,15 @@ export default class ManageTagsService extends cds.ApplicationService {
         let copyClipboards: Record<string, tagsClipboard> = {}
         this.on(getPasteTagsDefaultValue, () => { return { mode: TPasteMode.Both } })
         this.on(AccountStructureItem.actions.copyTags, async req => {
+            //@ts-expect-error
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
                 const { ID } = req.params[0] as { ID: string }
                 info(`Copying tags for item ${ID}...`)
 
-                const tags: tagsClipboard = await SELECT.from(AccountStructureItems, ID)
+                const tags = await SELECT.from(AccountStructureItems, ID)
                     //@ts-expect-error
-                    .columns(a => { a.managedTagAllocations(['name', 'value', 'pct']), a.customTags(['name', 'value']) })
+                    .columns(a => { a.managedTagAllocations(['name', 'value', 'pct']), a.customTags(['name', 'value']) }) as tagsClipboard
 
                 const copyClipboard = {
                     managedTagAllocations: tags.managedTagAllocations,
@@ -84,6 +85,7 @@ export default class ManageTagsService extends cds.ApplicationService {
         })
         this.on(AccountStructureItem.actions.pasteTags, async req => {
             const mode = req.data.mode as TPasteMode
+            //@ts-expect-error
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             const copyClipboard = copyClipboards[req.user.id]
 
@@ -94,9 +96,9 @@ export default class ManageTagsService extends cds.ApplicationService {
                 const { ID } = req.params[0] as { ID: string }
                 info(`Pasting tags in mode ${mode} to item ${ID}...`)
 
-                const existingTags: tagsClipboard & { label: string } = await SELECT.from(AccountStructureItems, ID)
+                const existingTags = await SELECT.from(AccountStructureItems, ID)
                     //@ts-expect-error
-                    .columns(a => { a.label, a.managedTagAllocations(['ID', 'name', 'value']), a.customTags(['ID', 'name']) })
+                    .columns(a => { a.label, a.managedTagAllocations(['ID', 'name', 'value']), a.customTags(['ID', 'name']) }) as tagsClipboard & { label: string }
 
                 let nCustomTags = 0
                 if ((mode == TPasteMode.Both || mode == TPasteMode.Only2CustomTags) && copyClipboard.customTags.length > 0) {
@@ -128,6 +130,7 @@ export default class ManageTagsService extends cds.ApplicationService {
 
         this.on(AccountStructureItem.actions.deleteTags, async req => {
             const mode = req.data.mode as TPasteMode
+            //@ts-expect-error
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
                 const { ID } = req.params[0] as { ID: string }

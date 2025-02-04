@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## Version 2.1.x - Future
+### Fixed
+- Fixed empty dropdown in copy/paste of tags
+
 ## Version 2.1.0 - 2024-11-15
 ### Added
 - Support for Kyma deployment

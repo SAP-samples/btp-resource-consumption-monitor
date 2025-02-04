@@ -19,7 +19,7 @@ export default class ManageAlertsService extends cds.ApplicationService {
 
         this.on('READ', Alert, async (req, next) => {
             const columns = req.query.SELECT?.columns?.map(x => x.ref ? x.ref[0] : '')
-            const requestedSimulation = columns?.find((x: string) => x.startsWith('simulation_'))
+            const requestedSimulation = columns?.find(x => x.toString().startsWith('simulation_'))
             const alert = await next() as Alert
             return requestedSimulation && alert.ID
                 ? addSimulation(alert, false)
@@ -27,7 +27,7 @@ export default class ManageAlertsService extends cds.ApplicationService {
         })
         this.on('READ', Alerts.drafts, async (req, next) => {
             const columns = req.query.SELECT?.columns?.map(x => x.ref ? x.ref[0] : '')
-            const requestedSimulation = columns?.find((x: string) => x.startsWith('simulation_'))
+            const requestedSimulation = columns?.find(x => x.toString().startsWith('simulation_'))
             const alert = await next() as Alert
             return requestedSimulation && alert.ID
                 ? addSimulation(alert, true)

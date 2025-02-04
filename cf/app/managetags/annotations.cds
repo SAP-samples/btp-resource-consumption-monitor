@@ -14,23 +14,23 @@ annotate service.AccountStructureItems with {
     });
 };
 
-annotate service.CL_PasteTagModes with @(UI: {
-    PresentationVariant #sorted: {
-        $Type         : 'UI.PresentationVariantType',
-        Visualizations: [@UI.LineItem],
-        SortOrder     : [{Property: code}]
-    },
-    LineItem                   : [{Value: description}]
-});
+// annotate service.CL_PasteTagModes with @(UI: {
+//     PresentationVariant #sorted: {
+//         $Type         : 'UI.PresentationVariantType',
+//         Visualizations: [@UI.LineItem],
+//         SortOrder     : [{Property: code}]
+//     },
+//     LineItem                   : [{Value: description}]
+// });
 
 annotate types.TPasteTagsParams with {
     mode @(Common: {
         Label                   : 'Select type of tags',
         ValueListWithFixedValues: true,
         ValueList               : {
-            PresentationVariantQualifier: 'sorted',
-            CollectionPath              : 'CL_PasteTagModes',
-            Parameters                  : [{
+            // PresentationVariantQualifier: '#sorted',
+            CollectionPath: 'CL_PasteTagModes',
+            Parameters    : [{
                 $Type            : 'Common.ValueListParameterOut',
                 ValueListProperty: 'description',
                 LocalDataProperty: 'mode'
