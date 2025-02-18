@@ -20,60 +20,78 @@ service RetrievalService {
     @readonly
     entity prepareCommercialMeasureMetricForecasts  as
         select
-            key c1.toMetric.toService.reportYearMonth,
-            key c1.toMetric.toService.retrieved,
-            key c1.toMetric.toService.serviceId,
-            key c1.toMetric.toService.interval,
-            key c1.toMetric.measureId,
-            key c1.level,
-            key c1.id,
-                c1.name,
-                c1.currency,
-                c1.unit,
+            reportYearMonth,
+            retrieved,
+            serviceId,
+            interval,
+            measureId,
+            id,
+            level,
+            max_cost,
+            measure_cost,
+            measure_usage,
+            measure_actualUsage,
+            measure_chargedBlocks,
+
+            case
+                when method = 'Excluded'        then 1
+                when method = 'TimeLinear'      then 1 / (DAYOFMONTH(retrieved) / DAYOFMONTH(LAST_DAY(retrieved)))
+                when method = 'TimeDegressive'  then 1 / POWER((DAYOFMONTH(retrieved) / DAYOFMONTH(LAST_DAY(retrieved))), COALESCE(degressionFactor, 1))
+            end as multiplier    : Decimal(20, 2),
+
+            case
+                when method = 'Excluded'        then 100
+                when method = 'TimeLinear'      then (COALESCE(max_cost, 0) > 0 ? measure_cost * 1 / (DAYOFMONTH(retrieved) / DAYOFMONTH(LAST_DAY(retrieved))) * 100 / max_cost : 100)
+                when method = 'TimeDegressive'  then (COALESCE(max_cost, 0) > 0 ? measure_cost * 1 / POWER( (DAYOFMONTH(retrieved) / DAYOFMONTH(LAST_DAY(retrieved))), COALESCE(degressionFactor, 1)) * 100 / max_cost : 100)
+            end as forecastPct   : Integer
+
+        from (
+            select
+                key c1.toMetric.toService.reportYearMonth,
+                key c1.toMetric.toService.retrieved,
+                key c1.toMetric.toService.serviceId,
+                key c1.toMetric.toService.interval,
+                key c1.toMetric.measureId,
+                key c1.level,
+                key c1.id,
+                    c1.forecastSetting.method,
+                    c1.forecastSetting.degressionFactor,
+                    c1.measure.cost             as measure_cost,
+                    c1.measure.usage            as measure_usage,
+                    c1.measure.actualUsage      as measure_actualUsage,
+                    c1.measure.chargedBlocks    as measure_chargedBlocks,
+                    max(
+                        c2.measure.cost
+                    )                           as max_cost : Decimal(20, 2)
+            from db.CommercialMeasures as c1
+            left join db.CommercialMeasures as c2
+                on  c1.toMetric.toService.serviceId = c2.toMetric.toService.serviceId
+                and c1.toMetric.measureId           = c2.toMetric.measureId
+                and c1.level                        = c2.level
+                and c1.id                           = c2.id
+                and c2.toMetric.toService.interval  = 'Monthly'
+            where
+                    c1.toMetric.toService.interval =  'Daily'
+                and c1.toMetric.measureId          <> '_combined_'
+            group by
+                c2.toMetric.toService.serviceId,
+                c2.toMetric.measureId,
+                c2.level,
+                c2.id,
+                c1.toMetric.toService.reportYearMonth,
+                c1.toMetric.toService.retrieved,
+                c1.toMetric.toService.interval,
+                c1.toMetric.toService.serviceId,
+                c1.toMetric.measureId,
+                c1.level,
+                c1.id,
                 c1.forecastSetting.method,
                 c1.forecastSetting.degressionFactor,
-                c1.measure.cost             as measure_cost,
-                c1.measure.paygCost         as measure_paygCost,
-                c1.measure.cloudCreditsCost as measure_cloudCreditsCost,
-                c1.measure.usage            as measure_usage,
-                c1.measure.actualUsage      as measure_actualUsage,
-                c1.measure.chargedBlocks    as measure_chargedBlocks,
-                max(
-                    c2.measure.cost
-                )                           as max_cost : Decimal(20, 2)
-        from db.CommercialMeasures as c1
-        left join db.CommercialMeasures as c2
-            on  c1.toMetric.toService.serviceId = c2.toMetric.toService.serviceId
-            and c1.toMetric.measureId           = c2.toMetric.measureId
-            and c1.level                        = c2.level
-            and c1.id                           = c2.id
-            and c2.toMetric.toService.interval  = 'Monthly'
-        where
-                c1.toMetric.toService.interval =  'Daily'
-            and c1.toMetric.measureId          <> '_combined_'
-        group by
-            c2.toMetric.toService.serviceId,
-            c2.toMetric.measureId,
-            c2.level,
-            c2.id,
-            c1.toMetric.toService.reportYearMonth,
-            c1.toMetric.toService.retrieved,
-            c1.toMetric.toService.interval,
-            c1.toMetric.toService.serviceId,
-            c1.toMetric.measureId,
-            c1.level,
-            c1.id,
-            c1.name,
-            c1.currency,
-            c1.unit,
-            c1.forecastSetting.method,
-            c1.forecastSetting.degressionFactor,
-            c1.measure.cost,
-            c1.measure.paygCost,
-            c1.measure.cloudCreditsCost,
-            c1.measure.usage,
-            c1.measure.actualUsage,
-            c1.measure.chargedBlocks;
+                c1.measure.cost,
+                c1.measure.usage,
+                c1.measure.actualUsage,
+                c1.measure.chargedBlocks
+        ) as max_cost_table;
 
     @readonly
     entity prepareCommercialMeasureServiceForecasts as

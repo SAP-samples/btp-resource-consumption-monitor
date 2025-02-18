@@ -831,65 +831,66 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
 async function updateCommercialMetricForecasts(serviceId?: string) {
     info(`Updating forecast data ...`)
 
-    let forecasted: CommercialMeasures = []
-    const measures = await SELECT.from(prepareCommercialMeasureMetricForecasts).where(serviceId && { serviceId: serviceId } || {})
-    for (const measure of measures) {
-
-        // Calculate how far in the month we are
-        const retrievedDay = Number(measure.retrieved?.split('-')[2])
-        const retrievedYearMonth = dateToYearMonth(new Date(measure.retrieved ?? 0))
-        const daysInMonth = getDaysInMonth(new Date(measure.retrieved ?? 0))
-        const howFarInMonthPct = (measure.reportYearMonth == retrievedYearMonth) ? Math.min(retrievedDay / daysInMonth, 1) : 1
-
-        // Set multiplier based on Forecast Method
-        let multiplier = 1
-        if (measure.method == TForecastMethod.TimeLinear) multiplier = 1 / howFarInMonthPct
-        else if (measure.method == TForecastMethod.TimeDegressive) multiplier = 1 / (howFarInMonthPct ** (measure.degressionFactor ?? 1))
-
-        // Default values
-        let forecastPct = 100
-        let forecast: TCommercialMeasure = {
-            cost: measure.measure_cost,
-            usage: measure.measure_usage,
-            actualUsage: measure.measure_actualUsage,
-            chargedBlocks: measure.measure_chargedBlocks
-        }
-
-        // Calculate values if not excluded
-        if (measure.method !== TForecastMethod.Excluded) {
-            forecastPct = (measure.max_cost && measure.max_cost > 0) ? ((measure.measure_cost ?? 0) * multiplier * 100 / measure.max_cost) : 100
-            forecast = {
+    let status = ''
+    if (cds.env.requires.db.kind == 'hana') {
+        // Use single SQL query that can be executed in HANA (faster)
+        const where = serviceId ? ` WHERE (SERVICEID = '${serviceId}')` : ''
+        const onClause =
+            `sourceTable.REPORTYEARMONTH        = targetTable.TOMETRIC_TOSERVICE_REPORTYEARMONTH 
+            AND sourceTable.RETRIEVED           = targetTable.TOMETRIC_TOSERVICE_RETRIEVED
+            AND sourceTable.SERVICEID           = targetTable.TOMETRIC_TOSERVICE_SERVICEID
+            AND sourceTable.INTERVAL            = targetTable.TOMETRIC_TOSERVICE_INTERVAL
+            AND sourceTable.MEASUREID           = targetTable.TOMETRIC_MEASUREID
+            AND sourceTable.ID                  = targetTable.ID
+            AND sourceTable.LEVEL               = targetTable.LEVEL`
+        const updateClause =
+            `targetTable.MAX_COST               = sourceTable.MAX_COST,
+            targetTable.FORECASTPCT             = ROUND(COALESCE(sourceTable.forecastPct, 100), 0),
+            targetTable.FORECAST_COST           = ROUND(sourceTable.MEASURE_COST * sourceTable.multiplier, 2),
+            targetTable.FORECAST_USAGE          = ROUND(sourceTable.MEASURE_USAGE * sourceTable.multiplier, 2),
+            targetTable.FORECAST_ACTUALUSAGE    = ROUND(sourceTable.MEASURE_ACTUALUSAGE * sourceTable.multiplier, 2),
+            targetTable.FORECAST_CHARGEDBLOCKS  = ROUND(sourceTable.MEASURE_CHARGEDBLOCKS * sourceTable.multiplier, 2)`
+        const sql =
+            `MERGE INTO ${CommercialMeasures.name.replace('.', '_')} AS targetTable
+            USING (SELECT * FROM ${prepareCommercialMeasureMetricForecasts.name.replace('.', '_')}${where}) AS sourceTable
+            ON ${onClause} WHEN MATCHED THEN UPDATE SET ${updateClause}`
+        const rows = await db.run(sql)
+        status = `${rows} forecasts updated in the database (hana optimized).`
+    } else {
+        // Fallback approach which routes the data via the application layer (slower)
+        let forecasted: CommercialMeasures = []
+        const measures = await SELECT.from(prepareCommercialMeasureMetricForecasts).where(serviceId && { serviceId: serviceId } || {})
+        for (const measure of measures) {
+            const multiplier = measure.multiplier ?? 1
+            const forecast: TCommercialMeasure = {
                 cost: fixDecimals((measure.measure_cost ?? 0) * multiplier),
                 usage: fixDecimals((measure.measure_usage ?? 0) * multiplier),
                 actualUsage: fixDecimals((measure.measure_actualUsage ?? 0) * multiplier),
                 chargedBlocks: fixDecimals((measure.measure_chargedBlocks ?? 0) * multiplier)
             }
-        }
-
-        // Create record for database update
-        forecasted.push({
-            toMetric: {
-                toService: {
-                    reportYearMonth: measure.reportYearMonth,
-                    serviceId: measure.serviceId,
-                    retrieved: measure.retrieved,
-                    interval: measure.interval
+            forecasted.push({
+                toMetric: {
+                    toService: {
+                        reportYearMonth: measure.reportYearMonth,
+                        serviceId: measure.serviceId,
+                        retrieved: measure.retrieved,
+                        interval: measure.interval
+                    },
+                    measureId: measure.measureId,
                 },
-                measureId: measure.measureId,
-            },
-            level: measure.level,
-            id: measure.id,
-            // name: measure.name,
-            ... (measure.measureId !== '_combined_') && { forecast },
-            forecastPct: fixDecimals(forecastPct, 0),
-            max_cost: measure.max_cost
-        })
+                level: measure.level,
+                id: measure.id,
+                ...  { forecast },
+                forecastPct: fixDecimals(measure.forecastPct ?? 100, 0),
+                max_cost: measure.max_cost
+            })
+        }
+        forecasted = forecasted.map(x => flattenObject(x))
+
+        forecasted.length > 0 && await UPSERT.into(CommercialMeasures).entries(forecasted)
+        status = `${forecasted.length} forecasts updated in the database (fallback legacy).`
     }
-    forecasted = forecasted.map(x => flattenObject(x))
 
-    forecasted.length > 0 && await UPSERT.into(CommercialMeasures).entries(forecasted)
-
-    const status = `${forecasted.length} forecasts updated in the database.`
     info(status)
     return status
 }
@@ -907,12 +908,12 @@ async function updateCommercialServiceForecasts(serviceId?: string) {
         const where = serviceId ? ` WHERE (toMetric_toService_serviceId = '${serviceId}')` : ''
         const sql = `UPSERT ${CommercialMeasures.name.replace('.', '_')} SELECT * FROM ${prepareCommercialMeasureServiceForecasts.name.replace('.', '_')}${where}`
         const rows = await db.run(sql)
-        status = `${rows} data points updated in the database (optimized).`
+        status = `${rows} data points updated in the database (hana optimized).`
     } else {
         // Fallback approach which routes the data via the application layer (slower)
         const data = await SELECT.from(prepareCommercialMeasureServiceForecasts).where(serviceId && { toMetric_toService_serviceId: serviceId } || {})
         data.length > 0 && await UPSERT.into(CommercialMeasures).entries(data)
-        status = `${data.length} data points updated in the database.`
+        status = `${data.length} data points updated in the database (fallback legacy).`
     }
 
     info(status)
@@ -1015,7 +1016,7 @@ async function updateDeltaMeasures(interval: TInterval) {
                 USING (SELECT ${keyColumnsSQL}, ${commercialDeltaColumnsSelectSQLMonthly} FROM ${CommercialMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Monthly')) AS sourceTable
                 ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`)
 
-        status = `${technicalRows} technical and ${commercialRows} commercial ${interval} deltas updated.`
+        status = `${technicalRows} technical and ${commercialRows} commercial ${interval} deltas updated (hana optimized).`
     } else {
         status = 'No deltas updated (hana feature only)'
     }
