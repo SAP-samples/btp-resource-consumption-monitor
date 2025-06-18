@@ -10,36 +10,30 @@
     "npm": ">=10"
   },
   "dependencies": {
-    "@cap-js-community/odata-v2-adapter": "^1.14",
+    "@cap-js-community/odata-v2-adapter": "^1.15",
     "@sap-cloud-sdk/connectivity": "^4.0",
     "@sap-cloud-sdk/openapi": "^4.0",
     "@sap/cds": "~8.9",
-    "@sap/cds-hana": "^2.0",
+    "@sap/cds-hana": "^2.1",
     "@sap/xsenv": "^5.5",
     "@sap/xssec": "^4.6",
     "express": "^4.21.2"
   },
   "devDependencies": {
-    "@cap-js/cds-typer": "~0.34.0",
-    "@cap-js/cds-types": "~0.10.0",
-    "@cap-js/sqlite": "^1.11.0",
-    "@sap-cloud-sdk/openapi-generator": "^4.0.2",
-    "@sap/cds-dk": "~8.9.2",
-    "@sap/eslint-plugin-cds": "^3.2.0",
-    "@sap/ux-specification": "^1.124.14",
-    "@types/node": "^22.14.1",
-    "@types/sap__xsenv": "^3.3.2",
-    "ctz": "^0.2.7",
+    "@cap-js/cds-typer": "~0.35.0",
+    "@cap-js/cds-types": "~0.11.0",
+    "@cap-js/sqlite": "~1.11.0",
+    "@sap-cloud-sdk/openapi-generator": "^4",
+    "@sap/cds-dk": "~8.9.5",
+    "@sap/eslint-plugin-cds": "^3.2",
+    "@sap/ux-specification": "^1.124",
+    "@types/node": "^24",
+    "@types/sap__xsenv": "^3",
+    "ctz": "^0.2.8",
     "eslint": "^9.24",
     "rimraf": "^6.0",
     "ts-node": "^10.9",
     "typescript": "^5"
-  },
-  "overrides": {
-    "braces": "^3.0.3",
-    "micromatch": "^4.0.8",
-    "cross-spawn": "^7.0.6",
-    "@babel/helpers": "^7.27.0"
   },
   "scripts": {
     "start": "cds-serve",
