@@ -29,7 +29,6 @@
     "@sap/ux-specification": "^1.124",
     "@types/node": "^24",
     "@types/sap__xsenv": "^3",
-    "ctz": "^0.2.8",
     "eslint": "^9.24",
     "rimraf": "^6.0",
     "ts-node": "^10.9",

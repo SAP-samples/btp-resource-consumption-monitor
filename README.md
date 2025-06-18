@@ -108,6 +108,8 @@ cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar
 ```
 
 #### For Kyma deployments:
+Make sure to have the **pre-requisites** for Kyma deployment installed. See here: [CAP docs: Deploy to Kyma](https://cap.cloud.sap/docs/guides/deployment/to-kyma#prerequisites), most notably the `helm`, `ctz` and `pack` clis. You can test this by running `echo "helm:" && helm version && echo "ctz:" && ctz -v && echo "pack:" && pack --version`.
+
 Set your Kyma namespace and generate a docker registry secret, e.g. `docker-registry`, and deploy it to Kyma:
 ```cmd
 kubectl config set-context --current --namespace=NAMESPACE
