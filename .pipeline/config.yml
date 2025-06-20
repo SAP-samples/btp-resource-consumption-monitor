@@ -1,0 +1,38 @@
+general:
+  buildTool: "mta"
+service:
+  buildToolVersion: "MBTJ21N22"
+  stages:
+    Release:
+      cfCredentialsId: "btp-tech-00-cf"
+    Build:
+      runFirst:
+        command: "cd cf && npm install"
+stages:
+  Build:
+    mavenExecuteStaticCodeChecks: false
+    npmExecuteLint: false
+  Acceptance:
+    cloudFoundryDeploy: false
+    npmExecuteEndToEndTests: false
+  Malware Scan:
+    malwareExecuteScan: false
+  Release:
+    tmsExport: false
+    tmsUpload: false
+    cfApiEndpoint: "https://api.cf.eu20-001.hana.ondemand.com"
+    cfOrg: "zabka-poc-zabka-sap-btp-costs-azure"
+    cfSpace: "poc_fin"
+    deployType: "standard"
+    cloudFoundryDeploy: true
+  Additional Unit Tests:
+    npmExecuteScripts: false
+  Compliance:
+    sonarExecuteScan: false
+steps:
+  cloudFoundryDeploy:
+    mtaDeployParameters: "-f --version-rule ALL"
+  artifactPrepareVersion:
+    versioningType: "cloud_noTag"
+  mtaBuild:
+    source: cf
