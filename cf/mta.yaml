@@ -9,6 +9,7 @@ build-parameters:
   before-all:
     - builder: custom
       commands:
+        - npm install
         - npm run build:cf
 
 modules:
