@@ -300,6 +300,9 @@ You can freely edit/change the created jobs, or create other jobs. When the appl
 
 *Note:* Jobs have a default expected completion time of 15 seconds. Depending on the query, the application and/or API can take longer to process a request. In that case, the job monitor will classify the run as failed even though it ran successfully.
 
+## Daily Deltas
+The daily delta consumption in the FinOps application is only an approximation of the consumption over a 24hr period. It is not meant to be a hard data point referring to the actual consumption on the given day. It is calculated as the difference between the *last consumption retrieved on day x-1* and the *last consumption retrieved on day x*. As explained above, the FinOps tool retrieves the usage data multiple times throughout the day (by default every 3 hours). Doing so, it updates the data point for that day in its database with the newly received information. In case a given BTP Service reports on usage only the day after the consumption took place, it means that the newly received information relates to a previous day and not the current day. The FinOps tool can not differentiate between these, so for some services the *daily delta* might refer to the consumption of the previous day.
+
 ## Forecasting Configuration
 Each commercial metric of a service has a `Forecasting Configuration`. The following settings are available:
 - `Excluded`: the metric will not be forecasted/propagated. The current consumption for today is what is expected for the entire month. This should be used for 'stable services'.
