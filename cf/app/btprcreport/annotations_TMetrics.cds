@@ -184,6 +184,12 @@ annotate service.TechnicalMetrics with @(UI: {
                     Target       : 'tmByInstance/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByDoubleParentLabel',
                     ![@UI.Hidden]: hideServiceInstanceDistribution
                 },
+                                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'By Application',
+                    Target       : 'tmByApplication/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel',
+                    ![@UI.Hidden]: hideServiceApplicationDistribution
+                },
                 {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'By Space',

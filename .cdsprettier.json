@@ -1,0 +1,8 @@
+{
+  "alignColonsBeforeTypes": true,
+  "whitespaceAfterColonInAnnotation": true,
+  "whitespaceBeforeColonInAnnotation": false,
+  "whitespaceAfterColon": true,
+  "whitespaceBeforeColon": true,
+  "alignTypes": true
+}

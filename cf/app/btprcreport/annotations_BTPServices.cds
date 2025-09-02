@@ -53,6 +53,10 @@ annotate service.BTPServices with @(UI: {
         SortOrder     : [
             {Property: reportYearMonth},
             {
+                Property  : cmByCustomer.currency,
+                Descending: true
+            },
+            {
                 Property  : cmByCustomer.forecast_cost,
                 Descending: true
             }
@@ -360,6 +364,12 @@ annotate service.BTPServices with @(UI: {
                 },
                 {
                     $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Application',
+                    Target       : 'cmByMetricByApplication/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideServiceApplicationDistribution
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
                     Label        : 'Breakdown By Space',
                     Target       : 'cmByMetricBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
                     ![@UI.Hidden]: hideCommercialSpaceAllocation
@@ -409,6 +419,12 @@ annotate service.BTPServices with @(UI: {
                     Label        : 'Breakdown By Instance',
                     Target       : 'tmByMetricByInstance/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
                     ![@UI.Hidden]: hideServiceInstanceDistribution
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Application',
+                    Target       : 'tmByMetricByApplication/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideServiceApplicationDistribution
                 },
                 {
                     $Type : 'UI.ReferenceFacet',

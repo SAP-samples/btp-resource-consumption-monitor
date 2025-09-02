@@ -8,52 +8,48 @@ service PresentationService {
     @readonly
     entity AccountStructureItems        as projection on db.AccountStructureItems;
 
-    @cds.redirection.target
+            @cds.redirection.target
     entity BTPServices                  as
         projection on db.BTPServices {
             *,
-            count(
-                distinct commercialMetrics.measureId
-            )                                           as countCommercialMetrics : Integer @title: 'Commercials Metrics',
+            count(distinct commercialMetrics.measureId)                      as countCommercialMetrics : Integer @title: 'Commercials Metrics',
             STRING_AGG(
                 commercialMetrics.metricName, '__' order by commercialMetrics.metricName
-            )                                           as namesCommercialMetrics : String,
-            count(
-                distinct technicalMetrics.measureId
-            )                                           as countTechnicalMetrics  : Integer @title: 'Technical Metrics',
-            (count(
-                distinct commercialMetrics.measureId
-            ) = 0 ? true : false)                       as hideCommercialInfo     : Boolean,
+            )                                                                as namesCommercialMetrics : String,
+            count(distinct technicalMetrics.measureId)                       as countTechnicalMetrics  : Integer @title: 'Technical Metrics',
+            (count(distinct commercialMetrics.measureId) = 0 ? true : false) as hideCommercialInfo     : Boolean,
 
             // Filters to display data on breakdown levels:
-            cmByLevel[1 : level = 'Customer']           as cmByCustomer,
-            cmByLevel[level = 'Global Account']         as cmByGlobalAccount,
-            cmByLevel[level = 'Directory']              as cmByDirectory,
-            cmByLevel[level = 'Sub Account']            as cmBySubAccount,
-            cmByLevel[level = 'Datacenter']             as cmByDatacenter,
+            cmByLevel[1 : level = 'Customer']                                as cmByCustomer,
+            cmByLevel[level = 'Global Account']                              as cmByGlobalAccount,
+            cmByLevel[level = 'Directory']                                   as cmByDirectory,
+            cmByLevel[level = 'Sub Account']                                 as cmBySubAccount,
+            cmByLevel[level = 'Datacenter']                                  as cmByDatacenter,
             // cmByLevel[level = 'Space']                  as cmBySpace,
             //
             // cmByMetricByLevel[1 : level = 'Customer']  as cmByMetricByCustomer,
-            cmByMetricByLevel[level = 'Global Account'] as cmByMetricByGlobalAccount,
-            cmByMetricByLevel[level = 'Directory']      as cmByMetricByDirectory,
-            cmByMetricByLevel[level = 'Sub Account']    as cmByMetricBySubAccount,
-            cmByMetricByLevel[level = 'Datacenter']     as cmByMetricByDatacenter,
-            cmByMetricByLevel[level = 'Space']          as cmByMetricBySpace,
-            cmByMetricByLevel[level = 'Instance']       as cmByMetricByInstance,
+            cmByMetricByLevel[level = 'Global Account']                      as cmByMetricByGlobalAccount,
+            cmByMetricByLevel[level = 'Directory']                           as cmByMetricByDirectory,
+            cmByMetricByLevel[level = 'Sub Account']                         as cmByMetricBySubAccount,
+            cmByMetricByLevel[level = 'Datacenter']                          as cmByMetricByDatacenter,
+            cmByMetricByLevel[level = 'Space']                               as cmByMetricBySpace,
+            cmByMetricByLevel[level = 'Instance']                            as cmByMetricByInstance,
+            cmByMetricByLevel[level = 'Application']                         as cmByMetricByApplication,
             //
-            tmByLevel[1 : level = 'Customer']           as tmByCustomer,
-            tmByLevel[level = 'Global Account']         as tmByGlobalAccount,
+            tmByLevel[1 : level = 'Customer']                                as tmByCustomer,
+            tmByLevel[level = 'Global Account']                              as tmByGlobalAccount,
             // tmByLevel[level = 'Directory']          as tmByDirectory,
             // tmByLevel[level = 'Sub Account']         as tmBySubAccount,
             // tmByLevel[level = 'Datacenter']         as tmByDatacenter,
             //
             // tmByMetricByLevel[1 : level = 'Customer']  as tmByMetricByCustomer,
-            tmByMetricByLevel[level = 'Global Account'] as tmByMetricByGlobalAccount,
-            tmByMetricByLevel[level = 'Directory']      as tmByMetricByDirectory,
-            tmByMetricByLevel[level = 'Sub Account']    as tmByMetricBySubAccount,
-            tmByMetricByLevel[level = 'Datacenter']     as tmByMetricByDatacenter,
-            tmByMetricByLevel[level = 'Space']          as tmByMetricBySpace,
-            tmByMetricByLevel[level = 'Instance']       as tmByMetricByInstance
+            tmByMetricByLevel[level = 'Global Account']                      as tmByMetricByGlobalAccount,
+            tmByMetricByLevel[level = 'Directory']                           as tmByMetricByDirectory,
+            tmByMetricByLevel[level = 'Sub Account']                         as tmByMetricBySubAccount,
+            tmByMetricByLevel[level = 'Datacenter']                          as tmByMetricByDatacenter,
+            tmByMetricByLevel[level = 'Space']                               as tmByMetricBySpace,
+            tmByMetricByLevel[level = 'Instance']                            as tmByMetricByInstance,
+            tmByMetricByLevel[level = 'Application']                         as tmByMetricByApplication,
         }
         group by
             reportYearMonth,
@@ -68,7 +64,7 @@ service PresentationService {
         };
 
 
-    @cds.redirection.target
+            @cds.redirection.target
     entity CommercialMetrics            as
         projection on db.CommercialMetrics {
             *,
@@ -79,18 +75,19 @@ service PresentationService {
             commercialMeasures[level = 'Sub Account']    as cmBySubAccount,
             commercialMeasures[level = 'Datacenter']     as cmByDatacenter,
             commercialMeasures[level = 'Space']          as cmBySpace,
-            commercialMeasures[level = 'Instance']       as cmByInstance
+            commercialMeasures[level = 'Instance']       as cmByInstance,
+            commercialMeasures[level = 'Application']    as cmByApplication
         }
         actions {
             @Common.SideEffects: {TargetEntities: [in]}
             action SetForecastSetting(
-                                      @(UI.ParameterDefaultValue:in.forecastSetting.method)
-                                      method : types.TSetForecastSettingParams:method,
+                                      @(UI.ParameterDefaultValue: in.forecastSetting.method)
+                                      method: types.TSetForecastSettingParams:method,
                                       @(
-                                          UI.ParameterDefaultValue:in.forecastSetting.degressionFactor,
-                                          UI.Hidden : (:method = 'TimeDegressive' ? false : true)
+                                          UI.ParameterDefaultValue: in.forecastSetting.degressionFactor,
+                                          UI.Hidden : ( :method = 'TimeDegressive' ? false : true)
                                       )
-                                      degressionFactor : types.TSetForecastSettingParams:degressionFactor);
+                                      degressionFactor: types.TSetForecastSettingParams:degressionFactor);
 
             @Common.IsActionCritical
             //TODO: UI refresh after delete
@@ -99,7 +96,7 @@ service PresentationService {
             @Common.SideEffects: {TargetEntities: [in.technicalMetricForAllocation]}
             action SetTechnicalMetricForAllocation(
                                                    @(
-                                                       Common:{
+                                                       Common: {
                                                            ValueListWithFixedValues: true,
                                                            ValueList               : {
                                                                PresentationVariantQualifier: '#sorted',
@@ -123,13 +120,13 @@ service PresentationService {
                                                                ]
                                                            }
                                                        },
-                                                       UI.ParameterDefaultValue:in.technicalMetricForAllocation.tMeasureId
+                                                       UI.ParameterDefaultValue: in.technicalMetricForAllocation.tMeasureId
                                                    )
-                                                   tMeasureId : types.TSetTechnicalMetricForAllocationParams:tMeasureId,
+                                                   tMeasureId: types.TSetTechnicalMetricForAllocationParams:tMeasureId,
                                                    @(
-                                                       UI.ParameterDefaultValue:in.technicalMetricForAllocation.metricName,
-                                                       UI.Hidden:true
-                                                   ) metricName : types.TSetTechnicalMetricForAllocationParams:metricName);
+                                                       UI.ParameterDefaultValue: in.technicalMetricForAllocation.metricName,
+                                                       UI.Hidden: true
+                                                   ) metricName: types.TSetTechnicalMetricForAllocationParams:metricName);
         };
 
 
@@ -142,7 +139,7 @@ service PresentationService {
             toMetric.metricName          as metricName, // Used in Chart
         };
 
-    @cds.redirection.target
+            @cds.redirection.target
     entity TechnicalMetrics             as
         projection on db.TechnicalMetrics {
             *,
@@ -153,7 +150,8 @@ service PresentationService {
             technicalMeasures[level = 'Sub Account']    as tmBySubAccount,
             technicalMeasures[level = 'Datacenter']     as tmByDatacenter,
             technicalMeasures[level = 'Space']          as tmBySpace,
-            technicalMeasures[level = 'Instance']       as tmByInstance
+            technicalMeasures[level = 'Instance']       as tmByInstance,
+            technicalMeasures[level = 'Application']    as tmByApplication
         }
         actions {
             @Common.IsActionCritical
@@ -202,16 +200,19 @@ service PresentationService {
 
     function getLatestBTPAccountMeasure() returns AggregatedCommercialMeasures;
     function getTileInfo()                returns types.TDynamicAppLauncher;
+
+    @Common.SideEffects.TargetEntities: ['/PresentationService.EntityContainer/BTPServices']
     action   proxy_downloadMeasuresForToday();
 
+    @Common.SideEffects.TargetEntities: ['/PresentationService.EntityContainer/BTPServices']
     action   proxy_downloadMeasuresForPastMonths( @(
-                                                      assert.range:[
+                                                      assert.range: [
                                                           201001,
                                                           209912
                                                       ],
-                                                      UI.ParameterDefaultValue:'202311',
-                                                      title:'Load from which month'
-                                                  ) fromDate : String);
+                                                      UI.ParameterDefaultValue: '202311',
+                                                      title: 'Load from which month'
+                                                  ) fromDate: String);
 
     action   proxy_calculateCommercialForecasts();
 
@@ -236,8 +237,14 @@ service PresentationService {
             *
         }
         where
-                retrieved = CURRENT_DATE
-            and interval  = 'Daily';
+                // retrieved = CURRENT_DATE
+                retrieved in (
+                select max(retrieved) from BTPServices
+                where
+                        countCommercialMetrics > 0
+                    and interval               = 'Daily'
+            )
+            and interval  =  'Daily';
 
     @readonly
     entity Card_HistoricTrends          as
@@ -257,6 +264,9 @@ service PresentationService {
             *
         }
         where
-            retrieved = CURRENT_DATE;
+            //retrieved = CURRENT_DATE
+            retrieved in (
+                select max(retrieved) from AnalyticsService.AggregatedCommercialMeasures
+            );
 // and name      <> '';
 }

@@ -280,6 +280,12 @@ annotate service.CommercialMetrics with @(UI: {
                 },
                 {
                     $Type        : 'UI.ReferenceFacet',
+                    Label        : 'By Application',
+                    Target       : 'cmByApplication/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel',
+                    ![@UI.Hidden]: hideServiceApplicationDistribution
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
                     Label        : 'By Space',
                     Target       : 'cmBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdownSingleMetricGroupedByParentLabel',
                     ![@UI.Hidden]: hideCommercialSpaceAllocation

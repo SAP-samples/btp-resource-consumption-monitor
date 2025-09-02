@@ -194,7 +194,7 @@ service RetrievalService {
             on  tm.toMetric.toService.serviceId =  a.serviceId
             and tm.toMetric.measureId           =  a.tMeasureId
             and tm.level                        in (
-                'Space', 'Instance'
+                'Space', 'Instance', 'Application'
             );
 
     entity AccountStructureItems                    as projection on db.AccountStructureItems;

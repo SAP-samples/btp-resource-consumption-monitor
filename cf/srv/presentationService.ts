@@ -89,6 +89,7 @@ export default class PresentationService extends cds.ApplicationService {
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
                 each.hideCommercialSpaceAllocation = !Settings.appConfiguration.distributeCostsToSpaces
                 each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.serviceId!)
+                each.hideServiceApplicationDistribution = !Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(each.serviceId!)
             })
         })
 
@@ -118,6 +119,7 @@ export default class PresentationService extends cds.ApplicationService {
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
                 each.hideCommercialSpaceAllocation = !Settings.appConfiguration.distributeCostsToSpaces
                 each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.toService_serviceId!)
+                each.hideServiceApplicationDistribution = !Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(each.toService_serviceId!)
 
                 if ('technicalMetricForAllocation' in each && each.technicalMetricForAllocation == null) {
                     // Create virtual entry to show text so there is a button for the user
@@ -145,6 +147,7 @@ export default class PresentationService extends cds.ApplicationService {
                 }
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
                 each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.toService_serviceId!)
+                each.hideServiceApplicationDistribution = !Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(each.toService_serviceId!)
             })
         })
 
