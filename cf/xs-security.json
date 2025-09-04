@@ -18,7 +18,8 @@
       "name": "Viewer",
       "description": "Role to access the application",
       "scope-references": [
-        "$XSAPPNAME.Viewer"
+        "$XSAPPNAME.Viewer",
+        "uaa.user"
       ],
       "attribute-references": []
     }

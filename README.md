@@ -226,6 +226,7 @@ In the **Work Zone Site Manager**, open the `Channel Manager` and:
 1. Synchronize your HTML5 Repository by clicking on the `refresh icon`
 2. Click on `+ New`, `Content Package` and upload the generated `/workzone/package.zip` file, specifying `btprc-srv` as Runtime Destination. You can keep the other default values.
 3. The import will take up to 30 seconds to complete
+4. For the newly created channel, click on `Map aliases`, go to `Card Aliases`, select `btprc-srv` in both dropdowns and click on `+` to activate the entry. `Save` and close this screen. 
 
 #### Step 3. Configure your site
 In the **Work Zone Site Manager**, open the `Site Directory` and:
