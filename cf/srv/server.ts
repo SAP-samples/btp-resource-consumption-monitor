@@ -163,6 +163,7 @@ cds.on('served', async (services) => {
     }
 
     await createSubaccountDestinationIfNotExist(host)
+    await fixOldInstanceIDs()
 })
 
 
@@ -230,6 +231,140 @@ async function createSubaccountDestinationIfNotExist(host: string) {
             .createSubaccountDestinations(destination)
             .execute(serviceDestination)
         info(`Subaccount destination "${destinationName}" created:`, destination)
+    }
+}
+
+/**
+ * In the new version of the application (version after 2.1.0), the IDs of level '5-instances' have changed to include their parent ID (to ensure uniqueness)
+ * In order to maintain a correct mapping of tags, these IDs have to be corrected before the new logic would create duplicate records
+ * This is a migration step which should only manipulate data once, and would run empty any subsequent time.
+ * This logic will need to run a few times to migrate all items.
+ */
+async function fixOldInstanceIDs() {
+    info('Looking for Account Structure Items with Instances needing migration ...')
+
+    try {
+        const affectedAccountStructureItems = await SELECT.from(`db_AccountStructureItems`)
+            .columns('ID', 'PARENTID')
+            .where`LEVEL='Instance' and LOCATE(ID, PARENTID)=0` as { ID: string, PARENTID: string }[]
+        const affectedAccountStructureIDs = affectedAccountStructureItems.map(x => `${x.ID}`)
+        const fixedAccountStructureItems = Object.fromEntries(affectedAccountStructureItems.map(x => [x.ID, `${x.PARENTID}_${x.ID}`]))
+
+        if (affectedAccountStructureItems.length > 0) {
+            info(`${affectedAccountStructureItems.length} account structure items affected`)
+
+            // Convert the CustomTags which need to be updated
+            const affectedCustomTags = await SELECT.from(`db_CustomTags`)
+                .columns('ID', 'TOACCOUNTSTRUCTUREITEM_ID')
+                .where({ TOACCOUNTSTRUCTUREITEM_ID: { in: affectedAccountStructureIDs } }) as { ID: string, TOACCOUNTSTRUCTUREITEM_ID: string }[]
+            info(`${affectedCustomTags.length} custom tags needing update ...`)
+            await Promise.all(affectedCustomTags.map(x =>
+                UPDATE(`db_CustomTags`, x.ID)
+                    .with({ TOACCOUNTSTRUCTUREITEM_ID: fixedAccountStructureItems[x.TOACCOUNTSTRUCTUREITEM_ID] || x.TOACCOUNTSTRUCTUREITEM_ID }))
+            )
+            info(`${affectedCustomTags.length} custom tags updated`)
+
+            // Convert the ManagedTags which need to be updated
+            const affectedManagedTags = await SELECT.from(`db_ManagedTagAllocations`)
+                .columns('ID', 'TOACCOUNTSTRUCTUREITEM_ID')
+                .where({ TOACCOUNTSTRUCTUREITEM_ID: { in: affectedAccountStructureIDs } }) as { ID: string, TOACCOUNTSTRUCTUREITEM_ID: string }[]
+            info(`${affectedManagedTags.length} managed tags needing update ...`)
+            await Promise.all(affectedManagedTags.map(x =>
+                UPDATE(`db_ManagedTagAllocations`, x.ID)
+                    .with({ TOACCOUNTSTRUCTUREITEM_ID: fixedAccountStructureItems[x.TOACCOUNTSTRUCTUREITEM_ID] || x.TOACCOUNTSTRUCTUREITEM_ID }))
+            )
+            info(`${affectedManagedTags.length} managed tags updated`)
+
+            // Convert the CommercialMeasures which need to be updated
+            const affectedCMeasures = await SELECT.from(`db_CommercialMeasures`)
+                .columns(
+                    'TOMETRIC_TOSERVICE_REPORTYEARMONTH',
+                    'TOMETRIC_TOSERVICE_SERVICEID',
+                    'TOMETRIC_TOSERVICE_RETRIEVED',
+                    'TOMETRIC_TOSERVICE_INTERVAL',
+                    'TOMETRIC_MEASUREID',
+                    'LEVEL',
+                    'ID'
+                )
+                .where({ ID: { in: affectedAccountStructureIDs } }) as {
+                    TOMETRIC_TOSERVICE_REPORTYEARMONTH: string,
+                    TOMETRIC_TOSERVICE_SERVICEID: string,
+                    TOMETRIC_TOSERVICE_RETRIEVED: string,
+                    TOMETRIC_TOSERVICE_INTERVAL: string,
+                    TOMETRIC_MEASUREID: string,
+                    LEVEL: string,
+                    ID: string
+                }[]
+            info(`${affectedCMeasures.length} commercial measures needing update ...`)
+            await Promise.all(affectedCMeasures.map(x =>
+                UPDATE(`db_CommercialMeasures`)
+                    .with({ ID: fixedAccountStructureItems[x.ID] || x.ID })
+                    .where({
+                        TOMETRIC_TOSERVICE_REPORTYEARMONTH: x.TOMETRIC_TOSERVICE_REPORTYEARMONTH,
+                        TOMETRIC_TOSERVICE_SERVICEID: x.TOMETRIC_TOSERVICE_SERVICEID,
+                        TOMETRIC_TOSERVICE_RETRIEVED: x.TOMETRIC_TOSERVICE_RETRIEVED,
+                        TOMETRIC_TOSERVICE_INTERVAL: x.TOMETRIC_TOSERVICE_INTERVAL,
+                        TOMETRIC_MEASUREID: x.TOMETRIC_MEASUREID,
+                        LEVEL: x.LEVEL,
+                        ID: x.ID
+                    })
+            ))
+            info(`${affectedCMeasures.length} commercial measures updated`)
+
+            // Convert the TechnicalMeasures which need to be updated
+            const affectedTMeasures = await SELECT.from(`db_TechnicalMeasures`)
+                .columns(
+                    'TOMETRIC_TOSERVICE_REPORTYEARMONTH',
+                    'TOMETRIC_TOSERVICE_SERVICEID',
+                    'TOMETRIC_TOSERVICE_RETRIEVED',
+                    'TOMETRIC_TOSERVICE_INTERVAL',
+                    'TOMETRIC_MEASUREID',
+                    'LEVEL',
+                    'ID'
+                )
+                .where({ ID: { in: affectedAccountStructureIDs } }) as {
+                    TOMETRIC_TOSERVICE_REPORTYEARMONTH: string,
+                    TOMETRIC_TOSERVICE_SERVICEID: string,
+                    TOMETRIC_TOSERVICE_RETRIEVED: string,
+                    TOMETRIC_TOSERVICE_INTERVAL: string,
+                    TOMETRIC_MEASUREID: string,
+                    LEVEL: string,
+                    ID: string
+                }[]
+            info(`${affectedTMeasures.length} technical measures needing update ...`)
+            await Promise.all(affectedTMeasures.map(x =>
+                UPDATE(`db_TechnicalMeasures`)
+                    .with({ ID: fixedAccountStructureItems[x.ID] || x.ID })
+                    .where({
+                        TOMETRIC_TOSERVICE_REPORTYEARMONTH: x.TOMETRIC_TOSERVICE_REPORTYEARMONTH,
+                        TOMETRIC_TOSERVICE_SERVICEID: x.TOMETRIC_TOSERVICE_SERVICEID,
+                        TOMETRIC_TOSERVICE_RETRIEVED: x.TOMETRIC_TOSERVICE_RETRIEVED,
+                        TOMETRIC_TOSERVICE_INTERVAL: x.TOMETRIC_TOSERVICE_INTERVAL,
+                        TOMETRIC_MEASUREID: x.TOMETRIC_MEASUREID,
+                        LEVEL: x.LEVEL,
+                        ID: x.ID
+                    })
+            ))
+            info(`${affectedTMeasures.length} technical measures updated`)
+
+            // Update the AccountStructureItems table
+            await UPDATE(`db_AccountStructureItems`)
+                .set`ID = PARENTID || '_' || ID`
+                .where({ ID: { in: affectedAccountStructureIDs } })
+            info(`${affectedAccountStructureItems.length} account structure items updated`)
+
+            info(`Migration finished.`)
+
+        } else {
+            info('No items found. Good to go.')
+        }
+    } catch (e) {
+        if (String(e).startsWith('TimeoutError: Acquiring client from pool timed out')) {
+            info('Migration interrupted due to time-out: during the migration run, not all items could be processed in 1 run. Restart the application to continue processing the remaining items.')
+            throw new Error('Dont panic, this is expected. Please restart the application until this error goes away to finish the migration. Gradually you will see the remaining items go closer to 0.\n')
+        } else {
+            throw e
+        }
     }
 }
 
