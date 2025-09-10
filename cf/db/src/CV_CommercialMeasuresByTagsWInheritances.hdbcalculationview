@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Calculation:scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:Calculation="http://www.sap.com/ndb/BiModelCalculation.ecore" xmlns:DataFoundation="http://www.sap.com/ndb/BiModelDataFoundation.ecore" xmlns:Dimension="http://www.sap.com/ndb/BiModelDimension.ecore" id="CV_CommercialMeasuresByTagsWInheritances" applyPrivilegeType="NONE" dataCategory="CUBE" schemaVersion="3.0" hierarchyGeneration="SQL" outputViewType="Aggregation" cacheInvalidationPeriod="NONE" enforceSqlExecution="true" application="BAS">
+<descriptions defaultDescription="CV_CommercialMeasuresByTagsWInheritances"/>
+<localVariables/>
+<variableMappings/>
+<dataSources>
+  <DataSource id="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES">
+    <resourceUri>ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES</resourceUri>
+  </DataSource>
+</dataSources>
+<snapshotProcedures/>
+<calculationViews/>
+
+<logicalModel id="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" filterExpressionLanguage="SQL">
+  <attributes>
+    <attribute id="RETRIEVED" order="1" displayAttribute="false" attributeHierarchyActive="false" semanticType="date">
+      <descriptions defaultDescription="Date"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="RETRIEVED"/>
+    </attribute>
+    <attribute id="INTERVAL" order="2" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Interval"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="INTERVAL"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_ID" order="3" displayAttribute="false" attributeHierarchyActive="false" descriptionColumnName="ACCOUNTSTRUCTUREITEM_LABEL">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_ID"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_ID"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_PARENTID" order="4" displayAttribute="false" attributeHierarchyActive="false" descriptionColumnName="ACCOUNTSTRUCTUREITEM_LABEL">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_PARENTID"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_PARENTID"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_LEVEL" order="5" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_LEVEL"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_LEVEL"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_NAME" order="6" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_NAME"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_NAME"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_REGION" order="7" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_REGION"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_REGION"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_ENVIRONMENT" order="8" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_ENVIRONMENT"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_ENVIRONMENT"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_EXCLUDED" order="9" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_EXCLUDED"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_EXCLUDED"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_LIFECYCLE" order="10" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="ACCOUNTSTRUCTUREITEM_LIFECYCLE"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_LIFECYCLE"/>
+    </attribute>
+    <attribute id="ACCOUNTSTRUCTUREITEM_LABEL" order="11" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Hierarchy"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="ACCOUNTSTRUCTUREITEM_LABEL"/>
+    </attribute>
+    <attribute id="TAG_NAME" order="12" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Tag Name"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="TAG_NAME"/>
+    </attribute>
+    <attribute id="TAG_VALUE" order="13" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Tag Value"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="TAG_VALUE"/>
+    </attribute>
+    <attribute id="TAG_PCT" order="14" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="TAG_PCT"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="TAG_PCT"/>
+    </attribute>
+    <attribute id="TAG_LABEL" order="15" displayAttribute="false" attributeHierarchyActive="false">
+      <descriptions defaultDescription="Tag Allocation"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="TAG_LABEL"/>
+    </attribute>
+    <attribute id="MEASURES_CURRENCY" order="16" displayAttribute="false" attributeHierarchyActive="false" semanticType="currencyCode">
+      <descriptions defaultDescription="Currency"/>
+      <keyMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="MEASURES_CURRENCY"/>
+    </attribute>
+  </attributes>
+  <calculatedAttributes/>
+  <baseMeasures>
+    <measure id="MEASURES_MEASURE_COST" order="17" aggregationType="sum" measureType="amount" semanticType="amount">
+      <descriptions defaultDescription="Cost"/>
+      <unitCurrencyAttribute attributeName="MEASURES_CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="MEASURES_MEASURE_COST"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_FORECAST_COST" order="18" aggregationType="sum" measureType="amount" semanticType="amount">
+      <descriptions defaultDescription="Forecasted Cost"/>
+      <unitCurrencyAttribute attributeName="MEASURES_CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="MEASURES_FORECAST_COST"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_DELTA_MEASURE_COST" order="19" aggregationType="sum" measureType="amount" semanticType="amount">
+      <descriptions defaultDescription="Delta Cost"/>
+      <unitCurrencyAttribute attributeName="MEASURES_CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="MEASURES_DELTA_MEASURE_COST"/>
+      <exceptionAggregationMetadata/>
+    </measure>
+    <measure id="MEASURES_DELTA_FORECAST_COST" order="20" aggregationType="sum" measureType="amount" semanticType="amount">
+      <descriptions defaultDescription="Delta Forecasted Cost"/>
+      <unitCurrencyAttribute attributeName="MEASURES_CURRENCY"/>
+      <measureMapping columnObjectName="ANALYTICSSERVICE_COMMERCIALMEASURESBYTAGSWINHERITANCES" columnName="MEASURES_DELTA_FORECAST_COST"/>
+      <exceptionAggregationMetadata/>
+    </measure></baseMeasures>
+  <calculatedMeasures/>
+  <restrictedMeasures/>
+  <localDimensions>
+    <localDimension id="AccountStructure">
+      <attributeRef xsi:type="DataFoundation:Attribute">ACCOUNTSTRUCTUREITEM_ID</attributeRef>
+      <attributeRef xsi:type="DataFoundation:Attribute">ACCOUNTSTRUCTUREITEM_PARENTID</attributeRef>
+      <hierarchies>
+        <hierarchy xsi:type="Dimension:ParentChildHierarchy" id="AccountStructure" aggregateAllNodes="false" orphanedNodesHandling="ROOT_NODES" rootNodeVisibility="ADD_ROOT_NODE_IF_DEFINED" cacheEnabled="true" cycleHandling="BREAKUP" emptyValueIsNull="true" defaultMember="">
+          <descriptions defaultDescription="AccountStructure"/>
+          <unassignedMemberProperties mode="FALSE"/>
+          <attributeParentPair attribute="ACCOUNTSTRUCTUREITEM_ID" parentAttribute="ACCOUNTSTRUCTUREITEM_PARENTID"/>
+          <siblingOrder byAttribute="ACCOUNTSTRUCTUREITEM_LABEL" direction="ASC"/>
+        </hierarchy>
+      </hierarchies>
+    </localDimension>
+  </localDimensions>
+
+
+  <filter>LEFT(&quot;ACCOUNTSTRUCTUREITEM_LABEL&quot;, 6) != 'Space:'
+    and
+    LEFT(&quot;ACCOUNTSTRUCTUREITEM_LABEL&quot;, 17) != 'Service (alloc.):'
+    and
+    LEFT(&quot;ACCOUNTSTRUCTUREITEM_LABEL&quot;, 11) != 'Datacenter:'</filter>
+
+</logicalModel>
+<layout>
+  <shapes>
+    <shape expanded="true" modelObjectName="Output" modelObjectNameSpace="MeasureGroup">
+      <upperLeftCorner x="40" y="85"/>
+    </shape>
+    
+  </shapes>
+</layout>
+</Calculation:scenario>
