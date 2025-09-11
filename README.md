@@ -60,14 +60,23 @@ The following **Entitlements** need to be available to use this application:
 The following components are **optional but recommended** as an add-on:
 - SAP Analytics Cloud version 2024.08+ (**Note:** this SAC tenant can reside *anywhere*, it doesn't have to sit in the same global account)
 
-## Upgrading from version 2.0 to 2.1
+## Upgrading to newer versions
 
+### From version 2.0 to 2.1
 You can upgrade your 2.0.x version to 2.1.0 in Cloud Foundry. Upgrades do not apply to Kyma deployments as they are new from v2.1.0 onwards.
 To upgrade your existing installation, just follow the below installation steps again using your existing target.
 
 From 2.0.2 to 2.1.0, only the Backend and Fiori applications have been changed, the SAC package has not been changed.
 
-After the upgrade, make sure to assign the backend role again to the end users.
+After the upgrade, make sure to refresh the HTLM5 Repo and (if needed) assign the backend role again to the end users.
+
+### From version 2.1 to 2.2
+You can upgrade your 2.1.x version to 2.2.0 in Cloud Foundry and Kyma.
+To upgrade your existing installation, just follow the below installation steps again using your existing target.
+
+From 2.1.x to 2.2.0, all elements have been changed: CAP backend, Fiori applications and SAC content.
+
+After the upgrade, make sure to refresh the HTLM5 Repo and (if needed) assign the backend role again to the end users.
 
 ## Download and Installation
 
@@ -93,7 +102,7 @@ In **Business Application Studio**, make sure to have a `Development Space` of k
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar -e mtaext_notifications.mtaext
+cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar -e mtaext_notifications.mtaext
 ```
 
 ***Note:*** This deployment will trigger an **initial activation email** to your email address asking for your consent to receive further emails. Make sure to action this email to ensure you receive the notifications from this application!
@@ -104,7 +113,7 @@ cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar -e mtaext_notificat
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.1.0.mtar
+cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar
 ```
 
 #### For Kyma deployments:
