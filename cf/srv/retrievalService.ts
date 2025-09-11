@@ -1266,14 +1266,19 @@ function buildRequestForAlert(alert: Alert): { json: Object; sql: string; req: c
         }, {})
     }
 
-    const req = SELECT.from(
-        alert.alertType == TAlertType.Commercial
-            ? CommercialMeasures
-            : TechnicalMeasures
-    )
-        .columns(a => { a('*'), a.toMetric?.metricName, a.toMetric?.toService?.serviceName })
-        .where(json)
-        .orderBy('toMetric_toService_serviceId', 'toMetric_measureId')
+    let req
+    if (alert.alertType == TAlertType.Commercial) {
+        req = SELECT.from(CommercialMeasures)
+            .columns(a => { a('*'), a.toMetric?.metricName, a.toMetric?.toService?.serviceName })
+            .where(json)
+            .orderBy('toMetric_toService_serviceId', 'toMetric_measureId')
+    } else {
+        req = SELECT.from(TechnicalMeasures)
+            .columns(a => { a('*'), a.toMetric?.metricName, a.toMetric?.toService?.serviceName })
+            .where(json)
+            .orderBy('toMetric_toService_serviceId', 'toMetric_measureId')
+    }
+
 
     const sql = req + ''
 

@@ -1,12 +1,12 @@
 {
   "name": "ui-deployer-kyma",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "engines": {
     "node": ">=20",
     "npm": ">=10"
   },
   "dependencies": {
-    "@sap/html5-app-deployer": "^7.0"
+    "@sap/html5-app-deployer": "^7.1"
   },
   "scripts": {
     "start": "node node_modules/@sap/html5-app-deployer/index.js"
