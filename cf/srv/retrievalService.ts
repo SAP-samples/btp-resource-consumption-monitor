@@ -830,7 +830,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                             treeLevel: item?.directoryId ? 5 : 4,
                             treeState: Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(item?.serviceId) ? 'expanded' : 'leaf',
                             managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.InstanceOfService ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
-                            customTags: [{ name: 'Hierarchy', value: `5-Instance` }]
+                            customTags: [{ name: 'Hierarchy', value: `5-${TAccountStructureLevels.InstanceOfService}` }]
                         })
                     });
             }
@@ -851,7 +851,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                             treeLevel: item?.directoryId ? 6 : 5,
                             treeState: 'leaf',
                             managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.ApplicationInService ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
-                            customTags: [{ name: 'Hierarchy', value: `6-Application` }]
+                            customTags: [{ name: 'Hierarchy', value: `6-${TAccountStructureLevels.ApplicationInService}` }]
                         })
                     });
             }

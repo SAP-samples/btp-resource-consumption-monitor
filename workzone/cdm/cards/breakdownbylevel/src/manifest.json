@@ -24,26 +24,29 @@
     "sap.card": {
         "type": "Analytical",
         "designtime": "dt/configuration",
+        "data": {
+            "request": {
+                "url": "{{destinations.btprc-srv}}/odata/v4/presentation/Card_TodaysMeasuresByLevels",
+                "withCredentials": true,
+                "parameters": {
+                    "$filter": "level eq '{filters>/level/selectedItem/key}'",
+                    "$orderby": "forecast_cost desc"
+                }
+            },
+            "path": "/value"
+        },
         "header": {
             "type": "Default",
             "title": "{{title}}",
+            "status": {
+                "text": "{= 'Latest reading: ' + ${/value/0/retrieved} }"
+            },
             "subTitle": "Today's forecast by {filters>/level/value}",
             "icon": {
                 "src": "sap-icon://donut-chart"
             }
         },
         "content": {
-            "data": {
-                "request": {
-                    "url": "{{destinations.btprc-srv}}/odata/v4/presentation/Card_TodaysMeasuresByLevels",
-                    "withCredentials": true,
-                    "parameters": {
-                        "$filter": "level eq '{filters>/level/selectedItem/key}'",
-                        "$orderby": "forecast_cost desc"
-                    }
-                },
-                "path": "/value"
-            },
             "chartType": "donut",
             "chartProperties": {
                 "title": {

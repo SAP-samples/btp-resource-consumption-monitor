@@ -5,17 +5,30 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
-## Version 2.1.x - Future
+## Version 2.2.0 - 2025-09-12
+### Added
+- New 'Application' level in account structure (subaccount > service > instance > application)
+- New detailed usage information for `ai-core` service per used AI model
+- Tags are now inherited so child items of a tagged entity will display their costs as well (non-inherited view still available as well)
+- 2 new calculation views with the inherited tags view, but without the 'datacenter', 'space' and 'service (alloc.)' levels
+- 2 new SAC views to toggle between views that either include tag inheritance or not
+
 ### Fixed
 - Fixed empty dropdown in copy/paste of tags
+- Renewed SAC package validity
 
 ### Changed
 - Improved performance of forecast calculations during data refresh
+- Changed generated IDs for Service Instances to ensure uniqueness, with migration script
+- Workzone cards now show KPIs of last available day instead of 'today'
+- Support for CDS 9.2
+- Moved ctz dependency to pre-requisite for Kyma deployments
+- Added npm-ci before build step for automated deployment pipelines
 
 ## Version 2.1.0 - 2024-11-15
 ### Added
 - Support for Kyma deployment
-- Support from CDS 8.4
+- Support for CDS 8.4
 - Enabled lower level 'instances' breakdown for select services
 
 ### Changed
