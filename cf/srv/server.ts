@@ -13,7 +13,7 @@ import {
 } from './external/APIJobSchedulerService'
 import assert from 'node:assert'
 
-const { info, error } = cds.log('server')
+const { info, warn, error } = cds.log('server')
 
 /**
  * Resource usage should be retrieved daily. Jobs will be used to do so.
@@ -163,7 +163,13 @@ cds.on('served', async (services) => {
     }
 
     await createSubaccountDestinationIfNotExist(host)
-    await fixOldInstanceIDs()
+
+    if (cds.requires.db.kind == 'hana') {
+        await fixOldInstanceIDs()
+    } else {
+        warn('! Running on different database than HANA Cloud. Will not run migration. Continuing without migration...')
+    }
+
 })
 
 
