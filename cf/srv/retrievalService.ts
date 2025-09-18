@@ -688,7 +688,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
     });
 
     // Account records
-    [...new Set(data.filter(x => x.globalAccountId !== null).map(x => x.globalAccountId))]
+    [...new Set(data.filter(x => !!x.globalAccountId).map(x => x.globalAccountId))]
         .forEach(id => {
             const item = data.find(x => x.globalAccountId == id)
             item?.globalAccountId && structureItems.push({
@@ -704,7 +704,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `1-${TAccountStructureLevels.GlobalAccount}` }]
             })
         });
-    [...new Set(data.filter(x => x.directoryId !== null).map(x => x.directoryId))]
+    [...new Set(data.filter(x => !!x.directoryId).map(x => x.directoryId))]
         .forEach(id => {
             const item = data.find(x => x.directoryId == id)
             item?.directoryId && structureItems.push({
@@ -720,7 +720,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `2-${TAccountStructureLevels.Directory}` }]
             })
         });
-    [...new Set(data.filter(x => x.dataCenter !== null).map(x => x.dataCenter))]
+    [...new Set(data.filter(x => !!x.dataCenter).map(x => x.dataCenter))]
         .forEach(id => {
             const item = data.find(x => x.dataCenter == id)
             item?.dataCenter && structureItems.push({
@@ -736,7 +736,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `2-${TAccountStructureLevels.Datacenter}` }]
             })
         });
-    [...new Set(data.filter(x => x.subaccountId !== null).map(x => x.subaccountId))]
+    [...new Set(data.filter(x => !!x.subaccountId).map(x => x.subaccountId))]
         .forEach(id => {
             const item = data.find(x => x.subaccountId == id)
             item?.subaccountId && structureItems.push({
@@ -752,7 +752,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `3-${TAccountStructureLevels.SubAccount}` }]
             })
         });
-    [...new Set(data.filter(x => x.spaceId !== null).map(x => x.spaceId))]
+    [...new Set(data.filter(x => !!x.spaceId).map(x => x.spaceId))]
         .forEach(id => {
             const item = data.find(x => x.spaceId == id)
             item?.spaceId && structureItems.push({
@@ -768,7 +768,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `4-${TAccountStructureLevels.Space}` }]
             })
         });
-    [...new Set(data.filter(x => x.environmentInstanceId !== null).map(x => x.environmentInstanceId))]
+    [...new Set(data.filter(x => !!x.environmentInstanceId).map(x => x.environmentInstanceId))]
         .forEach(id => {
             const item = data.find(x => x.environmentInstanceId == id)
             item?.environmentInstanceId && structureItems.push({
@@ -787,7 +787,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
         });
 
     // Service records: service item under Sub Account, or service (alloc) under space
-    [...new Set(data.filter(x => x.serviceId !== null).map(x => x.serviceId))]
+    [...new Set(data.filter(x => !!x.serviceId).map(x => x.serviceId))]
         .forEach(id => {
             const spaceItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => !!x.spaceId), ['serviceId', 'spaceId'])
             const subaccountItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => !x.spaceId), ['serviceId', 'subaccountId'])
@@ -815,9 +815,9 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
             }
             // new level under Service (only under Sub Account): instances
             if (Settings.appConfiguration.serviceInstancesCreationList.includes(id)) {
-                [...new Set(data.filter(x => x.serviceId == id).filter(x => x.instanceId !== null).map(x => x.instanceId))]
-                    .forEach(id => {
-                        const item = data.find(x => x.instanceId == id)
+                [...new Set(data.filter(x => x.serviceId == id).filter(x => !!x.instanceId).map(x => x.instanceId))]
+                    .forEach(instanceId => {
+                        const item = data.find(x => x.instanceId == instanceId && x.serviceId == id)
                         const itemParentID = `${item?.subaccountId}_${item?.serviceId}`
                         const itemID = `${itemParentID}_${item?.instanceId}`
                         item?.instanceId && structureItems.push({
@@ -836,9 +836,9 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
             }
             // new level under Service Instance (only under Sub Account): instance applications
             if (Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(id)) {
-                [...new Set(data.filter(x => x.serviceId == id).filter(x => x.application !== null).map(x => x.application))]
-                    .forEach(id => {
-                        const item = data.find(x => x.application == id)
+                [...new Set(data.filter(x => x.serviceId == id).filter(x => !!x.application).map(x => x.application))]
+                    .forEach(applicationId => {
+                        const item = data.find(x => x.application == applicationId && x.serviceId == id)
                         const itemParentID = `${item?.subaccountId}_${item?.serviceId}_${item?.instanceId}`
                         const itemID = `${itemParentID}_${item?.application}`
                         item?.application && structureItems.push({

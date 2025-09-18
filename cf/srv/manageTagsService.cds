@@ -19,9 +19,9 @@ service ManageTagsService {
         actions {
             action copyTags();
             @Common.DefaultValuesFunction: 'getPasteTagsDefaultValue'
-            action pasteTags(mode : types.TPasteTagsParams:mode);
+            action pasteTags(mode: types.TPasteTagsParams:mode);
             @Common.DefaultValuesFunction: 'getPasteTagsDefaultValue'
-            action deleteTags(mode : types.TPasteTagsParams:mode);
+            action deleteTags(mode: types.TPasteTagsParams:mode);
         };
 
     function getPasteTagsDefaultValue() returns types.TPasteTagsParams;
