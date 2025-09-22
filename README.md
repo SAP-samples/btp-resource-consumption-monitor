@@ -293,6 +293,15 @@ Open your browser to http://localhost:4004 where you will find the relevant `Web
 
 **Tip:** This will connect to the HANA Cloud database. In case you want to use a local sqlite database for testing, run `cds-ts deploy -2 sqlite`, and remove the binding to `btprc-db` from the `.cdsrc-private.json` file.
 
+## CAS Managed Service
+SAP Cloud Application Services (CAS) is offering a managed service which includes this FinOps application, together with IT Ops and Dev Ops, under the **Clean Code** umbrella. This is a perfect solution if you want SAP to manage this application for you.
+
+You can find more information:
+- on [SAP Trust Center: SAP CAS for Business AI](https://www.sap.com/about/trust-center/agreements/services/scope-documents.html?search=Business%20AI&sort=latest_desc&tag=language%3Aenglish&pdf-asset=9073c037-1b7f-0010-bca6-c68f7e60039b)
+- on the [SAP Cloud Application Services](https://www.sap.com/services-support/service-offerings/cloud-application-services.html) website
+
+Reach out to your CAS contact point or SAP account manager to get started.
+
 ## Architecture
 ![BTP Architecture](./btprc-architecture.png)
 
