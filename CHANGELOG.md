@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Tags are now inherited so child items of a tagged entity will display their costs as well (non-inherited view still available as well)
 - 2 new calculation views with the inherited tags view, but without the 'datacenter', 'space' and 'service (alloc.)' levels
 - 2 new SAC views to toggle between views that either include tag inheritance or not
+- Added 'bulk edit' feature for Technical Allocation and Forecast Configuration from the Billing Verification table
 
 ### Fixed
 - Fixed empty dropdown in copy/paste of tags
