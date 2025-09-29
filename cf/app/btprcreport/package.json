@@ -1,6 +1,6 @@
 {
     "name": "btprcreport",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "description": "Report showing BTP Credit consumption",
     "keywords": [
         "ui5",

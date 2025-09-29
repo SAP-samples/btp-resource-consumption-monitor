@@ -35,6 +35,9 @@
                 "path": "/"
             },
             "title": "{{title}}",
+            "status": {
+                "text": "{= 'Latest reading: ' + ${retrieved} }"
+            },
             "details": "{reportYearMonth}",
             "mainIndicator": {
                 "number": "{= format.currency(${forecast_cost}, ${currency}, {currencyCode:true})}",

@@ -61,12 +61,12 @@
     }
   },
   "sap.platform.cf": {
-    "ui5VersionNumber": "1.129.2"
+    "ui5VersionNumber": "1.136.7"
   },
   "sap.ui5": {
-    "flexEnabled": true,
+    "flexEnabled": false,
     "dependencies": {
-      "minUI5Version": "1.129.2",
+      "minUI5Version": "1.136.7",
       "libs": {
         "sap.m": {},
         "sap.ui.core": {},
@@ -141,6 +141,20 @@
             "filterSettings": {
               "dateSettings": {
                 "useDateRange": true
+              }
+            },
+            "quickVariantSelectionX": {
+              "variants": {
+                "WithInheritance": {
+                  "key": "WithInheritance",
+                  "entitySet": "CommercialMeasuresForYearByTagsWInheritances",
+                  "annotationPath": "com.sap.vocabularies.UI.v1.SelectionPresentationVariant#WithInheritance"
+                },
+                "NoInheritance": {
+                  "key": "NoInheritance",
+                  "entitySet": "CommercialMeasuresForYearByTags",
+                  "annotationPath": "com.sap.vocabularies.UI.v1.SelectionPresentationVariant#NoInheritance"
+                }
               }
             }
           }

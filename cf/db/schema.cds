@@ -19,6 +19,7 @@ entity BTPServices {
         virtual hideGlobalAccountDistribution   : Boolean;
         virtual hideCommercialSpaceAllocation   : Boolean;
         virtual hideServiceInstanceDistribution : Boolean;
+        virtual hideServiceApplicationDistribution : Boolean;
 
         // Used to display History on the Object Page
         history                                 : Association to many BTPServices
@@ -100,6 +101,7 @@ entity CommercialMetrics {
         virtual hideGlobalAccountDistribution   :      Boolean;
         virtual hideCommercialSpaceAllocation   :      Boolean;
         virtual hideServiceInstanceDistribution :      Boolean;
+        virtual hideServiceApplicationDistribution :      Boolean;
 
         forecastSetting                         :      Association to one ForecastSettings
                                                            on  forecastSetting.serviceId = toService.serviceId
@@ -128,6 +130,7 @@ entity TechnicalMetrics {
         virtual tagStrings                      :      String     @title: 'Platform Tags';
         virtual hideGlobalAccountDistribution   :      Boolean;
         virtual hideServiceInstanceDistribution :      Boolean;
+        virtual hideServiceApplicationDistribution :      Boolean;
 
         // Used to display measures on the Service Object Page and Metric Object Page
         technicalMeasures                       :      Composition of many TechnicalMeasures
@@ -389,7 +392,7 @@ entity PhasesResponseObjects {
 
 // Raw API data
 entity PhaseUpdates {
-    key ID                     : UUID default SYSUUID() @Core.Computed;
+    key ID                     : UUID @Core.Computed;
         toPhasesResponseObject : Association to PhasesResponseObjects;
         balance                : Decimal(20, 2);
         cloudCreditsForPhase   : Decimal(20, 2);

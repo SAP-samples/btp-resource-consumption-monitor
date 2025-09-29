@@ -450,11 +450,18 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
         }
         metrics.push(metric)
 
-        const serviceGroupByParent = serviceGroup.map(x => x as MonthlyCostResponseObject & { groupId: string })
-        //@ts-expect-error
-        serviceGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
-
-        const serviceGroupForInstances = serviceGroup.filter(x => Settings.appConfiguration.serviceInstancesCreationList.includes(x.serviceId))
+        // Create unique IDs depending on the parent
+        const serviceGroupByParent = serviceGroup
+            //@ts-ignore
+            .map(x => ({ ...x, groupId: `${x.spaceId || x.subaccountId}_${x.serviceId}` }) as MonthlyUsageResponseObject & { groupId: string })
+        const serviceGroupForInstancesByParent = serviceGroup
+            .filter(x => Settings.appConfiguration.serviceInstancesCreationList.includes(x.serviceId))
+            //@ts-ignore
+            .map(x => ({ ...x, groupId: `${x.subaccountId}_${x.serviceId}_${x.instanceId}` }) as MonthlyUsageResponseObject & { groupId: string })
+        const serviceGroupForApplicationsByParent = serviceGroup
+            .filter(x => Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(x.serviceId))
+            //@ts-ignore
+            .map(x => ({ ...x, groupId: `${x.subaccountId}_${x.serviceId}_${x.instanceId}_${x.application}` }) as MonthlyUsageResponseObject & { groupId: string })
 
         const isCommercial = 'currency' in serviceGroup[0]
         measures = [
@@ -470,7 +477,10 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
             ...aggregateMeasures(metric, groupByKeys(serviceGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties),
             // Create Service Instances
             //@ts-ignore
-            ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(serviceGroupForInstances, ['instanceId', 'instanceId']), TAggregationLevel.InstanceOfService, measureAggregationProperties) : [])
+            ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(serviceGroupForInstancesByParent, ['groupId', 'instanceId']), TAggregationLevel.InstanceOfService, measureAggregationProperties) : []),
+            // Create Applications in Service 
+            //@ts-ignore
+            ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(serviceGroupForApplicationsByParent, ['groupId', 'application']), TAggregationLevel.ApplicationInService, measureAggregationProperties) : [])
         ]
 
         // Aggregate one additional level: per Metric
@@ -490,11 +500,21 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
                 tags: aggregateTags(metricGroup, tagAggregationProperties)
             })
 
-            const metricGroupByParent = metricGroup.map(x => x as MonthlyCostResponseObject & { groupId: string })
-            //@ts-expect-error
-            metricGroupByParent.forEach(x => x.groupId = `${x.spaceId || x.subaccountId}_${x.serviceId}`)
+            // Create unique IDs depending on the parent, only applicable for technical items
+            const metricGroupByParent = metricGroup
+                //@ts-ignore
+                .map(x => ({ ...x, groupId: `${x.spaceId || x.subaccountId}_${x.serviceId}` }) as MonthlyUsageResponseObject & { groupId: string })
+            const metricGroupForInstancesByParent = metricGroup
+                .filter(x => Settings.appConfiguration.serviceInstancesCreationList.includes(x.serviceId))
+                //@ts-ignore
+                .map(x => ({ ...x, groupId: `${x.subaccountId}_${x.serviceId}_${x.instanceId}` }) as MonthlyUsageResponseObject & { groupId: string })
+            const metricGroupForApplicationsByParent = metricGroup
+                .filter(x => Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(x.serviceId))
+                //@ts-ignore
+                .map(x => ({ ...x, groupId: `${x.subaccountId}_${x.serviceId}_${x.instanceId}_${x.application}` }) as MonthlyUsageResponseObject & { groupId: string })
 
-            const metricGroupForInstances = metricGroup.filter(x => Settings.appConfiguration.serviceInstancesCreationList.includes(x.serviceId))
+            // Temp store for a 2-phased Technical Allocation, first by instance (parent = service), then by application (parent = instance)
+            let tamServiceInstances: Record<string, any>[] = []
 
             const isCommercial = 'currency' in metricGroup[0]
             measures = [
@@ -510,13 +530,19 @@ async function aggregateDataPerLevel(data: MonthlyCostResponseObject[] | Monthly
                 ...aggregateMeasures(metric, groupByKeys(metricGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties),
                 // Create Service Instances
                 //@ts-ignore
-                ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(metricGroupForInstances, ['instanceId', 'instanceId']), TAggregationLevel.InstanceOfService, measureAggregationProperties) : []),
+                ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(metricGroupForInstancesByParent, ['groupId', 'instanceId']), TAggregationLevel.InstanceOfService, measureAggregationProperties) : []),
+                // Create Applications in Service
+                ...(!isCommercial ? aggregateMeasures(metric, groupByKeys(metricGroupForApplicationsByParent, ['groupId', 'application']), TAggregationLevel.ApplicationInService, measureAggregationProperties) : []),
                 ...((isCommercial && Settings.appConfiguration.distributeCostsToSpaces)
                     ? generateTechnicalAllocationMeasures(metric, technicalAllocationTable, TAggregationLevel.Space, aggregateMeasures(metric, groupByKeys(metricGroup, ['subaccountId', 'subaccountName']), TAggregationLevel.SubAccount, measureAggregationProperties))
                     : []
                 ),
                 ...((isCommercial && Settings.appConfiguration.serviceInstancesCreationList.includes(metric.toService.serviceId!))
-                    ? generateTechnicalAllocationMeasures(metric, technicalAllocationTable, TAggregationLevel.InstanceOfService, aggregateMeasures(metric, groupByKeys(metricGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties))
+                    ? (tamServiceInstances = generateTechnicalAllocationMeasures(metric, technicalAllocationTable, TAggregationLevel.InstanceOfService, aggregateMeasures(metric, groupByKeys(metricGroupByParent, ['groupId', 'serviceName']), TAggregationLevel.ServiceInSubaccount, measureAggregationProperties)))
+                    : []
+                ),
+                ...((isCommercial && Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(metric.toService.serviceId!))
+                    ? generateTechnicalAllocationMeasures(metric, technicalAllocationTable, TAggregationLevel.ApplicationInService, tamServiceInstances)
                     : []
                 )
             ]
@@ -653,7 +679,8 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
         name: Settings.appConfiguration.accountHierarchy.master[1],
         environment: 'none',
         level: TAccountStructureLevels.Customer,
-        parentID: '(none)',
+        parentID: null,
+        // parentID: '(none)',
         treeLevel: 0,
         treeState: 'expanded',
         managedTagAllocations: [], //Root record should not have tags as that defeats the purpose of tags.
@@ -661,7 +688,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
     });
 
     // Account records
-    [...new Set(data.filter(x => x.globalAccountId !== null).map(x => x.globalAccountId))]
+    [...new Set(data.filter(x => !!x.globalAccountId).map(x => x.globalAccountId))]
         .forEach(id => {
             const item = data.find(x => x.globalAccountId == id)
             item?.globalAccountId && structureItems.push({
@@ -677,7 +704,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `1-${TAccountStructureLevels.GlobalAccount}` }]
             })
         });
-    [...new Set(data.filter(x => x.directoryId !== null).map(x => x.directoryId))]
+    [...new Set(data.filter(x => !!x.directoryId).map(x => x.directoryId))]
         .forEach(id => {
             const item = data.find(x => x.directoryId == id)
             item?.directoryId && structureItems.push({
@@ -693,7 +720,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `2-${TAccountStructureLevels.Directory}` }]
             })
         });
-    [...new Set(data.filter(x => x.dataCenter !== null).map(x => x.dataCenter))]
+    [...new Set(data.filter(x => !!x.dataCenter).map(x => x.dataCenter))]
         .forEach(id => {
             const item = data.find(x => x.dataCenter == id)
             item?.dataCenter && structureItems.push({
@@ -709,7 +736,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `2-${TAccountStructureLevels.Datacenter}` }]
             })
         });
-    [...new Set(data.filter(x => x.subaccountId !== null).map(x => x.subaccountId))]
+    [...new Set(data.filter(x => !!x.subaccountId).map(x => x.subaccountId))]
         .forEach(id => {
             const item = data.find(x => x.subaccountId == id)
             item?.subaccountId && structureItems.push({
@@ -725,7 +752,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `3-${TAccountStructureLevels.SubAccount}` }]
             })
         });
-    [...new Set(data.filter(x => x.spaceId !== null).map(x => x.spaceId))]
+    [...new Set(data.filter(x => !!x.spaceId).map(x => x.spaceId))]
         .forEach(id => {
             const item = data.find(x => x.spaceId == id)
             item?.spaceId && structureItems.push({
@@ -741,7 +768,7 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                 customTags: [{ name: 'Hierarchy', value: `4-${TAccountStructureLevels.Space}` }]
             })
         });
-    [...new Set(data.filter(x => x.environmentInstanceId !== null).map(x => x.environmentInstanceId))]
+    [...new Set(data.filter(x => !!x.environmentInstanceId).map(x => x.environmentInstanceId))]
         .forEach(id => {
             const item = data.find(x => x.environmentInstanceId == id)
             item?.environmentInstanceId && structureItems.push({
@@ -760,9 +787,9 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
         });
 
     // Service records: service item under Sub Account, or service (alloc) under space
-    [...new Set(data.filter(x => x.serviceId !== null).map(x => x.serviceId))]
+    [...new Set(data.filter(x => !!x.serviceId).map(x => x.serviceId))]
         .forEach(id => {
-            const spaceItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => x.spaceId), ['serviceId', 'spaceId'])
+            const spaceItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => !!x.spaceId), ['serviceId', 'spaceId'])
             const subaccountItems = groupByKeys(data.filter(x => x.serviceId == id).filter(x => !x.spaceId), ['serviceId', 'subaccountId'])
             const itemsByParent = [
                 ... (Object.keys(spaceItems).length > 0 ? Object.values(spaceItems).flatMap(x => x[0]) : []),
@@ -786,22 +813,45 @@ async function updateAccountStructureData(data: MonthlyUsageResponseObject[]) {
                     customTags: [{ name: 'Hierarchy', value: `${isSpaceLevel ? 5 : 4}-${itemLevel}` }]
                 })
             }
-            // new level under Service (under Sub Account): instances
+            // new level under Service (only under Sub Account): instances
             if (Settings.appConfiguration.serviceInstancesCreationList.includes(id)) {
-                [...new Set(data.filter(x => x.serviceId == id).filter(x => x.instanceId !== null).map(x => x.instanceId))]
-                    .forEach(id => {
-                        const item = data.find(x => x.instanceId == id)
+                [...new Set(data.filter(x => x.serviceId == id).filter(x => !!x.instanceId).map(x => x.instanceId))]
+                    .forEach(instanceId => {
+                        const item = data.find(x => x.instanceId == instanceId && x.serviceId == id)
+                        const itemParentID = `${item?.subaccountId}_${item?.serviceId}`
+                        const itemID = `${itemParentID}_${item?.instanceId}`
                         item?.instanceId && structureItems.push({
-                            ID: item?.instanceId,
+                            ID: itemID,
                             region: item?.dataCenterName,
                             name: item?.instanceId,
                             environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
                             level: TAccountStructureLevels.InstanceOfService,
-                            parentID: `${item?.subaccountId}_${item?.serviceId}`,
+                            parentID: itemParentID,
                             treeLevel: item?.directoryId ? 5 : 4,
-                            treeState: 'leaf',
+                            treeState: Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(item?.serviceId) ? 'expanded' : 'leaf',
                             managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.InstanceOfService ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
-                            customTags: [{ name: 'Hierarchy', value: `5-Instance` }]
+                            customTags: [{ name: 'Hierarchy', value: `5-${TAccountStructureLevels.InstanceOfService}` }]
+                        })
+                    });
+            }
+            // new level under Service Instance (only under Sub Account): instance applications
+            if (Settings.appConfiguration.serviceInstanceApplicationsCreationList.includes(id)) {
+                [...new Set(data.filter(x => x.serviceId == id).filter(x => !!x.application).map(x => x.application))]
+                    .forEach(applicationId => {
+                        const item = data.find(x => x.application == applicationId && x.serviceId == id)
+                        const itemParentID = `${item?.subaccountId}_${item?.serviceId}_${item?.instanceId}`
+                        const itemID = `${itemParentID}_${item?.application}`
+                        item?.application && structureItems.push({
+                            ID: itemID,
+                            region: item?.dataCenterName,
+                            name: item?.application,
+                            environment: (item?.dataCenterName as string)?.split('-')[0].toUpperCase(),
+                            level: TAccountStructureLevels.ApplicationInService,
+                            parentID: itemParentID,
+                            treeLevel: item?.directoryId ? 6 : 5,
+                            treeState: 'leaf',
+                            managedTagAllocations: Settings.tagConfiguration.defaultTagLevel == TAccountStructureLevels.ApplicationInService ? JSON.parse(JSON.stringify(Settings.tagConfiguration.defaultTags)) : [],
+                            customTags: [{ name: 'Hierarchy', value: `6-${TAccountStructureLevels.ApplicationInService}` }]
                         })
                     });
             }
@@ -1216,14 +1266,19 @@ function buildRequestForAlert(alert: Alert): { json: Object; sql: string; req: c
         }, {})
     }
 
-    const req = SELECT.from(
-        alert.alertType == TAlertType.Commercial
-            ? CommercialMeasures
-            : TechnicalMeasures
-    )
-        .columns(a => { a('*'), a.toMetric?.metricName, a.toMetric?.toService?.serviceName })
-        .where(json)
-        .orderBy('toMetric_toService_serviceId', 'toMetric_measureId')
+    let req
+    if (alert.alertType == TAlertType.Commercial) {
+        req = SELECT.from(CommercialMeasures)
+            .columns(a => { a('*'), a.toMetric?.metricName, a.toMetric?.toService?.serviceName })
+            .where(json)
+            .orderBy('toMetric_toService_serviceId', 'toMetric_measureId')
+    } else {
+        req = SELECT.from(TechnicalMeasures)
+            .columns(a => { a('*'), a.toMetric?.metricName, a.toMetric?.toService?.serviceName })
+            .where(json)
+            .orderBy('toMetric_toService_serviceId', 'toMetric_measureId')
+    }
+
 
     const sql = req + ''
 

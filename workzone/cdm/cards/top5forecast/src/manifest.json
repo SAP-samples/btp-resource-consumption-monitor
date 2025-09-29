@@ -42,7 +42,7 @@
             "title": "{{title}}",
             "subTitle": "{{subtitle}}",
             "status": {
-                "text": ""
+                "text": "{= 'Latest reading: ' + ${/value/0/retrieved} }"
             },
             "icon": {
                 "src": "sap-icon://money-bills"

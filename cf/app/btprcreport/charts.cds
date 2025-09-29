@@ -31,17 +31,20 @@ annotate service.CommercialMeasures with @(
     Analytics.AggregatedProperty #SUM_measure_cost : {
         Name                : 'SUM_measure_cost',
         AggregationMethod   : 'sum',
-        AggregatableProperty: measure_cost
+        AggregatableProperty: measure_cost,
+        ![@Common.Label]    : 'Cost'
     },
     Analytics.AggregatedProperty #SUM_forecast_cost: {
         Name                : 'SUM_forecast_cost',
         AggregationMethod   : 'sum',
-        AggregatableProperty: forecast_cost
+        AggregatableProperty: forecast_cost,
+        ![@Common.Label]    : 'Forecast'
     },
     Analytics.AggregatedProperty #SUM_measure_usage: {
         Name                : 'SUM_measure_usage',
         AggregationMethod   : 'sum',
-        AggregatableProperty: measure_usage
+        AggregatableProperty: measure_usage,
+        ![@Common.Label]    : 'Usage'
     },
     UI                                             : {
         Chart #MetricBulletChart                         : {
@@ -244,7 +247,8 @@ annotate service.TechnicalMeasures with @(
     Analytics.AggregatedProperty #SUM_measure_usage: {
         Name                : 'SUM_measure_usage',
         AggregationMethod   : 'sum',
-        AggregatableProperty: measure_usage
+        AggregatableProperty: measure_usage,
+        ![@Common.Label]    : 'Usage'
     },
     UI                                             : {
         Chart #ComparisonBySubAccount   : {

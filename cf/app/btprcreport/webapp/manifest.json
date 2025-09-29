@@ -68,12 +68,12 @@
     }
   },
   "sap.platform.cf": {
-    "ui5VersionNumber": "1.129.2"
+    "ui5VersionNumber": "1.136.7"
   },
   "sap.ui5": {
     "flexEnabled": true,
     "dependencies": {
-      "minUI5Version": "1.129.2",
+      "minUI5Version": "1.136.7",
       "libs": {
         "sap.m": {},
         "sap.ui.core": {},
@@ -169,12 +169,31 @@
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_deleteStructureAndTagData"
                       ]
                     },
+                    "BulkEditActions": {
+                      "text": "Bulk Edit",
+                      "menu": [
+                        "SetBulkForecastSettings",
+                        "SetBulkTechnicalAllocations"
+                      ]
+                    },
                     "ForecastActions": {
                       "text": "Forecast Management",
                       "menu": [
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_calculateCommercialForecasts",
                         "DataFieldForAction::PresentationService.EntityContainer::proxy_resetForecastSettings"
                       ]
+                    },
+                    "SetBulkTechnicalAllocations": {
+                      "id": "SetBulkTechnicalAllocations",
+                      "text": "Change Technical Allocations",
+                      "press": ".extension.btprcreport.ext.controller.ListReportExt.onSetBulkTechnicalAllocations",
+                      "enabled": true
+                    },
+                    "SetBulkForecastSettings": {
+                      "id": "SetBulkForecastSettings",
+                      "text": "Change Forecast Configurations",
+                      "press": ".extension.btprcreport.ext.controller.ListReportExt.onSetBulkForecastSettings",
+                      "enabled": true
                     }
                   }
                 }
@@ -276,6 +295,15 @@
         }
       },
       "config": {}
+    },
+    "extends": {
+      "extensions": {
+        "sap.ui.controllerExtensions": {
+          "sap.fe.templates.ListReport.ListReportController": {
+            "controllerName": "btprcreport.ext.controller.ListReportExt"
+          }
+        }
+      }
     }
   },
   "sap.fiori": {

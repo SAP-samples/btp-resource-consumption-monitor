@@ -1,0 +1,106 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:ui="sap.ui.core">
+    <Dialog id="bulkTechnicalAllocationDialog" 
+            title="Configure Technical Allocations" 
+            contentWidth="750px" 
+            contentHeight="80%" 
+            resizable="true" 
+            draggable="true"
+            afterClose="onAfterClose">
+        <content>
+            <VBox id="mainContainer" class="sapUiMediumMargin">
+                <!-- Header Controls -->
+                <HBox id="headerContainer" justifyContent="SpaceBetween" alignItems="Center" class="sapUiMediumMarginBottom">
+                    <VBox id="titleContainer">
+                        <Title id="mainTitle" text="Configure Technical Allocations" level="H2"/>
+                        <Text id="descriptionText" text="Select technical metrics to allocate commercial metrics for downstream cost distribution. Use 'Generate Proposal' for automatic suggestions." class="sapUiTinyMarginTop"/>
+                    </VBox>
+                    <HBox id="buttonContainer">
+                        <Button id="generateProposalBtn" 
+                                text="Generate Proposal" 
+                                type="Emphasized" 
+                                icon="sap-icon://ai" 
+                                press="onGenerateProposal"
+                                class="sapUiTinyMarginEnd"/>
+                        <Button id="clearAllBtn" 
+                                text="Clear All" 
+                                icon="sap-icon://clear-all" 
+                                press="onClearAll"
+                                class="sapUiTinyMarginEnd"/>
+                        <Button id="helpBtn" 
+                                icon="sap-icon://sys-help" 
+                                press="onShowHelp"
+                                tooltip="Show help information"/>
+                    </HBox>
+                </HBox>
+
+                <!-- Legend/Status Bar -->
+                <MessageStrip id="statusStrip" 
+                              text="After making any changes and saving this form, make sure to refresh the current/historic data to calculate the downstream datapoints."
+                              type="Information" 
+                              showIcon="true" 
+                              class="sapUiMediumMarginBottom"/>
+
+                <!-- Conflict Summary -->
+                <HBox id="conflictSummary" 
+                      justifyContent="SpaceBetween" 
+                      alignItems="Center" 
+                      class="sapUiMediumMarginBottom"
+                      visible="false">
+                    <Text id="conflictSummaryText" text=""/>
+                    <Link id="showConflictsOnlyLink" text="Show conflicts only" press="onToggleConflictsOnly"/>
+                </HBox>
+
+                <!-- Search Field -->
+                <HBox id="searchContainer" 
+                      justifyContent="SpaceBetween" 
+                      alignItems="Center" 
+                      class="sapUiMediumMarginBottom">
+                    <SearchField id="searchField"
+                                placeholder="Search services..."
+                                width="300px"
+                                search="onSearch"
+                                liveChange="onSearch"
+                                tooltip="Filter services by name"/>
+                </HBox>
+
+                <!-- Services Panel Container -->
+                <ScrollContainer id="scrollContainer" height="500px" vertical="true">
+                    <VBox id="servicesContainer">
+                        <!-- Service panels will be added dynamically -->
+                    </VBox>
+                </ScrollContainer>
+
+                <!-- Legend -->
+                <VBox id="legendContainer" class="sapUiMediumMarginTop">
+                    <Title id="legendTitle" text="Legend" level="H4"/>
+                    <HBox id="legendContent" class="sapUiTinyMarginTop">
+                        <HBox id="legend1">
+                            <core:Icon id="acceptIcon" src="sap-icon://accept" color="Positive" class="sapUiTinyMarginEnd"/>
+                            <Text id="acceptText" text="Proposed matches current allocation" class="sapUiMediumMarginEnd"/>
+                        </HBox>
+                        <HBox id="legend2">
+                            <core:Icon id="warningIcon" src="sap-icon://warning" color="Critical" class="sapUiTinyMarginEnd"/>
+                            <Text id="warningText" text="Proposed differs from current allocation" class="sapUiMediumMarginEnd"/>
+                        </HBox>
+                        <HBox id="legend3">
+                            <core:Icon id="infoIcon" src="sap-icon://ai" color="Marker" class="sapUiTinyMarginEnd"/>
+                            <Text id="infoText" text="New auto-generated proposal"/>
+                        </HBox>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </content>
+        <beginButton>
+            <Button id="saveBtn" 
+                    text="Save" 
+                    type="Emphasized" 
+                    press="onSave" 
+                    icon="sap-icon://save"/>
+        </beginButton>
+        <endButton>
+            <Button id="cancelBtn" 
+                    text="Cancel" 
+                    press="onCancel"/>
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

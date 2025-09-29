@@ -1,0 +1,107 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:ui="sap.ui.core">
+    <Dialog id="bulkForecastDialog" 
+            title="Configure Forecast Settings" 
+            contentWidth="850px" 
+            contentHeight="80%" 
+            resizable="true" 
+            draggable="true"
+            afterClose="onAfterClose">
+        <content>
+            <VBox id="forecastMainContainer" class="sapUiMediumMargin">
+                <!-- Header Controls -->
+                <HBox id="forecastHeaderContainer" justifyContent="SpaceBetween" alignItems="Center" class="sapUiMediumMarginBottom">
+                    <VBox id="forecastTitleContainer">
+                        <Title id="forecastMainTitle" text="Configure Forecast Settings" level="H2"/>
+                        <Text id="forecastDescriptionText" text="Select forecast methods for commercial metrics." class="sapUiTinyMarginTop"/>
+                    </VBox>
+                    <HBox id="forecastButtonContainer">
+                        <!-- <Button id="forecastGenerateProposalBtn" 
+                                text="Generate Proposal" 
+                                type="Emphasized" 
+                                icon="sap-icon://ai" 
+                                press="onGenerateProposal"
+                                class="sapUiTinyMarginEnd"/> -->
+                        <Button id="forecastClearAllBtn" 
+                                text="Clear All" 
+                                icon="sap-icon://clear-all" 
+                                press="onClearAll"
+                                class="sapUiTinyMarginEnd"/>
+                        <Button id="forecastHelpBtn" 
+                                icon="sap-icon://sys-help" 
+                                press="onShowHelp"
+                                tooltip="Show help information"/>
+                    </HBox>
+                </HBox>
+
+                <!-- Legend/Status Bar -->
+                <MessageStrip id="forecastStatusStrip" 
+                              text="Configure forecast methods for commercial metrics. TimeLinear provides basic linear forecasting, while TimeDegressive allows for custom degression factors: &lt;br&gt;&lt;br&gt;0: Same as 'excluded'&lt;br&gt;&lt; 1: the usage of the remaining days will be lower than the usage of the past days (degressive)&lt;br&gt;= 1: the usage of the remaining days will be similar to the usage of the past days (linear)&lt;br&gt;&gt; 1: the usage of the remaining days will be higher than the usage of the past days (progressive)"
+                              type="Information"
+                              showIcon="true"
+                              enableFormattedText="true"
+                              class="sapUiMediumMarginBottom"/>
+
+                <!-- Conflict Summary -->
+                <HBox id="forecastConflictSummary" 
+                      justifyContent="SpaceBetween" 
+                      alignItems="Center" 
+                      class="sapUiMediumMarginBottom"
+                      visible="false">
+                    <Text id="forecastConflictSummaryText" text=""/>
+                    <Link id="forecastShowConflictsOnlyLink" text="Show conflicts only" press="onToggleConflictsOnly"/>
+                </HBox>
+
+                <!-- Search Field -->
+                <HBox id="forecastSearchContainer" 
+                      justifyContent="SpaceBetween" 
+                      alignItems="Center" 
+                      class="sapUiMediumMarginBottom">
+                    <SearchField id="forecastSearchField"
+                                placeholder="Search services..."
+                                width="300px"
+                                search="onSearch"
+                                liveChange="onSearch"
+                                tooltip="Filter services by name"/>
+                </HBox>
+
+                <!-- Services Panel Container -->
+                <ScrollContainer id="forecastScrollContainer" height="500px" vertical="true">
+                    <VBox id="forecastServicesContainer">
+                        <!-- Service panels will be added dynamically -->
+                    </VBox>
+                </ScrollContainer>
+
+                <!-- Legend -->
+                <VBox id="forecastLegendContainer" class="sapUiMediumMarginTop">
+                    <Title id="forecastLegendTitle" text="Legend" level="H4"/>
+                    <HBox id="forecastLegendContent" class="sapUiTinyMarginTop">
+                        <HBox id="forecastLegend1">
+                            <core:Icon id="forecastAcceptIcon" src="sap-icon://accept" color="Positive" class="sapUiTinyMarginEnd"/>
+                            <Text id="forecastAcceptText" text="Configured with forecast method" class="sapUiMediumMarginEnd"/>
+                        </HBox>
+                        <HBox id="forecastLegend2">
+                            <core:Icon id="forecastWarningIcon" src="sap-icon://warning" color="Critical" class="sapUiTinyMarginEnd"/>
+                            <Text id="forecastWarningText" text="Proposed differs from current setting" class="sapUiMediumMarginEnd"/>
+                        </HBox>
+                        <HBox id="forecastLegend3">
+                            <core:Icon id="forecastInfoIcon" src="sap-icon://ai" color="Marker" class="sapUiTinyMarginEnd"/>
+                            <Text id="forecastInfoText" text="New auto-generated proposal"/>
+                        </HBox>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </content>
+        <beginButton>
+            <Button id="forecastSaveBtn" 
+                    text="Save" 
+                    type="Emphasized" 
+                    press="onSave" 
+                    icon="sap-icon://save"/>
+        </beginButton>
+        <endButton>
+            <Button id="forecastCancelBtn" 
+                    text="Cancel" 
+                    press="onCancel"/>
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

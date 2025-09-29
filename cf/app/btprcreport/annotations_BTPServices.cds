@@ -3,6 +3,8 @@ using from './annotations_CMetrics';
 using from './annotations_TMetrics';
 using from './annotations_Measures';
 using from './charts';
+// Plugins
+using from '../../srv/_plugin_ai-core';
 
 // Value Helps
 annotate service.BTPServices with @(Capabilities: {FilterRestrictions: {FilterExpressionRestrictions: [{
@@ -52,6 +54,10 @@ annotate service.BTPServices with @(UI: {
         Visualizations: [@UI.LineItem],
         SortOrder     : [
             {Property: reportYearMonth},
+            {
+                Property  : cmByCustomer.currency,
+                Descending: true
+            },
             {
                 Property  : cmByCustomer.forecast_cost,
                 Descending: true
@@ -360,6 +366,12 @@ annotate service.BTPServices with @(UI: {
                 },
                 {
                     $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Application',
+                    Target       : 'cmByMetricByApplication/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideServiceApplicationDistribution
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
                     Label        : 'Breakdown By Space',
                     Target       : 'cmByMetricBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
                     ![@UI.Hidden]: hideCommercialSpaceAllocation
@@ -411,6 +423,12 @@ annotate service.BTPServices with @(UI: {
                     ![@UI.Hidden]: hideServiceInstanceDistribution
                 },
                 {
+                    $Type        : 'UI.ReferenceFacet',
+                    Label        : 'Breakdown By Application',
+                    Target       : 'tmByMetricByApplication/@UI.PresentationVariant#ServiceEmbeddedBreakdown',
+                    ![@UI.Hidden]: hideServiceApplicationDistribution
+                },
+                {
                     $Type : 'UI.ReferenceFacet',
                     Label : 'Breakdown By Space',
                     Target: 'tmByMetricBySpace/@UI.PresentationVariant#ServiceEmbeddedBreakdown'
@@ -431,6 +449,37 @@ annotate service.BTPServices with @(UI: {
             $Type : 'UI.ReferenceFacet',
             Target: 'history/@UI.PresentationVariant#ServiceEmbeddedHistory',
             Label : 'History'
+        },
+        /**
+         * Individual pages for dedicated service usage details:
+         */
+        {
+            $Type : 'UI.CollectionFacet',
+            ID    : 'plugin_details',
+            Label : 'Usage Insights',
+            Facets: [
+                {
+                    // Needed to trick rendering the below tables with collapsed header (see UI5 v1.121.1)
+                    $Type        : 'UI.CollectionFacet',
+                    ID           : 'plugin_collection',
+                    Facets       : [],
+                    ![@UI.Hidden]: true
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Target       : 'plugin_aicore/@UI.PresentationVariant#Table',
+                    ID           : 'plugin_aicore_table',
+                    Label        : 'Models',
+                    ![@UI.Hidden]: (serviceId != 'ai-core')
+                },
+                {
+                    $Type        : 'UI.ReferenceFacet',
+                    Target       : 'plugin_aicore/@UI.PresentationVariant#Chart',
+                    ID           : 'plugin_aicore_chart',
+                    Label        : 'Chart',
+                    ![@UI.Hidden]: (serviceId != 'ai-core')
+                }
+            ]
         }
     ],
     FieldGroup #Metadata     : {Data: [
