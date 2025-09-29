@@ -8,7 +8,7 @@ service PresentationService {
     @readonly
     entity AccountStructureItems        as projection on db.AccountStructureItems;
 
-            @cds.redirection.target
+    @cds.redirection.target
     entity BTPServices                  as
         projection on db.BTPServices {
             *,
@@ -196,6 +196,54 @@ service PresentationService {
             metricName;
 
     @readonly
+    entity BulkTechnicalAllocations     as
+        select from db.BTPServices as s {
+            key s.serviceId,
+                s.serviceName,
+            key s.commercialMetrics.measureId                               as cMeasureId,
+                s.commercialMetrics.metricName                              as cMetricName,
+                s.commercialMetrics.technicalMetricForAllocation.tMeasureId,
+                s.commercialMetrics.technicalMetricForAllocation.metricName as tMetricName
+        }
+        where
+            s.commercialMetrics.measureId is not null
+        group by
+            s.serviceId,
+            s.serviceName,
+            s.commercialMetrics.measureId,
+            s.commercialMetrics.metricName,
+            s.commercialMetrics.technicalMetricForAllocation.tMeasureId,
+            s.commercialMetrics.technicalMetricForAllocation.metricName
+        order by
+            s.serviceName,
+            cMetricName;
+
+    @readonly
+    entity BulkForecastSettings         as
+        select from db.BTPServices as s {
+            key s.serviceId,
+                s.serviceName,
+            key s.commercialMetrics.measureId  as cMeasureId,
+                s.commercialMetrics.metricName as cMetricName,
+                s.commercialMetrics.forecastSetting.method,
+                s.commercialMetrics.forecastSetting.degressionFactor,
+                s.commercialMetrics.forecastSetting.statusText
+        }
+        where
+            s.commercialMetrics.measureId is not null
+        group by
+            s.serviceId,
+            s.serviceName,
+            s.commercialMetrics.measureId,
+            s.commercialMetrics.metricName,
+            s.commercialMetrics.forecastSetting.method,
+            s.commercialMetrics.forecastSetting.degressionFactor,
+            s.commercialMetrics.forecastSetting.statusText
+        order by
+            s.serviceName,
+            cMetricName;
+
+    @readonly
     entity AggregatedCommercialMeasures as projection on AnalyticsService.AggregatedCommercialMeasures;
 
     function getLatestBTPAccountMeasure() returns AggregatedCommercialMeasures;
@@ -227,6 +275,11 @@ service PresentationService {
 
     @Common.IsActionCritical
     action   proxy_deleteStructureAndTagData();
+
+    action   SetBulkTechnicalAllocations(allocations: types.TBulkTechnicalAllocationParams:allocations);
+
+    // @Common.SideEffects.TargetEntities: ['/PresentationService.EntityContainer/BTPServices']
+    action   SetBulkForecastSettings(settings: types.TBulkForecastSettingParams:settings);
 
     /**
      * For Work Zone cards

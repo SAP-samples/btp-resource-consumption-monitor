@@ -28,6 +28,8 @@ import {
     proxy_resetForecastSettings,
     proxy_calculateCommercialForecasts,
     proxy_resetTechnicalAllocations,
+    SetBulkTechnicalAllocations,
+    SetBulkForecastSettings,
     Card_HighestForecastServices,
     proxy_deleteStructureAndTagData
 } from '#cds-models/PresentationService'
@@ -182,6 +184,84 @@ export default class PresentationService extends cds.ApplicationService {
         this.on(proxy_resetForecastSettings, async (req) => req.notify(await retrievalService.resetForecastSettings() as string))
         this.on(proxy_resetTechnicalAllocations, async (req) => req.notify(await retrievalService.resetTechnicalAllocations() as string))
         this.on(proxy_calculateCommercialForecasts, async (req) => req.notify(await retrievalService.calculateCommercialForecasts() as string))
+
+        // Received from UI when Bulk Technical Allocations are set
+        this.on(SetBulkTechnicalAllocations, async (req) => {
+            const { allocations } = req.data
+
+            info(`Setting bulk technical allocations for ${allocations.length} metrics`)
+
+            let totalUpdated = 0
+            let totalDeleted = 0
+
+            for (const allocation of allocations) {
+                const { serviceId, cMeasureId, tMeasureId, metricName } = allocation
+
+                if (tMeasureId && tMeasureId.trim() !== '') {
+                    // Set or update allocation
+                    const allocationSetting: AllocationSetting = {
+                        serviceId: serviceId!,
+                        cMeasureId: cMeasureId!,
+                        mode: 'usage', // placeholder to deviate later
+                        tServiceId: serviceId, // placeholder to deviate later
+                        tMeasureId,
+                        metricName
+                    }
+                    const nbItems = await UPSERT.into(AllocationSettings).entries(allocationSetting)
+                    totalUpdated += nbItems
+                    info(`Set allocation for service [${serviceId}], metric [${cMeasureId}] to ${tMeasureId}`)
+                } else {
+                    // Remove allocation
+                    const nbItems = await DELETE.from(AllocationSettings, {
+                        serviceId,
+                        cMeasureId
+                    })
+                    totalDeleted += nbItems
+                    info(`Removed allocation for service [${serviceId}], metric [${cMeasureId}]`)
+                }
+            }
+
+            const status = `Bulk allocation update completed: ${totalUpdated} records updated, ${totalDeleted} records deleted.`
+            info(status)
+
+            return status
+        })
+
+        // Received from UI when Bulk Forecast Settings are set
+        this.on(SetBulkForecastSettings, async (req) => {
+            const { settings } = req.data
+
+            info(`Setting bulk forecast settings for ${settings.length} metrics`)
+
+            let totalUpdated = 0
+
+            for (const setting of settings) {
+                const { serviceId, cMeasureId, method, degressionFactor } = setting
+
+                info(`Setting forecast config for service [${serviceId}], metric [${cMeasureId}] to ${method} with factor ${degressionFactor}`)
+
+                const forecastSetting: ForecastSetting = {
+                    serviceId: serviceId!,
+                    measureId: cMeasureId!,
+                    method: method as TForecastMethod,
+                    degressionFactor: degressionFactor || 1
+                }
+
+                const nbItems = await UPSERT.into(ForecastSettings).entries(forecastSetting)
+                totalUpdated += nbItems
+            }
+
+            const status = `Bulk forecast update completed: ${totalUpdated} records updated.`
+            info(status)
+
+            // Trigger a recalculation of the forecasts for all affected services
+            const uniqueServiceIds = [...new Set(settings.map(s => s.serviceId))]
+            for (const serviceId of uniqueServiceIds) {
+                await retrievalService.calculateCommercialForecastsForService({ serviceId })
+            }
+
+            return status
+        })
 
         // Received from UI when Forecast Settings are changed
         this.on(CommercialMetric.actions.SetForecastSetting, async (req) => {

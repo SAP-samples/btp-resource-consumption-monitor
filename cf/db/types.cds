@@ -122,6 +122,28 @@ type TSetTechnicalMetricForAllocationParams {
     metricName : String;
 }
 
+type TBulkTechnicalAllocationItem {
+    serviceId  : String;
+    cMeasureId : String;
+    tMeasureId : String;
+    metricName : String;
+}
+
+type TBulkTechnicalAllocationParams {
+    allocations : many TBulkTechnicalAllocationItem;
+}
+
+type TBulkForecastSettingItem {
+    serviceId        : String;
+    cMeasureId       : String;
+    method           : String;
+    degressionFactor : Double;
+}
+
+type TBulkForecastSettingParams {
+    settings : many TBulkForecastSettingItem;
+}
+
 type TPasteTagsParams {
     mode : String;
 }
