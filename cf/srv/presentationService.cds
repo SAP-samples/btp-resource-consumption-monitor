@@ -199,9 +199,9 @@ service PresentationService {
     entity BulkTechnicalAllocations     as
         select from db.BTPServices as s {
             key s.serviceId,
-                s.serviceName,
+                min(s.serviceName)                                          as serviceName : String,
             key s.commercialMetrics.measureId                               as cMeasureId,
-                s.commercialMetrics.metricName                              as cMetricName,
+                min(s.commercialMetrics.metricName)                         as cMetricName : String,
                 s.commercialMetrics.technicalMetricForAllocation.tMeasureId,
                 s.commercialMetrics.technicalMetricForAllocation.metricName as tMetricName
         }
@@ -209,22 +209,20 @@ service PresentationService {
             s.commercialMetrics.measureId is not null
         group by
             s.serviceId,
-            s.serviceName,
             s.commercialMetrics.measureId,
-            s.commercialMetrics.metricName,
             s.commercialMetrics.technicalMetricForAllocation.tMeasureId,
             s.commercialMetrics.technicalMetricForAllocation.metricName
         order by
-            s.serviceName,
+            serviceName,
             cMetricName;
 
     @readonly
     entity BulkForecastSettings         as
         select from db.BTPServices as s {
             key s.serviceId,
-                s.serviceName,
-            key s.commercialMetrics.measureId  as cMeasureId,
-                s.commercialMetrics.metricName as cMetricName,
+                min(s.serviceName)                  as serviceName : String,
+            key s.commercialMetrics.measureId       as cMeasureId,
+                min(s.commercialMetrics.metricName) as cMetricName : String,
                 s.commercialMetrics.forecastSetting.method,
                 s.commercialMetrics.forecastSetting.degressionFactor,
                 s.commercialMetrics.forecastSetting.statusText
@@ -233,14 +231,12 @@ service PresentationService {
             s.commercialMetrics.measureId is not null
         group by
             s.serviceId,
-            s.serviceName,
             s.commercialMetrics.measureId,
-            s.commercialMetrics.metricName,
             s.commercialMetrics.forecastSetting.method,
             s.commercialMetrics.forecastSetting.degressionFactor,
             s.commercialMetrics.forecastSetting.statusText
         order by
-            s.serviceName,
+            serviceName,
             cMetricName;
 
     @readonly

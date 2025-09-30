@@ -281,7 +281,10 @@ export default class RetrievalService extends cds.ApplicationService {
                 let measures: any[] = []
                 try {
                     measures = await request.req
-                    measures.forEach(m => m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : m.metricName)
+                    measures.forEach(m => {
+                        m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : (m.toMetric_measureId || m.metricName)
+                        m.serviceName = m.toMetric_toService_serviceName || m.toMetric_toService_serviceName
+                    })
                     table = createAlertsTableCourierNew(alert, measures)
                 } catch (error) {
                     warn(error)
@@ -1217,7 +1220,10 @@ async function fetchMeasuresForAlerts(alerts: Alerts): Promise<{ alert: Alert; m
             measures = [{ name: 'Please fix alert configuration' }]
         }
 
-        measures.forEach(m => m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : m.metricName)
+        measures.forEach(m => {
+            m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : (m.toMetric_measureId || m.metricName)
+            m.serviceName = m.toMetric_toService_serviceName || m.toMetric_toService_serviceName
+        })
         result.push({
             alert: alert as Alert,
             measures
