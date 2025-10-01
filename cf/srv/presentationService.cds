@@ -187,10 +187,13 @@ service PresentationService {
                 Common.Text           : metricName,
                 Common.TextArrangement: #TextOnly
             ),
-                metricName
+            min(metricName) as metricName : String
         from db.TechnicalMetrics
         where
             measureId <> '_combined_'
+        group by
+            toService.serviceId,
+            measureId
         order by
             serviceId,
             metricName;
