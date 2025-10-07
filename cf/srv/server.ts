@@ -353,11 +353,35 @@ async function fixOldInstanceIDs() {
             ))
             info(`${affectedTMeasures.length} technical measures updated`)
 
-            // Update the AccountStructureItems table
-            await UPDATE(`db_AccountStructureItems`)
-                .set`ID = PARENTID || '_' || ID`
-                .where({ ID: { in: affectedAccountStructureIDs } })
-            info(`${affectedAccountStructureItems.length} account structure items updated`)
+            // Part 1: Update IDs only if the target ID doesn't exist yet
+            const existingIDs = await SELECT.from(`db_AccountStructureItems`)
+                .columns('ID') as { ID: string }[]
+            const existingIDSet = new Set(existingIDs.map(x => x.ID))
+
+            const safeToUpdateItems = affectedAccountStructureItems.filter(item => {
+                const newID = `${item.PARENTID}_${item.ID}`
+                return !existingIDSet.has(newID)
+            })
+            const safeToUpdateIDs = safeToUpdateItems.map(x => x.ID)
+
+            if (safeToUpdateIDs.length > 0) {
+                await UPDATE(`db_AccountStructureItems`)
+                    .set`ID = PARENTID || '_' || ID`
+                    .where({ ID: { in: safeToUpdateIDs } })
+                info(`${safeToUpdateIDs.length} account structure items updated safely`)
+            } else {
+                info(`No account structure items could be updated safely`)
+            }
+
+            // Part 2: Delete records with remaining (non-replaced) IDs
+            const remainingIDs = affectedAccountStructureIDs.filter(id => !safeToUpdateIDs.includes(id))
+            if (remainingIDs.length > 0) {
+                await DELETE.from(`db_AccountStructureItems`)
+                    .where({ ID: { in: remainingIDs } })
+                info(`${remainingIDs.length} account structure items deleted (could not be updated due to ID conflicts)`)
+            } else {
+                info(`No account structure items needed to be deleted`)
+            }
 
             info(`Migration finished.`)
 

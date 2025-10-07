@@ -64,7 +64,10 @@
       "[production]": {
         "auth": "xsuaa",
         "db": {
-          "kind": "hana"
+          "kind": "hana",
+          "pool": {
+            "acquireTimeoutMillis": 20000
+          }
         }
       },
       "[hybrid]": {

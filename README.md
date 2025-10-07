@@ -78,6 +78,20 @@ From 2.1.x to 2.2.0, all elements have been changed: CAP backend, Fiori applicat
 
 After the upgrade, make sure to refresh the HTLM5 Repo and (if needed) assign the backend role again to the end users.
 
+**Important**: The upgrade to 2.2 triggers a migration, which, depending on the amount of already existing data points, will take some time. The application will do the migration during startup, but a timeout will make it crash and restart, after which it will continue the migration from where it stopped earlier. You will see the following logs during the migration and the aim will be to see all numbers go down to zero. It should be able to process about 10.000 records per startup. This is a one-time migration and subsequent restarts will be normal again.
+
+```
+[server] - xxx account structure items affected
+[server] - 0 custom tags needing update ...
+[server] - 0 custom tags updated
+[server] - 0 managed tags needing update ...
+[server] - 0 managed tags updated
+[server] - 0 commercial measures needing update ...
+[server] - 0 commercial measures updated
+[server] - 0 technical measures needing update ...
+[server] - 0 technical measures updated
+```
+
 ## Download and Installation
 
 This solution contains 3 installable components:
