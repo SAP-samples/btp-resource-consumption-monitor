@@ -71,12 +71,22 @@ export function getNextMonth(yearMonth: string): number {
 export function groupByKeys<T>(items: T[], keys: (keyof T)[]): { [key: string]: T[] } {
     return items.reduce((p, c) => {
         const id = JSON.stringify(keys.map(x => c[x] || Settings.defaultValues.noNameErrorValue))
-        p[id] = p[id] || []
-        p[id].push(c)
+        const property = Object.keys(p).find(x => sanitizeID(x) == sanitizeID(id))
+        if (!!property) {
+            p[property].push(c)
+        } else {
+            p[id] = [c]
+        }
+        // p[id] = p[id] || []
+        // p[id].push(c)
         return p
     }, {} as { [key: string]: T[] })
 }
-
+function sanitizeID(id: string) {
+    return id
+        .replaceAll(/[^a-zA-Z0-9]/g, '')
+        .toLowerCase()
+}
 export function flattenObject(object: Record<string, any> | null, parent?: string) {
     const flattened: Record<string, any> = {}
     for (const [k, v] of Object.entries(object ?? {})) {
