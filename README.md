@@ -116,7 +116,7 @@ In **Business Application Studio**, make sure to have a `Development Space` of k
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar -e mtaext_notifications.mtaext
+npm run cf:deploy-with-notif
 ```
 
 ***Note:*** This deployment will trigger an **initial activation email** to your email address asking for your consent to receive further emails. Make sure to action this email to ensure you receive the notifications from this application!
@@ -127,7 +127,7 @@ cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar -e mtaext_notificat
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar
+npm run cf:deploy
 ```
 
 #### For Kyma deployments:

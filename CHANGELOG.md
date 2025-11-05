@@ -5,6 +5,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## Version 2.3.0 - 2025-11-06
+### Added
+
+### Fixed
+
+### Changed
+- Support for CDS 9.3
+
 ## Version 2.2.0 - 2025-09-12
 ### Added
 - New 'Application' level in account structure (subaccount > service > instance > application)
