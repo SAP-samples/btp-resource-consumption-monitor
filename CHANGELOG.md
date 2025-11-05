@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 ### Fixed
+- Improved migration script for upgrades from v2.1
 
 ### Changed
 - Support for CDS 9.3

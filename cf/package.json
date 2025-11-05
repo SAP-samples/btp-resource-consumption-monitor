@@ -66,15 +66,17 @@
         "db": {
           "kind": "hana",
           "pool": {
-            "acquireTimeoutMillis": 20000
+            "acquireTimeoutMillis": 30000
           }
         }
       },
       "[hybrid]": {
         "auth": "dummy",
         "db": {
-          "kind": "sqlite",
-          "url": "db.sqlite"
+          "kind": "hana",
+          "pool": {
+            "acquireTimeoutMillis": 30000
+          }
         }
       },
       "db": {

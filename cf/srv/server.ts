@@ -257,101 +257,124 @@ async function fixOldInstanceIDs() {
         const fixedAccountStructureItems = Object.fromEntries(affectedAccountStructureItems.map(x => [x.ID, `${x.PARENTID}_${x.ID}`]))
 
         if (affectedAccountStructureItems.length > 0) {
+            let hasMoreItems = true
+            const batchLimit = 10000
+
             info(`${affectedAccountStructureItems.length} account structure items affected`)
 
             // Convert the CustomTags which need to be updated
-            const affectedCustomTags = await SELECT.from(`db_CustomTags`)
-                .columns('ID', 'TOACCOUNTSTRUCTUREITEM_ID')
-                .where({ TOACCOUNTSTRUCTUREITEM_ID: { in: affectedAccountStructureIDs } }) as { ID: string, TOACCOUNTSTRUCTUREITEM_ID: string }[]
-            info(`${affectedCustomTags.length} custom tags needing update ...`)
-            await Promise.all(affectedCustomTags.map(x =>
-                UPDATE(`db_CustomTags`, x.ID)
-                    .with({ TOACCOUNTSTRUCTUREITEM_ID: fixedAccountStructureItems[x.TOACCOUNTSTRUCTUREITEM_ID] || x.TOACCOUNTSTRUCTUREITEM_ID }))
-            )
-            info(`${affectedCustomTags.length} custom tags updated`)
+            do {
+                info(`${(await SELECT.from(`db_CustomTags`).columns('count(ID) as NITEMS').where({ ID: { in: affectedAccountStructureIDs } }))[0].NITEMS} custom tags needing update ...`)
+                const affectedCustomTags = await SELECT.from(`db_CustomTags`)
+                    .columns('ID', 'TOACCOUNTSTRUCTUREITEM_ID')
+                    .where({ TOACCOUNTSTRUCTUREITEM_ID: { in: affectedAccountStructureIDs } })
+                    .limit(batchLimit) as { ID: string, TOACCOUNTSTRUCTUREITEM_ID: string }[]
+                info(`Updating ${affectedCustomTags.length} custom tags ...`)
+                await Promise.all(affectedCustomTags.map(x =>
+                    UPDATE(`db_CustomTags`, x.ID)
+                        .with({ TOACCOUNTSTRUCTUREITEM_ID: fixedAccountStructureItems[x.TOACCOUNTSTRUCTUREITEM_ID] || x.TOACCOUNTSTRUCTUREITEM_ID }))
+                )
+                hasMoreItems = (affectedCustomTags.length > 0)
+            }
+            while (hasMoreItems)
 
             // Convert the ManagedTags which need to be updated
-            const affectedManagedTags = await SELECT.from(`db_ManagedTagAllocations`)
-                .columns('ID', 'TOACCOUNTSTRUCTUREITEM_ID')
-                .where({ TOACCOUNTSTRUCTUREITEM_ID: { in: affectedAccountStructureIDs } }) as { ID: string, TOACCOUNTSTRUCTUREITEM_ID: string }[]
-            info(`${affectedManagedTags.length} managed tags needing update ...`)
-            await Promise.all(affectedManagedTags.map(x =>
-                UPDATE(`db_ManagedTagAllocations`, x.ID)
-                    .with({ TOACCOUNTSTRUCTUREITEM_ID: fixedAccountStructureItems[x.TOACCOUNTSTRUCTUREITEM_ID] || x.TOACCOUNTSTRUCTUREITEM_ID }))
-            )
-            info(`${affectedManagedTags.length} managed tags updated`)
+            do {
+                info(`${(await SELECT.from(`db_ManagedTagAllocations`).columns('count(ID) as NITEMS').where({ ID: { in: affectedAccountStructureIDs } }))[0].NITEMS} managed tags needing update ...`)
+                const affectedManagedTags = await SELECT.from(`db_ManagedTagAllocations`)
+                    .columns('ID', 'TOACCOUNTSTRUCTUREITEM_ID')
+                    .where({ TOACCOUNTSTRUCTUREITEM_ID: { in: affectedAccountStructureIDs } })
+                    .limit(batchLimit) as { ID: string, TOACCOUNTSTRUCTUREITEM_ID: string }[]
+                info(`Updating ${affectedManagedTags.length} managed tags ...`)
+                await Promise.all(affectedManagedTags.map(x =>
+                    UPDATE(`db_ManagedTagAllocations`, x.ID)
+                        .with({ TOACCOUNTSTRUCTUREITEM_ID: fixedAccountStructureItems[x.TOACCOUNTSTRUCTUREITEM_ID] || x.TOACCOUNTSTRUCTUREITEM_ID }))
+                )
+                hasMoreItems = (affectedManagedTags.length > 0)
+            }
+            while (hasMoreItems)
 
             // Convert the CommercialMeasures which need to be updated
-            const affectedCMeasures = await SELECT.from(`db_CommercialMeasures`)
-                .columns(
-                    'TOMETRIC_TOSERVICE_REPORTYEARMONTH',
-                    'TOMETRIC_TOSERVICE_SERVICEID',
-                    'TOMETRIC_TOSERVICE_RETRIEVED',
-                    'TOMETRIC_TOSERVICE_INTERVAL',
-                    'TOMETRIC_MEASUREID',
-                    'LEVEL',
-                    'ID'
-                )
-                .where({ ID: { in: affectedAccountStructureIDs } }) as {
-                    TOMETRIC_TOSERVICE_REPORTYEARMONTH: string,
-                    TOMETRIC_TOSERVICE_SERVICEID: string,
-                    TOMETRIC_TOSERVICE_RETRIEVED: string,
-                    TOMETRIC_TOSERVICE_INTERVAL: string,
-                    TOMETRIC_MEASUREID: string,
-                    LEVEL: string,
-                    ID: string
-                }[]
-            info(`${affectedCMeasures.length} commercial measures needing update ...`)
-            await Promise.all(affectedCMeasures.map(x =>
-                UPDATE(`db_CommercialMeasures`)
-                    .with({ ID: fixedAccountStructureItems[x.ID] || x.ID })
-                    .where({
-                        TOMETRIC_TOSERVICE_REPORTYEARMONTH: x.TOMETRIC_TOSERVICE_REPORTYEARMONTH,
-                        TOMETRIC_TOSERVICE_SERVICEID: x.TOMETRIC_TOSERVICE_SERVICEID,
-                        TOMETRIC_TOSERVICE_RETRIEVED: x.TOMETRIC_TOSERVICE_RETRIEVED,
-                        TOMETRIC_TOSERVICE_INTERVAL: x.TOMETRIC_TOSERVICE_INTERVAL,
-                        TOMETRIC_MEASUREID: x.TOMETRIC_MEASUREID,
-                        LEVEL: x.LEVEL,
-                        ID: x.ID
-                    })
-            ))
-            info(`${affectedCMeasures.length} commercial measures updated`)
+            do {
+                info(`${(await SELECT.from(`db_CommercialMeasures`).columns('count(ID) as NITEMS').where({ ID: { in: affectedAccountStructureIDs } }))[0].NITEMS} commercial measures needing update ...`)
+                const affectedCMeasures = await SELECT.from(`db_CommercialMeasures`)
+                    .columns(
+                        'TOMETRIC_TOSERVICE_REPORTYEARMONTH',
+                        'TOMETRIC_TOSERVICE_SERVICEID',
+                        'TOMETRIC_TOSERVICE_RETRIEVED',
+                        'TOMETRIC_TOSERVICE_INTERVAL',
+                        'TOMETRIC_MEASUREID',
+                        'LEVEL',
+                        'ID'
+                    )
+                    .where({ ID: { in: affectedAccountStructureIDs } })
+                    .limit(batchLimit) as {
+                        TOMETRIC_TOSERVICE_REPORTYEARMONTH: string,
+                        TOMETRIC_TOSERVICE_SERVICEID: string,
+                        TOMETRIC_TOSERVICE_RETRIEVED: string,
+                        TOMETRIC_TOSERVICE_INTERVAL: string,
+                        TOMETRIC_MEASUREID: string,
+                        LEVEL: string,
+                        ID: string
+                    }[]
+                info(`Updating ${affectedCMeasures.length} commercial measures ...`)
+                await Promise.all(affectedCMeasures.map(x =>
+                    UPDATE(`db_CommercialMeasures`)
+                        .with({ ID: fixedAccountStructureItems[x.ID] || x.ID })
+                        .where({
+                            TOMETRIC_TOSERVICE_REPORTYEARMONTH: x.TOMETRIC_TOSERVICE_REPORTYEARMONTH,
+                            TOMETRIC_TOSERVICE_SERVICEID: x.TOMETRIC_TOSERVICE_SERVICEID,
+                            TOMETRIC_TOSERVICE_RETRIEVED: x.TOMETRIC_TOSERVICE_RETRIEVED,
+                            TOMETRIC_TOSERVICE_INTERVAL: x.TOMETRIC_TOSERVICE_INTERVAL,
+                            TOMETRIC_MEASUREID: x.TOMETRIC_MEASUREID,
+                            LEVEL: x.LEVEL,
+                            ID: x.ID
+                        })
+                ))
+                hasMoreItems = (affectedCMeasures.length > 0)
+            }
+            while (hasMoreItems)
 
             // Convert the TechnicalMeasures which need to be updated
-            const affectedTMeasures = await SELECT.from(`db_TechnicalMeasures`)
-                .columns(
-                    'TOMETRIC_TOSERVICE_REPORTYEARMONTH',
-                    'TOMETRIC_TOSERVICE_SERVICEID',
-                    'TOMETRIC_TOSERVICE_RETRIEVED',
-                    'TOMETRIC_TOSERVICE_INTERVAL',
-                    'TOMETRIC_MEASUREID',
-                    'LEVEL',
-                    'ID'
-                )
-                .where({ ID: { in: affectedAccountStructureIDs } }) as {
-                    TOMETRIC_TOSERVICE_REPORTYEARMONTH: string,
-                    TOMETRIC_TOSERVICE_SERVICEID: string,
-                    TOMETRIC_TOSERVICE_RETRIEVED: string,
-                    TOMETRIC_TOSERVICE_INTERVAL: string,
-                    TOMETRIC_MEASUREID: string,
-                    LEVEL: string,
-                    ID: string
-                }[]
-            info(`${affectedTMeasures.length} technical measures needing update ...`)
-            await Promise.all(affectedTMeasures.map(x =>
-                UPDATE(`db_TechnicalMeasures`)
-                    .with({ ID: fixedAccountStructureItems[x.ID] || x.ID })
-                    .where({
-                        TOMETRIC_TOSERVICE_REPORTYEARMONTH: x.TOMETRIC_TOSERVICE_REPORTYEARMONTH,
-                        TOMETRIC_TOSERVICE_SERVICEID: x.TOMETRIC_TOSERVICE_SERVICEID,
-                        TOMETRIC_TOSERVICE_RETRIEVED: x.TOMETRIC_TOSERVICE_RETRIEVED,
-                        TOMETRIC_TOSERVICE_INTERVAL: x.TOMETRIC_TOSERVICE_INTERVAL,
-                        TOMETRIC_MEASUREID: x.TOMETRIC_MEASUREID,
-                        LEVEL: x.LEVEL,
-                        ID: x.ID
-                    })
-            ))
-            info(`${affectedTMeasures.length} technical measures updated`)
+            do {
+                info(`${(await SELECT.from(`db_TechnicalMeasures`).columns('count(ID) as NITEMS').where({ ID: { in: affectedAccountStructureIDs } }))[0].NITEMS} technical measures needing update ...`)
+                const affectedTMeasures = await SELECT.from(`db_TechnicalMeasures`)
+                    .columns(
+                        'TOMETRIC_TOSERVICE_REPORTYEARMONTH',
+                        'TOMETRIC_TOSERVICE_SERVICEID',
+                        'TOMETRIC_TOSERVICE_RETRIEVED',
+                        'TOMETRIC_TOSERVICE_INTERVAL',
+                        'TOMETRIC_MEASUREID',
+                        'LEVEL',
+                        'ID'
+                    )
+                    .where({ ID: { in: affectedAccountStructureIDs } })
+                    .limit(batchLimit) as {
+                        TOMETRIC_TOSERVICE_REPORTYEARMONTH: string,
+                        TOMETRIC_TOSERVICE_SERVICEID: string,
+                        TOMETRIC_TOSERVICE_RETRIEVED: string,
+                        TOMETRIC_TOSERVICE_INTERVAL: string,
+                        TOMETRIC_MEASUREID: string,
+                        LEVEL: string,
+                        ID: string
+                    }[]
+                info(`Updating ${affectedTMeasures.length} technical measures ...`)
+                await Promise.all(affectedTMeasures.map(x =>
+                    UPDATE(`db_TechnicalMeasures`)
+                        .with({ ID: fixedAccountStructureItems[x.ID] || x.ID })
+                        .where({
+                            TOMETRIC_TOSERVICE_REPORTYEARMONTH: x.TOMETRIC_TOSERVICE_REPORTYEARMONTH,
+                            TOMETRIC_TOSERVICE_SERVICEID: x.TOMETRIC_TOSERVICE_SERVICEID,
+                            TOMETRIC_TOSERVICE_RETRIEVED: x.TOMETRIC_TOSERVICE_RETRIEVED,
+                            TOMETRIC_TOSERVICE_INTERVAL: x.TOMETRIC_TOSERVICE_INTERVAL,
+                            TOMETRIC_MEASUREID: x.TOMETRIC_MEASUREID,
+                            LEVEL: x.LEVEL,
+                            ID: x.ID
+                        })
+                ))
+                hasMoreItems = (affectedTMeasures.length > 0)
+            }
+            while (hasMoreItems)
 
             // Part 1: Update IDs only if the target ID doesn't exist yet
             const existingIDs = await SELECT.from(`db_AccountStructureItems`)

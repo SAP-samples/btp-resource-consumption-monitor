@@ -224,7 +224,7 @@ export default class PresentationService extends cds.ApplicationService {
             const status = `Bulk allocation update completed: ${totalUpdated} records updated, ${totalDeleted} records deleted.`
             info(status)
 
-            return status
+            req.notify(status)
         })
 
         // Received from UI when Bulk Forecast Settings are set
@@ -260,7 +260,7 @@ export default class PresentationService extends cds.ApplicationService {
                 await retrievalService.calculateCommercialForecastsForService({ serviceId })
             }
 
-            return status
+            req.notify(status)
         })
 
         // Received from UI when Forecast Settings are changed
@@ -283,8 +283,6 @@ export default class PresentationService extends cds.ApplicationService {
 
             // Trigger a recalculation of the forecasts for this Service            
             await retrievalService.calculateCommercialForecastsForService({ serviceId })
-
-            return status
         })
 
         // Received from UI when Allocation Settings are changed
@@ -315,8 +313,6 @@ export default class PresentationService extends cds.ApplicationService {
 
             const status = `${nbItems} records updated in the database.`
             info(status)
-
-            return status
         })
 
         this.on(BTPService.actions.deleteBTPService, async req => {
