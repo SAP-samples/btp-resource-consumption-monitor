@@ -38,6 +38,14 @@ srv:
   health:
     liveness:
       path: /health
+      # How often (in seconds) to perform the probe.
+      periodSeconds: 60
+      # Number of probes to fail in a row, in order to consider the check failed.
+      failureThreshold: 5
+      # Number of probes to succeed in a row, in order to consider the check successful.
+      successThreshold: 1
+      # Connection timeout
+      timeoutSeconds: 45
     readiness:
       path: /health
 

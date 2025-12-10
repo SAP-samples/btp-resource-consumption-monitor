@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
-## Version 2.3.0 - 2025-11-06
+## Version 2.3.0 - 2025-12-11
 ### Added
 
 ### Fixed
@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 - Support for CDS 9.3
+- Kyma health checks
 
 ## Version 2.2.0 - 2025-09-12
 ### Added
