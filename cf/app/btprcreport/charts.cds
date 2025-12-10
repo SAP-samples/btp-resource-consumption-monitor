@@ -2,19 +2,20 @@ using PresentationService as service from '../../srv/presentationService';
 
 annotate service.CommercialMeasures with @(
     Aggregation.ApplySupported                     : {
-        Transformations       : [
-            'aggregate',
-            'topcount',
-            'bottomcount',
-            'identity',
-            'concat',
-            'groupby',
-            'filter',
-            'top',
-            'skip',
-            'orderby',
-            'search'
-        ],
+        // The default FE table type changed in UI5 v1.142 making it default to AnalyticalTable instead of ResponsiveTable when below transformations are defined.
+        // Transformations       : [
+        //     'aggregate',
+        //     'topcount',
+        //     'bottomcount',
+        //     'identity',
+        //     'concat',
+        //     'groupby',
+        //     'filter',
+        //     'top',
+        //     'skip',
+        //     'orderby',
+        //     'search'
+        // ],
         Rollup                : #SingleHierarchy,
         GroupableProperties   : [
             metricName,
@@ -223,19 +224,20 @@ annotate service.CommercialMeasures with @(
 
 annotate service.TechnicalMeasures with @(
     Aggregation.ApplySupported                     : {
-        Transformations       : [
-            'aggregate',
-            'topcount',
-            'bottomcount',
-            'identity',
-            'concat',
-            'groupby',
-            'filter',
-            'top',
-            'skip',
-            'orderby',
-            'search'
-        ],
+        // The default FE table type changed in UI5 v1.142 making it default to AnalyticalTable instead of ResponsiveTable when below transformations are defined.
+        // Transformations       : [
+        //     'aggregate',
+        //     'topcount',
+        //     'bottomcount',
+        //     'identity',
+        //     'concat',
+        //     'groupby',
+        //     'filter',
+        //     'top',
+        //     'skip',
+        //     'orderby',
+        //     'search'
+        // ],
         Rollup                : #SingleHierarchy,
         GroupableProperties   : [
             metricName,
