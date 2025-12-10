@@ -14,7 +14,7 @@
     "@ui5/cli": "^4",
     "bestzip": "^2",
     "fs-extra": "^11",
-    "glob": "^11",
+    "glob": "^13",
     "handlebars": "^4",
     "properties-reader": "^2",
     "rimraf": "^6"

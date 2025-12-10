@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@cap-js-community/odata-v2-adapter": "^1.15",
-    "@cap-js/hana": "^2.3",
+    "@cap-js/db-service": "~2.6",
+    "@cap-js/hana": "~2.2",
     "@sap-cloud-sdk/connectivity": "^4.1",
     "@sap-cloud-sdk/openapi": "^4.1",
     "@sap/cds": "~9.3",
