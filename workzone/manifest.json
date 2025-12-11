@@ -2,7 +2,7 @@
 	"sap.package": {
 		"id": "btprc.cpkg",
 		"packageVersion": {
-			"version": "2.2.0",
+			"version": "2.3.0",
 			"upgradeNotification": "all"
 		},
 		"i18n": "i18n/i18n.properties",

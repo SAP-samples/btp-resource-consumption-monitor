@@ -116,7 +116,7 @@ In **Business Application Studio**, make sure to have a `Development Space` of k
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar -e mtaext_notifications.mtaext
+npm run cf:deploy-with-notif
 ```
 
 ***Note:*** This deployment will trigger an **initial activation email** to your email address asking for your consent to receive further emails. Make sure to action this email to ensure you receive the notifications from this application!
@@ -127,7 +127,7 @@ cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar -e mtaext_notificat
 cd cf
 npm install
 mbt build
-cf deploy ./mta_archives/btp-resource-consumption_2.2.0.mtar
+npm run cf:deploy
 ```
 
 #### For Kyma deployments:
@@ -386,11 +386,11 @@ To do so:
 
 ### For Cloud Foundry deployments:
 - In the Global Account where the application is deployed, create a new `User Provided Service` in which you paste the service key contents. The *name* of this user provided service has to contain `uas` (use e.g. `btprc-uas-ups-account2`).
-- Adapt the `cf/mta.yaml` on lines 36, 39 and 268, 275 to swap/add the bound standard service instance for the user-provided instance.
+- Adapt the `cf/mta.yaml` on lines 37, 40 and 269, 276 to swap/add the bound standard service instance for the user-provided instance.
 
 ### For Kyma deployments:
 - In the Global Account where the application is deployed, create a new `Secret` in which you paste the service key contents. The *name* of this user provided service has to contain `uas` (use e.g. `btprc-uas-ups-account2`). You can use this [template file](./cf/kyma/template-additional-UAS.yaml) to create the secret.
-- Adapt the `cf/kyma/values.yaml` on lines 21 and 27 to swap/add the bound standard service instance for the user-provided instance.
+- Adapt the `cf/chart/values.yaml` on lines 21 and 27 to swap/add the bound standard service instance for the user-provided instance.
 
 ## Using Free Tier
 For demo and test purposes it is possible to implement this solution using Free Tier services. Be aware there are restrictions when using the Free Tier service plans.

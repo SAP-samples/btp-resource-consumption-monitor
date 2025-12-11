@@ -1,6 +1,6 @@
 _schema-version: "3.1"
 ID: btp-resource-consumption
-version: 2.2.0
+version: 2.3.0
 description: BTP usage and resource consumption dashboard
 parameters:
   enable-parallel-deployments: true

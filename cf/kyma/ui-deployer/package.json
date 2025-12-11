@@ -1,9 +1,9 @@
 {
   "name": "ui-deployer-kyma",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "engines": {
-    "node": ">=20",
-    "npm": ">=10"
+    "node": ">=22",
+    "npm": ">=11"
   },
   "dependencies": {
     "@sap/html5-app-deployer": "^7.1"
