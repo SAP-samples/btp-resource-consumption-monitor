@@ -73,7 +73,7 @@ modules:
         subaccount:
           destinations:
             - Name: btprc-srv
-              Authentication: OAuth2UserTokenExchange
+              Authentication: OAuth2JWTBearer
               TokenServiceInstanceName: btprc-auth
               TokenServiceKeyName: btprc-auth-key
               URL: ~{srv-api/srv-url}
@@ -85,7 +85,7 @@ modules:
         instance:
           destinations:
             - Name: btprc-srv-api
-              Authentication: OAuth2UserTokenExchange
+              Authentication: OAuth2JWTBearer
               TokenServiceInstanceName: btprc-auth
               TokenServiceKeyName: btprc-auth-key
               URL: ~{srv-api/srv-url}
