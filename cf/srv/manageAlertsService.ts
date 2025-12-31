@@ -1,6 +1,7 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
 import { flattenObject } from './functions'
+import { getUserAccessContext, addInFilter } from './authorizationHelper'
 
 import {
     Alert,
@@ -16,6 +17,22 @@ export default class ManageAlertsService extends cds.ApplicationService {
 
         // Connect to Retrieval Service to send triggers
         const retrievalService = await cds.connect.to(RetrievalService)
+
+        /**
+         * Authorization: Filter LevelNames by user access
+         * LevelNames is a projection on AccountStructureItems
+         */
+        this.before('READ', 'LevelNames', async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'id', context.allowedIds)
+                }
+                info(`Authorization: Filtering LevelNames to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
 
         this.on('READ', Alert, async (req, next) => {
             const columns = req.query.SELECT?.columns?.map(x => x.ref ? x.ref[0] : '')

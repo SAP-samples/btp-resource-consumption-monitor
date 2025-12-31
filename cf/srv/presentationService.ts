@@ -9,6 +9,12 @@ import {
 } from './functions'
 
 import {
+    getUserAccessContext,
+    UserAccessContext,
+    addInFilter
+} from './authorizationHelper'
+
+import {
     AggregatedCommercialMeasures
 } from '#cds-models/AnalyticsService';
 
@@ -48,11 +54,14 @@ import {
     AllocationSetting,
     AllocationSettings,
     ForecastSetting,
-    ForecastSettings,
+    ForecastSettings
 } from '#cds-models/db'
 import { Settings } from './settings'
 
 const info = cds.log('presentationService').info
+
+// Store user access context per request for use across handlers
+const requestContextMap = new WeakMap<object, UserAccessContext>()
 
 enum statusMap { Good = 3, Warning = 2, Error = 1, Neutral = 0 }
 enum multipliers { Normal = 100, WarningMax = 125, ErrorMax = 150 }
@@ -65,15 +74,56 @@ export default class PresentationService extends cds.ApplicationService {
         const retrievalService = await cds.connect.to(RetrievalService)
 
         /**
+         * Authorization: Filter AccountStructureItems by user access
+         */
+        this.before('READ', 'AccountStructureItems', async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    // No access - return empty result
+                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering AccountStructureItems to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
          * Handlers for BTPServices
          */
-        this.before('READ', BTPServices, req => {
+        this.before('READ', BTPServices, async req => {
+            // Get and store user access context for use in AFTER handler
+            const context = await getUserAccessContext(req)
+            requestContextMap.set(req, context)
+
             addRequiredMeasureColumns<BTPService>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
             addSortMeasureColumns<BTPService>(req.query, 'cmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<BTPService>(req.query, 'cmByDirectory', 'measure_cost', true)
             addSortMeasureColumns<BTPService>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
-        this.after('READ', BTPServices, items => {
+        this.after('READ', BTPServices, (items, req) => {
+            // Get user access context from BEFORE handler
+            const context = requestContextMap.get(req)
+
+            // Authorization: Filter out services with no accessible measures
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                info(`Authorization: Filtering BTPServices for user with ${context.allowedIds.length} accessible IDs`)
+                // Filter in place by marking items to remove
+                const indicesToRemove: number[] = []
+                items.forEach((each, index) => {
+                    const hasAccess = filterNestedMeasures(each, context.allowedIds)
+                    if (!hasAccess) {
+                        indicesToRemove.push(index)
+                    }
+                })
+                // Remove items in reverse order to maintain indices
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    items.splice(indicesToRemove[i], 1)
+                }
+                info(`Authorization: Filtered BTPServices from ${items.length + indicesToRemove.length} to ${items.length} services`)
+            }
+
             items?.forEach(each => {
                 const measure = (each as BTPService).cmByCustomer
                 if (measure) {
@@ -81,9 +131,6 @@ export default class PresentationService extends cds.ApplicationService {
                     measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                     measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
-                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    // if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
@@ -99,13 +146,35 @@ export default class PresentationService extends cds.ApplicationService {
         /**
          * Handlers for CommercialMetrics
          */
-        this.before('READ', CommercialMetrics, req => {
+        this.before('READ', CommercialMetrics, async req => {
+            // Get and store user access context for use in AFTER handler
+            const context = await getUserAccessContext(req)
+            requestContextMap.set(req, context)
+
             addRequiredMeasureColumns<CommercialMetric>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmByDirectory', 'measure_cost', true)
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
-        this.after('READ', CommercialMetrics, items => {
+        this.after('READ', CommercialMetrics, (items, req) => {
+            // Get user access context from BEFORE handler
+            const context = requestContextMap.get(req)
+
+            // Authorization: Filter out metrics with no accessible measures
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                const indicesToRemove: number[] = []
+                items.forEach((each, index) => {
+                    const hasAccess = filterNestedMeasures(each, context.allowedIds)
+                    if (!hasAccess) {
+                        indicesToRemove.push(index)
+                    }
+                })
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    items.splice(indicesToRemove[i], 1)
+                }
+                info(`Authorization: Filtered CommercialMetrics from ${items.length + indicesToRemove.length} to ${items.length} metrics`)
+            }
+
             items?.forEach(each => {
                 const measure = (each as CommercialMetric).cmByCustomer
                 if (measure) {
@@ -113,9 +182,6 @@ export default class PresentationService extends cds.ApplicationService {
                     measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                     measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
-                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    // if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
                 }
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
@@ -131,21 +197,57 @@ export default class PresentationService extends cds.ApplicationService {
         })
 
         /**
+         * Authorization: Filter CommercialMeasures direct queries by user access
+         */
+        this.before('READ', 'CommercialMeasures', async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'id', context.allowedIds)
+                }
+                info(`Authorization: Filtering CommercialMeasures to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
          * Handlers for TechnicalMetrics
          */
-        this.before('READ', TechnicalMetrics, req => {
+        this.before('READ', TechnicalMetrics, async req => {
+            // Get and store user access context for use in AFTER handler
+            const context = await getUserAccessContext(req)
+            requestContextMap.set(req, context)
+
             addRequiredColumns<TechnicalMetric>(req.query, ['tags'])
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmByDirectory', 'measure_usage', true)
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmBySubAccount', 'measure_usage', true)
         })
-        this.after('READ', TechnicalMetrics, items => {
+        this.after('READ', TechnicalMetrics, (items, req) => {
+            // Get user access context from BEFORE handler
+            const context = requestContextMap.get(req)
+
+            // Authorization: Filter out metrics with no accessible measures
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                const indicesToRemove: number[] = []
+                items.forEach((each, index) => {
+                    const hasAccess = filterNestedMeasures(each, context.allowedIds)
+                    if (!hasAccess) {
+                        indicesToRemove.push(index)
+                    }
+                })
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    items.splice(indicesToRemove[i], 1)
+                }
+                info(`Authorization: Filtered TechnicalMetrics from ${items.length + indicesToRemove.length} to ${items.length} metrics`)
+            }
+
             items?.forEach(each => {
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
                 const measure = (each as TechnicalMetric).tmByCustomer
                 if (measure) {
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
-                    // if (measure.delta_measure_usagePct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
                 }
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
                 each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.toService_serviceId!)
@@ -154,16 +256,51 @@ export default class PresentationService extends cds.ApplicationService {
         })
 
         /**
+         * Authorization: Filter TechnicalMeasures direct queries by user access
+         */
+        this.before('READ', 'TechnicalMeasures', async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'id', context.allowedIds)
+                }
+                info(`Authorization: Filtering TechnicalMeasures to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
          * Handlers for Work Zone cards
          */
-        this.after('READ', Card_HighestForecastServices, items => {
+        this.before('READ', Card_HighestForecastServices, async req => {
+            // Get and store user access context for use in AFTER handler
+            const context = await getUserAccessContext(req)
+            requestContextMap.set(req, context)
+        })
+        this.after('READ', Card_HighestForecastServices, (items, req) => {
+            // Get user access context from BEFORE handler
+            const context = requestContextMap.get(req)
+
+            // Authorization: Filter out services with no accessible measures
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                const indicesToRemove: number[] = []
+                items.forEach((each, index) => {
+                    const hasAccess = filterNestedMeasures(each, context.allowedIds)
+                    if (!hasAccess) {
+                        indicesToRemove.push(index)
+                    }
+                })
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    items.splice(indicesToRemove[i], 1)
+                }
+            }
+
             items?.forEach(each => {
                 const measure = (each as BTPService).cmByCustomer
                 if (measure) {
                     measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
@@ -500,4 +637,63 @@ function getDeltaCriticality(value?: number | null): number {
         else criticality = statusMap.Error
     }
     return criticality
+}
+
+/**
+ * Filter nested measure arrays in BTPServices, CommercialMetrics, TechnicalMetrics
+ * to only include measures for accessible AccountStructureItems.
+ *
+ * The cmByLevel and tmByLevel associations contain arrays of measures where
+ * each measure has an 'id' field that corresponds to an AccountStructureItem.ID
+ *
+ * @param item The service/metric item containing nested measure associations
+ * @param allowedIds Array of accessible AccountStructureItem IDs
+ * @returns true if the item has at least one accessible measure, false otherwise
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function filterNestedMeasures(item: any, allowedIds: string[]): boolean {
+    // List of all measure association field names that need filtering
+    const measureFields = [
+        // Commercial measure associations
+        'cmByCustomer', 'cmByGlobalAccount', 'cmByDirectory', 'cmBySubAccount',
+        'cmByDatacenter', 'cmBySpace', 'cmByInstance', 'cmByApplication',
+        'cmByMetricByGlobalAccount', 'cmByMetricByDirectory', 'cmByMetricBySubAccount',
+        'cmByMetricByDatacenter', 'cmByMetricBySpace', 'cmByMetricByInstance', 'cmByMetricByApplication',
+        // Technical measure associations
+        'tmByCustomer', 'tmByGlobalAccount', 'tmByDirectory', 'tmBySubAccount',
+        'tmByDatacenter', 'tmBySpace', 'tmByInstance', 'tmByApplication',
+        'tmByMetricByGlobalAccount', 'tmByMetricByDirectory', 'tmByMetricBySubAccount',
+        'tmByMetricByDatacenter', 'tmByMetricBySpace', 'tmByMetricByInstance', 'tmByMetricByApplication'
+    ]
+
+    let hasAccessibleMeasures = false
+
+    for (const field of measureFields) {
+        const value = item[field]
+        if (value === undefined || value === null) continue
+
+        if (Array.isArray(value)) {
+            // Filter array of measures
+            const filtered = value.filter((measure: Record<string, unknown>) => {
+                const id = measure.id
+                return typeof id === 'string' && allowedIds.includes(id)
+            })
+            item[field] = filtered
+            if (filtered.length > 0) {
+                hasAccessibleMeasures = true
+            }
+        } else if (typeof value === 'object') {
+            // Single measure object (e.g., cmByCustomer which has [1 : level = 'Customer'])
+            const measure = value as Record<string, unknown>
+            const id = measure.id
+            if (typeof id === 'string' && !allowedIds.includes(id)) {
+                // User doesn't have access to this measure, clear it
+                item[field] = null
+            } else if (typeof id === 'string') {
+                hasAccessibleMeasures = true
+            }
+        }
+    }
+
+    return hasAccessibleMeasures
 }

@@ -1,7 +1,7 @@
 import cds from '@sap/cds'
 
-import { Settings } from './settings'
 import { addRequiredColumns } from './functions'
+import { getUserAccessContext, addInFilter } from './authorizationHelper'
 
 import {
     CommercialMeasure,
@@ -15,6 +15,98 @@ const info = cds.log('analyticsService').info
 
 export default class AnalyticsService extends cds.ApplicationService {
     async init() {
+
+        /**
+         * Authorization: Filter AccountStructureItems by user access
+         */
+        this.before('READ', 'AccountStructureItems', async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering AccountStructureItems to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter AggregatedCommercialMeasures by user access
+         * Uses 'id' field which corresponds to AccountStructureItem.ID
+         */
+        this.before('READ', 'AggregatedCommercialMeasures', async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'id', context.allowedIds)
+                }
+                info(`Authorization: Filtering AggregatedCommercialMeasures to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CommercialMeasures by user access
+         * Uses 'AccountStructureItem_ID' field
+         */
+        this.before('READ', CommercialMeasures, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering CommercialMeasures to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CommercialMeasuresByTags by user access
+         */
+        this.before('READ', CommercialMeasuresByTags, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering CommercialMeasuresByTags to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CommercialMeasuresForYears by user access
+         */
+        this.before('READ', CommercialMeasuresForYears, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering CommercialMeasuresForYears to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CommercialMeasuresForYearByTags by user access
+         */
+        this.before('READ', CommercialMeasuresForYearByTags, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering CommercialMeasuresForYearByTags to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
 
         const deltaColumns: (keyof CommercialMeasure)[] = [
             'Measures_delta_measure_cost',

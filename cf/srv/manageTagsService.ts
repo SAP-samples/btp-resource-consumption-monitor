@@ -1,5 +1,6 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
+import { getUserAccessContext, isIdAccessible, addInFilter } from './authorizationHelper'
 import {
     AccountStructureItem,
     AccountStructureItems,
@@ -23,6 +24,34 @@ type tagsClipboard = {
 
 export default class ManageTagsService extends cds.ApplicationService {
     async init() {
+
+        /**
+         * Authorization: Filter AccountStructureItems by user access
+         */
+        this.before('READ', AccountStructureItems, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering AccountStructureItems to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Protect SAVE operations on AccountStructureItems
+         */
+        this.before('SAVE', AccountStructureItem, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                const { ID } = req.data
+                if (ID && !isIdAccessible(ID, context)) {
+                    req.reject(403, `Access denied: You do not have permission to modify account structure item ${ID}`)
+                }
+            }
+        })
 
         this.after('READ', AccountStructureItems, items => {
             items?.forEach(each => {
@@ -64,6 +93,13 @@ export default class ManageTagsService extends cds.ApplicationService {
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
                 const { ID } = req.params[0] as { ID: string }
+
+                // Authorization: Check if user has access to this item
+                const context = await getUserAccessContext(req)
+                if (!context.isUnrestricted && !isIdAccessible(ID, context)) {
+                    return req.reject(403, `Access denied: You do not have permission to copy tags from item ${ID}`)
+                }
+
                 info(`Copying tags for item ${ID}...`)
 
                 const tags = await SELECT.from(AccountStructureItems, ID)
@@ -94,6 +130,13 @@ export default class ManageTagsService extends cds.ApplicationService {
             }
             if (requestor == 'ManageTagsService.AccountStructureItems') {
                 const { ID } = req.params[0] as { ID: string }
+
+                // Authorization: Check if user has access to this item
+                const context = await getUserAccessContext(req)
+                if (!context.isUnrestricted && !isIdAccessible(ID, context)) {
+                    return req.reject(403, `Access denied: You do not have permission to paste tags to item ${ID}`)
+                }
+
                 info(`Pasting tags in mode ${mode} to item ${ID}...`)
 
                 const existingTags = await SELECT.from(AccountStructureItems, ID)
@@ -134,6 +177,13 @@ export default class ManageTagsService extends cds.ApplicationService {
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
                 const { ID } = req.params[0] as { ID: string }
+
+                // Authorization: Check if user has access to this item
+                const context = await getUserAccessContext(req)
+                if (!context.isUnrestricted && !isIdAccessible(ID, context)) {
+                    return req.reject(403, `Access denied: You do not have permission to delete tags from item ${ID}`)
+                }
+
                 info(`Deleting tags in mode ${mode} from item ${ID}...`)
 
                 let nCustomTags = 0
