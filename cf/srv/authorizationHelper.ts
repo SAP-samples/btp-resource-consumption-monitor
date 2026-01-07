@@ -154,40 +154,66 @@ export async function getUserAccessContext(req: Request): Promise<UserAccessCont
 }
 
 /**
- * Resolves hierarchy by getting all descendant IDs from given parent IDs.
- * If a user has access to a Directory, they can see all child Subaccounts.
- * If a user has access to a Global Account, they can see all Directories and Subaccounts.
+ * Resolves hierarchy by getting all ancestor and descendant IDs from given IDs.
+ * - If a user has access to a Subaccount, they can see aggregated data at Directory and Global Account levels
+ * - If a user has access to a Directory, they can see all child Subaccounts
+ * - If a user has access to a Global Account, they can see all Directories and Subaccounts
+ * - Customer level is EXCLUDED from ancestors (it aggregates ALL data)
  *
  * Uses in-memory traversal for portability across database types.
  *
- * @param parentIds - Array of AccountStructureItem IDs from the user's attribute
- * @returns Array of all accessible IDs (parents + all descendants)
+ * @param assignedIds - Array of AccountStructureItem IDs from the user's attribute
+ * @returns Array of all accessible IDs (assigned + ancestors up to Global Account + all descendants)
  */
-export async function resolveHierarchy(parentIds: string[]): Promise<string[]> {
-    if (parentIds.length === 0) {
+export async function resolveHierarchy(assignedIds: string[]): Promise<string[]> {
+    if (assignedIds.length === 0) {
         return []
     }
 
     // Query all AccountStructureItems to build the hierarchy
-    // This is more portable than database-specific recursive CTEs
-    const allItems = await SELECT.from(AccountStructureItems).columns('ID', 'parentID')
+    // Include 'level' to know when to stop ancestor traversal (exclude Customer level)
+    const allItems = await SELECT.from(AccountStructureItems).columns('ID', 'parentID', 'level')
 
     const result = new Set<string>()
 
-    // Add the parent IDs themselves (user always has access to their directly assigned IDs)
-    parentIds.forEach(id => result.add(id))
+    // Add the assigned IDs themselves (user always has access to their directly assigned IDs)
+    assignedIds.forEach(id => result.add(id))
 
-    // Build parent→children map for efficient lookup
+    // Build parent→children map for efficient lookup (for descendants)
     const childrenMap = new Map<string, string[]>()
+    // Build child→parent map for efficient lookup (for ancestors)
+    const parentMap = new Map<string, string>()
+    // Build ID→level map to check if we should stop at Customer level
+    const levelMap = new Map<string, string>()
+
     for (const item of allItems) {
+        levelMap.set(item.ID!, item.level!)
         if (item.parentID) {
+            // For descendants lookup
             const children = childrenMap.get(item.parentID) || []
             children.push(item.ID!)
             childrenMap.set(item.parentID, children)
+            // For ancestors lookup
+            parentMap.set(item.ID!, item.parentID)
         }
     }
 
-    // Recursively add all descendants of each parent ID
+    // Recursively add ancestors of each assigned ID
+    // STOP at Customer level - it aggregates ALL data and should not be auto-included
+    function addAncestors(childId: string): void {
+        const parentId = parentMap.get(childId)
+        if (parentId && !result.has(parentId)) {
+            const parentLevel = levelMap.get(parentId)
+            // Don't include Customer level - it aggregates everything
+            if (parentLevel === 'Customer') {
+                return
+            }
+            result.add(parentId)
+            addAncestors(parentId) // Recurse to get grandparents (up to Global Account)
+        }
+    }
+
+    // Recursively add all descendants of each assigned ID
     function addDescendants(parentId: string): void {
         const children = childrenMap.get(parentId) || []
         for (const childId of children) {
@@ -198,7 +224,8 @@ export async function resolveHierarchy(parentIds: string[]): Promise<string[]> {
         }
     }
 
-    parentIds.forEach(addDescendants)
+    assignedIds.forEach(addAncestors)
+    assignedIds.forEach(addDescendants)
 
     return Array.from(result)
 }
@@ -216,6 +243,141 @@ export function isIdAccessible(id: string, context: UserAccessContext): boolean 
         return true
     }
     return context.allowedIds.includes(id)
+}
+
+/**
+ * Gets the Global Account IDs that the user has DIRECT access to.
+ * This is used for entities that aggregate at Global Account level (like BillingDifferences).
+ *
+ * A user has direct access to a Global Account if:
+ * 1. They were directly assigned the Global Account ID in their SubaccountAccess attribute, OR
+ * 2. They were assigned a level ABOVE Global Account (Directory access doesn't exist, so this means Customer)
+ *
+ * Users who only have Subaccount-level access should NOT see Global Account aggregated data,
+ * because that would expose data from other subaccounts they don't have access to.
+ *
+ * @param req - The CAP request object containing user context
+ * @returns Array of Global Account IDs the user has direct access to
+ */
+export async function getDirectGlobalAccountAccess(req: Request): Promise<string[]> {
+    // System users and Admins have full access
+    if (hasUnrestrictedAccess(req)) {
+        return [] // Empty means no filtering needed
+    }
+
+    // Get the raw attribute values (before hierarchy expansion)
+    const attributeIds = getSubaccountAccessAttribute(req)
+
+    if (attributeIds.length === 0) {
+        return [] // No access
+    }
+
+    // Query AccountStructureItems to find which of these IDs are at Global Account level or higher
+    const items = await SELECT.from(AccountStructureItems)
+        .columns('ID', 'level')
+        .where({ ID: { in: attributeIds } })
+
+    const globalAccountIds: string[] = []
+
+    for (const item of items) {
+        // Only include IDs that are at Global Account level
+        // (Customer level is excluded by design - it aggregates ALL data)
+        if (item.level === 'Global Account') {
+            globalAccountIds.push(item.ID!)
+        }
+    }
+
+    info(`User ${req.user?.id} has direct Global Account access to: ${globalAccountIds.join(', ') || '(none)'}`)
+
+    return globalAccountIds
+}
+
+/**
+ * Service key composite type for BTPServices
+ */
+export interface BTPServiceKey {
+    reportYearMonth: string
+    serviceId: string
+    retrieved: string
+    interval: string
+}
+
+/**
+ * Gets the list of unique service IDs that have at least one accessible CommercialMeasure.
+ * This is used to filter BulkTechnicalAllocations and BulkForecastSettings.
+ *
+ * @param allowedIds - Array of accessible AccountStructureItem IDs
+ * @returns Array of accessible service IDs
+ */
+export async function getAccessibleServiceIds(allowedIds: string[]): Promise<string[]> {
+    if (allowedIds.length === 0) {
+        return []
+    }
+
+    // Query CommercialMeasures to find distinct service IDs that have measures with accessible IDs
+    const measures = await SELECT.distinct
+        .from('db.CommercialMeasures')
+        .columns('toMetric.toService.serviceId as serviceId')
+        .where({ id: { in: allowedIds } })
+
+    const serviceIds = measures.map((m: { serviceId: string }) => m.serviceId).filter(Boolean)
+    info(`Found ${serviceIds.length} accessible service IDs for ${allowedIds.length} allowed IDs`)
+
+    return serviceIds
+}
+
+/**
+ * Gets the list of BTPService composite keys that have at least one accessible CommercialMeasure.
+ * This is used to filter BTPServices at the database level.
+ *
+ * @param allowedIds - Array of accessible AccountStructureItem IDs
+ * @returns Array of composite keys for accessible services
+ */
+export async function getAccessibleServiceKeys(allowedIds: string[]): Promise<BTPServiceKey[]> {
+    if (allowedIds.length === 0) {
+        return []
+    }
+
+    // Query CommercialMeasures to find services that have measures with accessible IDs
+    // We need distinct combinations of the BTPServices composite key
+    const measures = await SELECT.distinct
+        .from('db.CommercialMeasures')
+        .columns(
+            'toMetric.toService.reportYearMonth as reportYearMonth',
+            'toMetric.toService.serviceId as serviceId',
+            'toMetric.toService.retrieved as retrieved',
+            'toMetric.toService.interval as interval'
+        )
+        .where({ id: { in: allowedIds } })
+
+    info(`Found ${measures.length} accessible service keys for ${allowedIds.length} allowed IDs`)
+
+    return measures as BTPServiceKey[]
+}
+
+/**
+ * Adds a filter to the query to only include BTPServices that have accessible measures.
+ * Uses a simple serviceId IN (...) filter for efficiency.
+ * The AFTER handler (filterNestedMeasures) handles fine-grained measure filtering.
+ *
+ * @param query - The CQN query object
+ * @param serviceKeys - Array of accessible service composite keys
+ * @param fieldPrefix - Optional prefix for field names (e.g., 'toService_' for CommercialMetrics)
+ */
+export function addServiceKeyFilter(query: Query, serviceKeys: BTPServiceKey[], fieldPrefix: string = ''): void {
+    if (serviceKeys.length === 0) {
+        // No accessible services - add impossible condition
+        addInFilter(query, `${fieldPrefix}serviceId`, ['__NO_ACCESS__'])
+        return
+    }
+
+    // Extract unique serviceIds for efficient IN clause filtering
+    // Fine-grained filtering is done in the AFTER handler via filterNestedMeasures
+    const uniqueServiceIds = [...new Set(serviceKeys.map(k => k.serviceId))]
+
+    addInFilter(query, `${fieldPrefix}serviceId`, uniqueServiceIds)
+
+    info(`Added service key filter for ${uniqueServiceIds.length} unique services (from ${serviceKeys.length} keys)`)
 }
 
 /**

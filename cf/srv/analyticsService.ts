@@ -7,8 +7,12 @@ import {
     CommercialMeasure,
     CommercialMeasures,
     CommercialMeasuresByTags,
+    CommercialMeasuresByTagsWInheritances,
     CommercialMeasuresForYears,
-    CommercialMeasuresForYearByTags
+    CommercialMeasuresForYearByTags,
+    CommercialMeasuresForYearByTagsWInheritances,
+    CloudCreditConsumptions,
+    CombinedTags
 } from '#cds-models/AnalyticsService'
 
 const info = cds.log('analyticsService').info
@@ -105,6 +109,68 @@ export default class AnalyticsService extends cds.ApplicationService {
                     addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
                 }
                 info(`Authorization: Filtering CommercialMeasuresForYearByTags to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CommercialMeasuresByTagsWInheritances by user access
+         */
+        this.before('READ', CommercialMeasuresByTagsWInheritances, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering CommercialMeasuresByTagsWInheritances to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CommercialMeasuresForYearByTagsWInheritances by user access
+         */
+        this.before('READ', CommercialMeasuresForYearByTagsWInheritances, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering CommercialMeasuresForYearByTagsWInheritances to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CloudCreditConsumptions by user access
+         * Uses 'globalAccountId' field which corresponds to AccountStructureItem.ID
+         */
+        this.before('READ', CloudCreditConsumptions, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'globalAccountId', context.allowedIds)
+                }
+                info(`Authorization: Filtering CloudCreditConsumptions to ${context.allowedIds.length} accessible IDs`)
+            }
+        })
+
+        /**
+         * Authorization: Filter CombinedTags by user access
+         * Uses 'toAccountStructureItem_ID' field which corresponds to AccountStructureItem.ID
+         */
+        this.before('READ', CombinedTags, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'toAccountStructureItem_ID', ['__NO_ACCESS__'])
+                } else {
+                    addInFilter(req.query, 'toAccountStructureItem_ID', context.allowedIds)
+                }
+                info(`Authorization: Filtering CombinedTags to ${context.allowedIds.length} accessible IDs`)
             }
         })
 

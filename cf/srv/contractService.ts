@@ -1,80 +1,65 @@
 import cds from '@sap/cds'
 
 import { Settings } from './settings'
-import { getUserAccessContext, addInFilter } from './authorizationHelper'
+import { addInFilter, hasUnrestrictedAccess } from './authorizationHelper'
 import {
     BillingDifferences,
     Card_CreditBurnDownHeaders,
     Card_CreditBurnDowns
-} from '#cds-models/ContractsService'
+} from '#cds-models/ContractService'
 import {
     reportYearMonthToText,
     reportYearMonthToTextShort
 } from './functions'
 
-const info = cds.log('contractsService').info
+const info = cds.log('contractService').info
 
-export default class ContractsService extends cds.ApplicationService {
+export default class ContractService extends cds.ApplicationService {
     async init() {
 
         /**
-         * Authorization: Filter BillingDifferences by user access
-         * Uses 'globalAccountId' field which corresponds to AccountStructureItem.ID
+         * Authorization: Block BillingDifferences for non-admin users
+         * This entity shows Global Account-level aggregated billing data (costs + credits)
+         * which cannot be filtered by subaccount - users with subaccount access only
+         * should not see any billing differences data
          */
         this.before('READ', BillingDifferences, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'globalAccountId', context.allowedIds)
-                }
-                info(`Authorization: Filtering BillingDifferences to ${context.allowedIds.length} accessible IDs`)
+            if (!hasUnrestrictedAccess(req)) {
+                addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
+                info(`Authorization: Blocking BillingDifferences - user ${req.user?.id} does not have Admin access`)
             }
         })
 
         /**
-         * Authorization: Filter Card_CreditBurnDowns by user access
+         * Authorization: Block Card_CreditBurnDowns for non-admin users
+         * Credit burndown is Global Account-level data
          */
         this.before('READ', Card_CreditBurnDowns, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'globalAccountId', context.allowedIds)
-                }
-                info(`Authorization: Filtering Card_CreditBurnDowns to ${context.allowedIds.length} accessible IDs`)
+            if (!hasUnrestrictedAccess(req)) {
+                addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
+                info(`Authorization: Blocking Card_CreditBurnDowns - user ${req.user?.id} does not have Admin access`)
             }
         })
 
         /**
-         * Authorization: Filter Card_CreditBurnDownHeaders by user access
+         * Authorization: Block Card_CreditBurnDownHeaders for non-admin users
+         * Credit burndown is Global Account-level data
          */
         this.before('READ', Card_CreditBurnDownHeaders, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'globalAccountId', context.allowedIds)
-                }
-                info(`Authorization: Filtering Card_CreditBurnDownHeaders to ${context.allowedIds.length} accessible IDs`)
+            if (!hasUnrestrictedAccess(req)) {
+                addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
+                info(`Authorization: Blocking Card_CreditBurnDownHeaders - user ${req.user?.id} does not have Admin access`)
             }
         })
 
         /**
-         * Authorization: Filter unique_globalAccountNames by user access
+         * Authorization: Block unique_globalAccountNames for non-admin users
+         * This is used for filtering in BillingDifferences which is admin-only
          */
         this.before('READ', 'unique_globalAccountNames', async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'ID', context.allowedIds)
-                }
-                info(`Authorization: Filtering unique_globalAccountNames to ${context.allowedIds.length} accessible IDs`)
+            if (!hasUnrestrictedAccess(req)) {
+                addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
+                info(`Authorization: Blocking unique_globalAccountNames - user ${req.user?.id} does not have Admin access`)
             }
         })
 
