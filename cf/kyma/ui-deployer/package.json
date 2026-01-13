@@ -6,7 +6,7 @@
     "npm": ">=11"
   },
   "dependencies": {
-    "@sap/html5-app-deployer": "^7.1"
+    "@sap/html5-app-deployer": "^7.2"
   },
   "scripts": {
     "start": "node node_modules/@sap/html5-app-deployer/index.js"
