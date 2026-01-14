@@ -1,7 +1,7 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
 import { flattenObject } from './functions'
-import { getUserAccessContext, addInFilter } from './authorizationHelper'
+import { getUserAccessContext, addInFilter, hasUnrestrictedAccess } from './authorizationHelper'
 
 import {
     Alert,
@@ -17,6 +17,15 @@ export default class ManageAlertsService extends cds.ApplicationService {
 
         // Connect to Retrieval Service to send triggers
         const retrievalService = await cds.connect.to(RetrievalService)
+
+        /**
+         * Authorization: Restrict alert configuration to administrators only
+         */
+        this.before('*', Alerts, async req => {
+            if (!hasUnrestrictedAccess(req)) {
+                req.reject(403, 'Alert configuration is restricted to administrators')
+            }
+        })
 
         /**
          * Authorization: Filter LevelNames by user access
