@@ -1,7 +1,7 @@
 import cds from '@sap/cds'
 
 import { addRequiredColumns } from './functions'
-import { getUserAccessContext, addInFilter } from './authorizationHelper'
+import { getUserAccessContext, addInFilter, getSubAccountLevelIds } from './authorizationHelper'
 
 import {
     CommercialMeasure,
@@ -14,8 +14,6 @@ import {
     CloudCreditConsumptions,
     CombinedTags
 } from '#cds-models/AnalyticsService'
-
-const info = cds.log('analyticsService').info
 
 export default class AnalyticsService extends cds.ApplicationService {
     async init() {
@@ -31,13 +29,13 @@ export default class AnalyticsService extends cds.ApplicationService {
                 } else {
                     addInFilter(req.query, 'ID', context.allowedIds)
                 }
-                info(`Authorization: Filtering AccountStructureItems to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
         /**
          * Authorization: Filter AggregatedCommercialMeasures by user access
          * Uses 'id' field which corresponds to AccountStructureItem.ID
+         * For restricted users, only show SubAccount level and below
          */
         this.before('READ', 'AggregatedCommercialMeasures', async req => {
             const context = await getUserAccessContext(req)
@@ -45,15 +43,17 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (context.allowedIds.length === 0) {
                     addInFilter(req.query, 'id', ['__NO_ACCESS__'])
                 } else {
-                    addInFilter(req.query, 'id', context.allowedIds)
+                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                    addInFilter(req.query, 'id', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
                 }
-                info(`Authorization: Filtering AggregatedCommercialMeasures to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
         /**
          * Authorization: Filter CommercialMeasures by user access
          * Uses 'AccountStructureItem_ID' field
+         * For restricted users, only show SubAccount level and below (not Directory/GlobalAccount
+         * which contain aggregated data from all children including inaccessible subaccounts)
          */
         this.before('READ', CommercialMeasures, async req => {
             const context = await getUserAccessContext(req)
@@ -61,9 +61,10 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (context.allowedIds.length === 0) {
                     addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
                 } else {
-                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                    // Filter to only SubAccount level and below to exclude aggregated parent levels
+                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
                 }
-                info(`Authorization: Filtering CommercialMeasures to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -76,9 +77,9 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (context.allowedIds.length === 0) {
                     addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
                 } else {
-                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
                 }
-                info(`Authorization: Filtering CommercialMeasuresByTags to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -91,9 +92,9 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (context.allowedIds.length === 0) {
                     addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
                 } else {
-                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
                 }
-                info(`Authorization: Filtering CommercialMeasuresForYears to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -106,9 +107,9 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (context.allowedIds.length === 0) {
                     addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
                 } else {
-                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
                 }
-                info(`Authorization: Filtering CommercialMeasuresForYearByTags to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -121,9 +122,9 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (context.allowedIds.length === 0) {
                     addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
                 } else {
-                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
                 }
-                info(`Authorization: Filtering CommercialMeasuresByTagsWInheritances to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -136,9 +137,9 @@ export default class AnalyticsService extends cds.ApplicationService {
                 if (context.allowedIds.length === 0) {
                     addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
                 } else {
-                    addInFilter(req.query, 'AccountStructureItem_ID', context.allowedIds)
+                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
                 }
-                info(`Authorization: Filtering CommercialMeasuresForYearByTagsWInheritances to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -154,7 +155,6 @@ export default class AnalyticsService extends cds.ApplicationService {
                 } else {
                     addInFilter(req.query, 'globalAccountId', context.allowedIds)
                 }
-                info(`Authorization: Filtering CloudCreditConsumptions to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -170,7 +170,6 @@ export default class AnalyticsService extends cds.ApplicationService {
                 } else {
                     addInFilter(req.query, 'toAccountStructureItem_ID', context.allowedIds)
                 }
-                info(`Authorization: Filtering CombinedTags to ${context.allowedIds.length} accessible IDs`)
             }
         })
 

@@ -95,24 +95,18 @@ export function hasUnrestrictedAccess(req: Request): boolean {
 export function getSubaccountAccessAttribute(req: Request): string[] {
     // Access user attributes via req.user.attr
     const userAttr = req.user?.attr
-    info(`User attributes: ${JSON.stringify(userAttr)}`)
-
     const subaccountAccess = userAttr?.SubaccountAccess
 
     if (!subaccountAccess) {
-        info(`No SubaccountAccess attribute found for user ${req.user?.id}`)
         return []
     }
 
     // Attribute can be string (single value) or array (multiple values)
     if (Array.isArray(subaccountAccess)) {
-        const filtered = subaccountAccess.filter(id => typeof id === 'string' && id.length > 0)
-        info(`SubaccountAccess (array): ${filtered.join(', ')}`)
-        return filtered
+        return subaccountAccess.filter(id => typeof id === 'string' && id.length > 0)
     }
 
     if (typeof subaccountAccess === 'string' && subaccountAccess.length > 0) {
-        info(`SubaccountAccess (string): ${subaccountAccess}`)
         return [subaccountAccess]
     }
 
@@ -137,15 +131,11 @@ export async function getUserAccessContext(req: Request): Promise<UserAccessCont
 
     // If no attribute values, user has NO access (Viewer without attributes)
     if (attributeIds.length === 0) {
-        info(`User ${req.user?.id} has Viewer role but no SubaccountAccess attribute - NO data access`)
         return { isUnrestricted: false, allowedIds: [] }
     }
 
-    info(`User ${req.user?.id} has SubaccountAccess attribute: ${attributeIds.join(', ')}`)
-
     // Resolve hierarchy: get all descendants of the attributed IDs
     const allAccessibleIds = await resolveHierarchy(attributeIds)
-    info(`Resolved ${allAccessibleIds.length} accessible IDs for user ${req.user?.id}`)
 
     return {
         isUnrestricted: false,
@@ -154,16 +144,19 @@ export async function getUserAccessContext(req: Request): Promise<UserAccessCont
 }
 
 /**
- * Resolves hierarchy by getting all ancestor and descendant IDs from given IDs.
- * - If a user has access to a Subaccount, they can see aggregated data at Directory and Global Account levels
- * - If a user has access to a Directory, they can see all child Subaccounts
- * - If a user has access to a Global Account, they can see all Directories and Subaccounts
- * - Customer level is EXCLUDED from ancestors (it aggregates ALL data)
+ * Resolves hierarchy by getting all descendant IDs from given IDs.
+ * - If a user has access to a Subaccount, they can see that Subaccount and its children (Spaces, Instances)
+ * - If a user has access to a Directory, they can see all child Subaccounts and their descendants
+ * - If a user has access to a Global Account, they can see all Directories, Subaccounts, and descendants
+ *
+ * NOTE: Ancestors are NOT included. Parent-level rows contain aggregated data from ALL children,
+ * including subaccounts the user may not have access to. Only the assigned IDs and their
+ * descendants are included in the access scope.
  *
  * Uses in-memory traversal for portability across database types.
  *
  * @param assignedIds - Array of AccountStructureItem IDs from the user's attribute
- * @returns Array of all accessible IDs (assigned + ancestors up to Global Account + all descendants)
+ * @returns Array of all accessible IDs (assigned + all descendants only, NO ancestors)
  */
 export async function resolveHierarchy(assignedIds: string[]): Promise<string[]> {
     if (assignedIds.length === 0) {
@@ -171,7 +164,6 @@ export async function resolveHierarchy(assignedIds: string[]): Promise<string[]>
     }
 
     // Query all AccountStructureItems to build the hierarchy
-    // Include 'level' to know when to stop ancestor traversal (exclude Customer level)
     const allItems = await SELECT.from(AccountStructureItems).columns('ID', 'parentID', 'level')
 
     const result = new Set<string>()
@@ -181,35 +173,13 @@ export async function resolveHierarchy(assignedIds: string[]): Promise<string[]>
 
     // Build parent→children map for efficient lookup (for descendants)
     const childrenMap = new Map<string, string[]>()
-    // Build child→parent map for efficient lookup (for ancestors)
-    const parentMap = new Map<string, string>()
-    // Build ID→level map to check if we should stop at Customer level
-    const levelMap = new Map<string, string>()
 
     for (const item of allItems) {
-        levelMap.set(item.ID!, item.level!)
         if (item.parentID) {
             // For descendants lookup
             const children = childrenMap.get(item.parentID) || []
             children.push(item.ID!)
             childrenMap.set(item.parentID, children)
-            // For ancestors lookup
-            parentMap.set(item.ID!, item.parentID)
-        }
-    }
-
-    // Recursively add ancestors of each assigned ID
-    // STOP at Customer level - it aggregates ALL data and should not be auto-included
-    function addAncestors(childId: string): void {
-        const parentId = parentMap.get(childId)
-        if (parentId && !result.has(parentId)) {
-            const parentLevel = levelMap.get(parentId)
-            // Don't include Customer level - it aggregates everything
-            if (parentLevel === 'Customer') {
-                return
-            }
-            result.add(parentId)
-            addAncestors(parentId) // Recurse to get grandparents (up to Global Account)
         }
     }
 
@@ -224,7 +194,8 @@ export async function resolveHierarchy(assignedIds: string[]): Promise<string[]>
         }
     }
 
-    assignedIds.forEach(addAncestors)
+    // Only add descendants, NOT ancestors
+    // Ancestors contain aggregated data from all children (including inaccessible ones)
     assignedIds.forEach(addDescendants)
 
     return Array.from(result)
@@ -287,8 +258,6 @@ export async function getDirectGlobalAccountAccess(req: Request): Promise<string
         }
     }
 
-    info(`User ${req.user?.id} has direct Global Account access to: ${globalAccountIds.join(', ') || '(none)'}`)
-
     return globalAccountIds
 }
 
@@ -321,7 +290,6 @@ export async function getAccessibleServiceIds(allowedIds: string[]): Promise<str
         .where({ id: { in: allowedIds } })
 
     const serviceIds = measures.map((m: { serviceId: string }) => m.serviceId).filter(Boolean)
-    info(`Found ${serviceIds.length} accessible service IDs for ${allowedIds.length} allowed IDs`)
 
     return serviceIds
 }
@@ -350,8 +318,6 @@ export async function getAccessibleServiceKeys(allowedIds: string[]): Promise<BT
         )
         .where({ id: { in: allowedIds } })
 
-    info(`Found ${measures.length} accessible service keys for ${allowedIds.length} allowed IDs`)
-
     return measures as BTPServiceKey[]
 }
 
@@ -376,8 +342,6 @@ export function addServiceKeyFilter(query: Query, serviceKeys: BTPServiceKey[], 
     const uniqueServiceIds = [...new Set(serviceKeys.map(k => k.serviceId))]
 
     addInFilter(query, `${fieldPrefix}serviceId`, uniqueServiceIds)
-
-    info(`Added service key filter for ${uniqueServiceIds.length} unique services (from ${serviceKeys.length} keys)`)
 }
 
 /**
@@ -401,4 +365,40 @@ export function filterAccessibleItems<T extends Record<string, unknown>>(
         const id = item[idField]
         return typeof id === 'string' && context.allowedIds.includes(id)
     })
+}
+
+/**
+ * Levels that contain aggregated data from all children.
+ * For restricted users, measures at these levels should be excluded because
+ * they include data from subaccounts the user doesn't have access to.
+ */
+const AGGREGATED_LEVELS = ['Customer', 'Global Account', 'Directory']
+
+/**
+ * Gets the list of allowed IDs filtered to only include non-aggregated levels.
+ * This excludes Customer, Global Account, and Directory levels which contain
+ * aggregated data from all their children (including inaccessible subaccounts).
+ *
+ * @param allowedIds - Array of accessible AccountStructureItem IDs
+ * @returns Array of IDs at SubAccount level and below only
+ */
+export async function getSubAccountLevelIds(allowedIds: string[]): Promise<string[]> {
+    if (allowedIds.length === 0) {
+        return []
+    }
+
+    // Query AccountStructureItems to find which IDs are at SubAccount level or below
+    const items = await SELECT.from(AccountStructureItems)
+        .columns('ID', 'level')
+        .where({ ID: { in: allowedIds } })
+
+    const filteredIds: string[] = []
+    for (const item of items) {
+        // Only include IDs that are NOT at aggregated levels
+        if (!AGGREGATED_LEVELS.includes(item.level!)) {
+            filteredIds.push(item.ID!)
+        }
+    }
+
+    return filteredIds
 }
