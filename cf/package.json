@@ -38,6 +38,7 @@
   },
   "scripts": {
     "start": "cds-serve",
+    "watch":"cds-ts watch --profile hybrid",
     "npmu:apps": "npm update --prefix ./app/billingdifferences && npm update --prefix ./app/btprcreport && npm update --prefix ./app/managealerts && npm update --prefix ./app/managetags && npm update --prefix ./app/measuresbytags && npm update --prefix ./app/measuresforyearbytags && npm update --prefix ./app/measuresforyears && npm update --prefix ./app/measurestotal",
     "npmu:kyma": "npm update --prefix ./kyma/ui-deployer",
     "build:cf": "rimraf @cds-models resources mta_archives gen && cds-ts build --production",

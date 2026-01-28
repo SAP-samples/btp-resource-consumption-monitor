@@ -112,6 +112,7 @@ export default class PresentationService extends cds.ApplicationService {
                 // Customer-level measures aggregate ALL subaccounts (unauthorized data exposure)
                 switchCustomerToSubAccountExpand(req.query, 'cmByCustomer', 'cmBySubAccount')
                 switchCustomerToSubAccountExpand(req.query, 'tmByCustomer', 'tmBySubAccount')
+
             }
 
             // Add required columns based on user access level
@@ -293,19 +294,67 @@ export default class PresentationService extends cds.ApplicationService {
         })
 
         /**
-         * Authorization: Filter CommercialMeasures direct queries by user access
-         * For restricted users, block aggregated levels (Customer, Directory, GlobalAccount)
-         * which contain data from all children including inaccessible subaccounts
+         * Authorization: Filter CommercialMeasures queries by user access
+         * Handles direct queries and navigation through various associations
          */
         this.before('READ', 'CommercialMeasures', async req => {
             const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+
+            // Check navigation context from the FROM clause
+            // Navigation FROM clause looks like: { ref: ['BTPServices', 'cmHistoryByMetricAll'], ... }
+            const fromRef = req.query.SELECT?.from?.ref
+            const getNavigationAssociation = (): string | undefined => {
+                if (!fromRef || !Array.isArray(fromRef)) return undefined
+                for (const part of fromRef) {
+                    if (typeof part === 'string' && part.startsWith('cm')) {
+                        return part
+                    }
+                }
+                return undefined
+            }
+            const navigationAssoc = getNavigationAssociation()
+
+            // History associations need dynamic level filtering
+            const isHistoryNavigation = navigationAssoc?.startsWith('cmHistoryByMetric')
+
+            // Breakdown associations (cmByMetricByDatacenter, cmByMetricBySpace, etc.)
+            // These are already scoped by the parent BTPServices navigation
+            const isBreakdownNavigation = navigationAssoc?.startsWith('cmByMetricBy')
+
+            if (isHistoryNavigation) {
+                // For history chart navigation, add level filter based on user access
+                if (context.isUnrestricted) {
+                    // Unrestricted users see Global Account level (aggregated across all subaccounts)
+                    addInFilter(req.query, 'level', ['Global Account'])
                 } else {
-                    addInFilter(req.query, 'id', context.allowedIds)
-                    // Block aggregated levels - they contain data from all children
-                    addInFilter(req.query, 'level', ['Sub Account', 'Space', 'Instance', 'Application', 'Datacenter'])
+                    // Restricted users see Sub Account level (only their accessible subaccounts)
+                    if (context.allowedIds.length === 0) {
+                        addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                    } else {
+                        addInFilter(req.query, 'id', context.allowedIds)
+                        addInFilter(req.query, 'level', ['Sub Account'])
+                    }
+                }
+            } else if (isBreakdownNavigation) {
+                // For breakdown navigations (cmByMetricByDatacenter, cmByMetricBySpace, etc.)
+                // The data is already scoped to the parent BTPServices record which was verified as accessible
+                // The level filter is applied by the association projection
+                // No additional ID filtering needed - the breakdown shows distribution across dimensions
+                // that the user has access to via the parent service
+                if (!context.isUnrestricted && context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                }
+            } else {
+                // For direct queries, apply the standard access control
+                if (!context.isUnrestricted) {
+                    if (context.allowedIds.length === 0) {
+                        addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                    } else {
+                        addInFilter(req.query, 'id', context.allowedIds)
+                        // Block aggregated levels - they contain data from all children
+                        // Allow: Sub Account, Space, Instance, Application, Datacenter, Service, Service (alloc.)
+                        addInFilter(req.query, 'level', ['Sub Account', 'Space', 'Instance', 'Application', 'Datacenter', 'Service', 'Service (alloc.)'])
+                    }
                 }
             }
         })
@@ -318,10 +367,21 @@ export default class PresentationService extends cds.ApplicationService {
             const context = await getUserAccessContext(req)
             requestContextMap.set(req, context)
 
+            // Check navigation context from the FROM clause
+            const fromRef = req.query.SELECT?.from?.ref
+            const isHistoryNavigation = fromRef && Array.isArray(fromRef) &&
+                fromRef.some((part: unknown) =>
+                    typeof part === 'string' && part === 'technicalMetricsHistory'
+                )
+
             // Authorization: Filter metrics that have accessible measures
             if (!context.isUnrestricted) {
-                const accessibleKeys = await getAccessibleServiceKeys(context.allowedIds)
-                addServiceKeyFilter(req.query, accessibleKeys, 'toService_')
+                // For history navigation, the parent BTPServices has already been verified as accessible
+                // No additional service key filtering needed
+                if (!isHistoryNavigation) {
+                    const accessibleKeys = await getAccessibleServiceKeys(context.allowedIds)
+                    addServiceKeyFilter(req.query, accessibleKeys, 'toService_')
+                }
 
                 // For restricted users: Switch from Customer-level to SubAccount-level measures
                 switchCustomerToSubAccountExpand(req.query, 'tmByCustomer', 'tmBySubAccount')
@@ -379,18 +439,46 @@ export default class PresentationService extends cds.ApplicationService {
         })
 
         /**
-         * Authorization: Filter TechnicalMeasures direct queries by user access
-         * For restricted users, block aggregated levels (Customer, Directory, GlobalAccount)
+         * Authorization: Filter TechnicalMeasures queries by user access
+         * Handles direct queries and navigation through various associations
          */
         this.before('READ', 'TechnicalMeasures', async req => {
             const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
+
+            // Check navigation context from the FROM clause
+            const fromRef = req.query.SELECT?.from?.ref
+            const getNavigationAssociation = (): string | undefined => {
+                if (!fromRef || !Array.isArray(fromRef)) return undefined
+                for (const part of fromRef) {
+                    if (typeof part === 'string' && part.startsWith('tm')) {
+                        return part
+                    }
+                }
+                return undefined
+            }
+            const navigationAssoc = getNavigationAssociation()
+
+            // Breakdown associations (tmByMetricByDatacenter, tmByMetricBySpace, etc.)
+            // These are already scoped by the parent BTPServices navigation
+            const isBreakdownNavigation = navigationAssoc?.startsWith('tmByMetricBy')
+
+            if (isBreakdownNavigation) {
+                // For breakdown navigations, the data is already scoped to the parent BTPServices record
+                // No additional ID filtering needed
+                if (!context.isUnrestricted && context.allowedIds.length === 0) {
                     addInFilter(req.query, 'id', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'id', context.allowedIds)
-                    // Block aggregated levels - they contain data from all children
-                    addInFilter(req.query, 'level', ['Sub Account', 'Space', 'Instance', 'Application', 'Datacenter'])
+                }
+            } else {
+                // For direct queries, apply the standard access control
+                if (!context.isUnrestricted) {
+                    if (context.allowedIds.length === 0) {
+                        addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                    } else {
+                        addInFilter(req.query, 'id', context.allowedIds)
+                        // Block aggregated levels - they contain data from all children
+                        // Allow: Sub Account, Space, Instance, Application, Datacenter, Service, Service (alloc.)
+                        addInFilter(req.query, 'level', ['Sub Account', 'Space', 'Instance', 'Application', 'Datacenter', 'Service', 'Service (alloc.)'])
+                    }
                 }
             }
         })
@@ -919,6 +1007,8 @@ function filterNestedMeasures(item: any, allowedIds: string[]): boolean {
         'cmByDatacenter', 'cmBySpace', 'cmByInstance', 'cmByApplication',
         'cmByMetricBySubAccount',
         'cmByMetricByDatacenter', 'cmByMetricBySpace', 'cmByMetricByInstance', 'cmByMetricByApplication',
+        // History associations (level is filtered dynamically in handler based on user access)
+        'cmHistoryByMetricAll', 'cmHistoryByMetricDaily', 'cmHistoryByMetricMonthly',
         // Technical measure associations (SubAccount and lower levels only)
         'tmBySubAccount',
         'tmByDatacenter', 'tmBySpace', 'tmByInstance', 'tmByApplication',
