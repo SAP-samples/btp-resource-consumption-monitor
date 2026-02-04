@@ -82,7 +82,8 @@
                 "urlTemplateParams": {
                     "appId": "measuresforyearbytags",
                     "query": {
-                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
+                        "siteId": "${SITE_ID}",
+                        "subaccountId": "${SUBACCOUNT_ID}",
                         "saasApprouter": "true"
                     }
                 }

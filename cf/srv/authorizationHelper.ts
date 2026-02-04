@@ -4,6 +4,157 @@ import { AccountStructureItems } from '#cds-models/db'
 
 const info = cds.log('authorizationHelper').info
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/**
+ * Levels that contain aggregated data from all children.
+ * For restricted users, measures at these levels should be excluded because
+ * they include data from subaccounts the user doesn't have access to.
+ */
+export const AGGREGATED_LEVELS = ['Customer', 'Global Account', 'Directory'] as const
+
+/**
+ * Special value used to block all access when user has no permissions
+ */
+export const NO_ACCESS_VALUE = '__NO_ACCESS__'
+
+// ============================================================================
+// HANDLER FACTORY FUNCTIONS
+// ============================================================================
+
+/**
+ * Handler type for CAP BEFORE handlers
+ */
+type BeforeHandler = (req: Request) => Promise<void>
+
+/**
+ * Creates a BEFORE READ handler that filters by user's allowed IDs.
+ * Use for entities where the ID field directly maps to AccountStructureItem.ID
+ *
+ * @param fieldName - The field to filter on (e.g., 'ID', 'AccountStructureItem_ID')
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before('READ', AccountStructureItems, createBasicIdFilter('ID'))
+ * this.before('READ', CombinedTags, createBasicIdFilter('toAccountStructureItem_ID'))
+ */
+export function createBasicIdFilter(fieldName: string): BeforeHandler {
+    return async (req: Request) => {
+        const context = await getUserAccessContext(req)
+        if (!context.isUnrestricted) {
+            if (context.allowedIds.length === 0) {
+                addInFilter(req.query, fieldName, [NO_ACCESS_VALUE])
+            } else {
+                addInFilter(req.query, fieldName, context.allowedIds)
+            }
+        }
+    }
+}
+
+/**
+ * Creates a BEFORE READ handler that filters to SubAccount level and below only.
+ * Excludes Customer, Global Account, and Directory levels which contain
+ * aggregated data from all children (including inaccessible subaccounts).
+ *
+ * @param fieldName - The field to filter on (e.g., 'AccountStructureItem_ID', 'id')
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before('READ', CommercialMeasures, createSubAccountLevelFilter('AccountStructureItem_ID'))
+ */
+export function createSubAccountLevelFilter(fieldName: string): BeforeHandler {
+    return async (req: Request) => {
+        const context = await getUserAccessContext(req)
+        if (!context.isUnrestricted) {
+            if (context.allowedIds.length === 0) {
+                addInFilter(req.query, fieldName, [NO_ACCESS_VALUE])
+            } else {
+                const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
+                addInFilter(req.query, fieldName, subAccountLevelIds.length > 0 ? subAccountLevelIds : [NO_ACCESS_VALUE])
+            }
+        }
+    }
+}
+
+/**
+ * Creates a BEFORE READ handler that blocks all access for non-admin users.
+ * Use for entities that contain Global Account-level aggregated data
+ * that cannot be filtered by subaccount.
+ *
+ * @param fieldName - The field to add the blocking filter on
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before('READ', BillingDifferences, createAdminOnlyFilter('globalAccountId'))
+ */
+export function createAdminOnlyFilter(fieldName: string): BeforeHandler {
+    return async (req: Request) => {
+        if (!hasUnrestrictedAccess(req)) {
+            addInFilter(req.query, fieldName, [NO_ACCESS_VALUE])
+            info(`Authorization: Blocking ${fieldName} - user ${req.user?.id} does not have Admin access`)
+        }
+    }
+}
+
+/**
+ * Creates a BEFORE handler for write operations (CREATE, UPDATE, DELETE, SAVE)
+ * that validates the user has access to the target item.
+ *
+ * @param getIdFromData - Function to extract the ID from req.data
+ * @param entityName - Name of the entity for error messages
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before('SAVE', AccountStructureItem, createWriteProtection(data => data.ID, 'account structure item'))
+ */
+export function createWriteProtection(
+    getIdFromData: (data: Record<string, unknown>) => string | undefined,
+    entityName: string
+): BeforeHandler {
+    return async (req: Request) => {
+        const context = await getUserAccessContext(req)
+        if (!context.isUnrestricted) {
+            const id = getIdFromData(req.data as Record<string, unknown>)
+            if (id && !isIdAccessible(id, context)) {
+                req.reject(403, `Access denied: You do not have permission to modify ${entityName} ${id}`)
+            }
+        }
+    }
+}
+
+/**
+ * Creates a BEFORE handler for action protection that validates the user
+ * has access to the target item from request params.
+ *
+ * @param paramIndex - Index of the param containing the ID (usually 0)
+ * @param idField - Name of the ID field in params (usually 'ID')
+ * @param actionName - Name of the action for error messages
+ * @returns A handler function for use with this.on()
+ *
+ * @example
+ * this.on(AccountStructureItem.actions.copyTags, createActionProtection(0, 'ID', 'copy tags from'))
+ */
+export function createActionProtection(
+    paramIndex: number,
+    idField: string,
+    actionName: string
+): (req: Request) => Promise<{ allowed: boolean; context: UserAccessContext; id: string }> {
+    return async (req: Request) => {
+        const params = req.params[paramIndex] as Record<string, string>
+        const id = params[idField]
+        const context = await getUserAccessContext(req)
+
+        if (!context.isUnrestricted && !isIdAccessible(id, context)) {
+            req.reject(403, `Access denied: You do not have permission to ${actionName} item ${id}`)
+            return { allowed: false, context, id }
+        }
+
+        return { allowed: true, context, id }
+    }
+}
+
 /**
  * CQN expression types for WHERE clause manipulation
  */
@@ -368,13 +519,6 @@ export function filterAccessibleItems<T extends Record<string, unknown>>(
 }
 
 /**
- * Levels that contain aggregated data from all children.
- * For restricted users, measures at these levels should be excluded because
- * they include data from subaccounts the user doesn't have access to.
- */
-const AGGREGATED_LEVELS = ['Customer', 'Global Account', 'Directory']
-
-/**
  * Gets the list of allowed IDs filtered to only include non-aggregated levels.
  * This excludes Customer, Global Account, and Directory levels which contain
  * aggregated data from all their children (including inaccessible subaccounts).
@@ -395,7 +539,7 @@ export async function getSubAccountLevelIds(allowedIds: string[]): Promise<strin
     const filteredIds: string[] = []
     for (const item of items) {
         // Only include IDs that are NOT at aggregated levels
-        if (!AGGREGATED_LEVELS.includes(item.level!)) {
+        if (!AGGREGATED_LEVELS.includes(item.level as typeof AGGREGATED_LEVELS[number])) {
             filteredIds.push(item.ID!)
         }
     }

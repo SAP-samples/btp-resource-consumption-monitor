@@ -1,6 +1,11 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
-import { getUserAccessContext, isIdAccessible, addInFilter } from './authorizationHelper'
+import {
+    createBasicIdFilter,
+    createWriteProtection,
+    getUserAccessContext,
+    isIdAccessible
+} from './authorizationHelper'
 import {
     AccountStructureItem,
     AccountStructureItems,
@@ -25,33 +30,15 @@ type tagsClipboard = {
 export default class ManageTagsService extends cds.ApplicationService {
     async init() {
 
-        /**
-         * Authorization: Filter AccountStructureItems by user access
-         */
-        this.before('READ', AccountStructureItems, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'ID', context.allowedIds)
-                }
-                info(`Authorization: Filtering AccountStructureItems to ${context.allowedIds.length} accessible IDs`)
-            }
-        })
+        // ====================================================================
+        // AUTHORIZATION HANDLERS
+        // ====================================================================
 
-        /**
-         * Authorization: Protect SAVE operations on AccountStructureItems
-         */
-        this.before('SAVE', AccountStructureItem, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                const { ID } = req.data
-                if (ID && !isIdAccessible(ID, context)) {
-                    req.reject(403, `Access denied: You do not have permission to modify account structure item ${ID}`)
-                }
-            }
-        })
+        this.before('READ', AccountStructureItems, createBasicIdFilter('ID'))
+        this.before('SAVE', AccountStructureItem, createWriteProtection(
+            data => data.ID as string | undefined,
+            'account structure item'
+        ))
 
         this.after('READ', AccountStructureItems, items => {
             items?.forEach(each => {

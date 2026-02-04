@@ -1,7 +1,10 @@
 import cds from '@sap/cds'
 
 import { addRequiredColumns } from './functions'
-import { getUserAccessContext, addInFilter, getSubAccountLevelIds } from './authorizationHelper'
+import {
+    createBasicIdFilter,
+    createSubAccountLevelFilter
+} from './authorizationHelper'
 
 import {
     CommercialMeasure,
@@ -18,160 +21,23 @@ import {
 export default class AnalyticsService extends cds.ApplicationService {
     async init() {
 
-        /**
-         * Authorization: Filter AccountStructureItems by user access
-         */
-        this.before('READ', 'AccountStructureItems', async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'ID', context.allowedIds)
-                }
-            }
-        })
+        // ====================================================================
+        // AUTHORIZATION HANDLERS
+        // ====================================================================
 
-        /**
-         * Authorization: Filter AggregatedCommercialMeasures by user access
-         * Uses 'id' field which corresponds to AccountStructureItem.ID
-         * For restricted users, only show SubAccount level and below
-         */
-        this.before('READ', 'AggregatedCommercialMeasures', async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
-                } else {
-                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
-                    addInFilter(req.query, 'id', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
-                }
-            }
-        })
+        // Basic ID filtering (full hierarchy access)
+        this.before('READ', 'AccountStructureItems', createBasicIdFilter('ID'))
+        this.before('READ', CloudCreditConsumptions, createBasicIdFilter('globalAccountId'))
+        this.before('READ', CombinedTags, createBasicIdFilter('toAccountStructureItem_ID'))
 
-        /**
-         * Authorization: Filter CommercialMeasures by user access
-         * Uses 'AccountStructureItem_ID' field
-         * For restricted users, only show SubAccount level and below (not Directory/GlobalAccount
-         * which contain aggregated data from all children including inaccessible subaccounts)
-         */
-        this.before('READ', CommercialMeasures, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
-                } else {
-                    // Filter to only SubAccount level and below to exclude aggregated parent levels
-                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
-                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
-                }
-            }
-        })
-
-        /**
-         * Authorization: Filter CommercialMeasuresByTags by user access
-         */
-        this.before('READ', CommercialMeasuresByTags, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
-                } else {
-                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
-                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
-                }
-            }
-        })
-
-        /**
-         * Authorization: Filter CommercialMeasuresForYears by user access
-         */
-        this.before('READ', CommercialMeasuresForYears, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
-                } else {
-                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
-                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
-                }
-            }
-        })
-
-        /**
-         * Authorization: Filter CommercialMeasuresForYearByTags by user access
-         */
-        this.before('READ', CommercialMeasuresForYearByTags, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
-                } else {
-                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
-                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
-                }
-            }
-        })
-
-        /**
-         * Authorization: Filter CommercialMeasuresByTagsWInheritances by user access
-         */
-        this.before('READ', CommercialMeasuresByTagsWInheritances, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
-                } else {
-                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
-                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
-                }
-            }
-        })
-
-        /**
-         * Authorization: Filter CommercialMeasuresForYearByTagsWInheritances by user access
-         */
-        this.before('READ', CommercialMeasuresForYearByTagsWInheritances, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'AccountStructureItem_ID', ['__NO_ACCESS__'])
-                } else {
-                    const subAccountLevelIds = await getSubAccountLevelIds(context.allowedIds)
-                    addInFilter(req.query, 'AccountStructureItem_ID', subAccountLevelIds.length > 0 ? subAccountLevelIds : ['__NO_ACCESS__'])
-                }
-            }
-        })
-
-        /**
-         * Authorization: Filter CloudCreditConsumptions by user access
-         * Uses 'globalAccountId' field which corresponds to AccountStructureItem.ID
-         */
-        this.before('READ', CloudCreditConsumptions, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'globalAccountId', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'globalAccountId', context.allowedIds)
-                }
-            }
-        })
-
-        /**
-         * Authorization: Filter CombinedTags by user access
-         * Uses 'toAccountStructureItem_ID' field which corresponds to AccountStructureItem.ID
-         */
-        this.before('READ', CombinedTags, async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'toAccountStructureItem_ID', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'toAccountStructureItem_ID', context.allowedIds)
-                }
-            }
-        })
+        // SubAccount level filtering (excludes aggregated parent levels)
+        this.before('READ', 'AggregatedCommercialMeasures', createSubAccountLevelFilter('id'))
+        this.before('READ', CommercialMeasures, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresByTags, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresForYears, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresForYearByTags, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresByTagsWInheritances, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresForYearByTagsWInheritances, createSubAccountLevelFilter('AccountStructureItem_ID'))
 
         const deltaColumns: (keyof CommercialMeasure)[] = [
             'Measures_delta_measure_cost',

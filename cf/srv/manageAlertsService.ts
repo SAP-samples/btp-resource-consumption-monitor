@@ -1,7 +1,13 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
 import { flattenObject } from './functions'
-import { getUserAccessContext, addInFilter, hasUnrestrictedAccess, getAccessibleServiceIds } from './authorizationHelper'
+import {
+    getUserAccessContext,
+    addInFilter,
+    createBasicIdFilter,
+    getAccessibleServiceIds,
+    NO_ACCESS_VALUE
+} from './authorizationHelper'
 
 import {
     Alert,
@@ -20,50 +26,37 @@ export default class ManageAlertsService extends cds.ApplicationService {
         // Connect to Retrieval Service to send triggers
         const retrievalService = await cds.connect.to(RetrievalService)
 
-        /**
-         * Authorization: Filter alerts for viewers based on their accessible accounts
-         * Viewers can see:
-         * 1. Alerts that target accounts they have access to
-         * 2. Alerts they created themselves
-         */
+        // ====================================================================
+        // AUTHORIZATION HANDLERS
+        // ====================================================================
+
+        // Basic ID filtering for LevelNames
+        this.before('READ', 'LevelNames', createBasicIdFilter('id'))
+
+        // Complex alert filtering (user can see alerts targeting their accounts OR created by them)
         this.before('READ', Alerts, async req => {
             const context = await getUserAccessContext(req)
             if (!context.isUnrestricted) {
                 const userId = req.user?.id || ''
-                // Find alerts that the viewer can access (by subaccount OR created by them)
                 const accessibleAlertIds = await getAccessibleAlertIds(context.allowedIds, userId)
-                if (accessibleAlertIds.length === 0) {
-                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'ID', accessibleAlertIds)
-                }
+                addInFilter(req.query, 'ID', accessibleAlertIds.length > 0 ? accessibleAlertIds : [NO_ACCESS_VALUE])
                 info(`Authorization: Filtering Alerts for viewer ${userId} with ${context.allowedIds.length} accessible account IDs`)
             }
         })
 
-        /**
-         * Authorization: Validate alert modifications for viewers
-         * Viewers can only create/update alerts that target their accessible accounts
-         */
+        // Validate viewer has at least some account access for create/update
         this.before(['CREATE', 'UPDATE'], Alerts, async req => {
             const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                // Viewers need at least some access to create/modify alerts
-                if (context.allowedIds.length === 0) {
-                    req.reject(403, 'You do not have access to any accounts to create alerts for')
-                }
-                info(`Authorization: Viewer creating/updating alert with access to ${context.allowedIds.length} accounts`)
+            if (!context.isUnrestricted && context.allowedIds.length === 0) {
+                req.reject(403, 'You do not have access to any accounts to create alerts for')
             }
         })
 
-        /**
-         * Authorization: Validate levelItems are within viewer's access on draft activation
-         */
+        // Validate levelItems are within viewer's access on draft activation
         this.before('SAVE', Alerts, async req => {
             const context = await getUserAccessContext(req)
             if (!context.isUnrestricted && req.data) {
                 const alertData = req.data as Alert
-                // Check if any levelItems are outside viewer's access
                 if (alertData.levelItems && alertData.levelItems.length > 0) {
                     const invalidItems = alertData.levelItems.filter(
                         item => !context.allowedIds.includes(item.itemID!)
@@ -72,17 +65,13 @@ export default class ManageAlertsService extends cds.ApplicationService {
                         req.reject(403, `You cannot create alerts for accounts you do not have access to: ${invalidItems.map(i => i.itemID).join(', ')}`)
                     }
                 }
-                info(`Authorization: Validated ${alertData.levelItems?.length || 0} levelItems for viewer`)
             }
         })
 
-        /**
-         * Authorization: Prevent viewers from deleting alerts outside their scope
-         */
+        // Prevent viewers from deleting alerts outside their scope
         this.before('DELETE', Alerts, async req => {
             const context = await getUserAccessContext(req)
             if (!context.isUnrestricted) {
-                // Get the alert being deleted
                 const alertId = (req.data as Alert).ID
                 if (alertId) {
                     const userId = req.user?.id || ''
@@ -91,22 +80,6 @@ export default class ManageAlertsService extends cds.ApplicationService {
                         req.reject(403, 'You do not have permission to delete this alert')
                     }
                 }
-            }
-        })
-
-        /**
-         * Authorization: Filter LevelNames by user access
-         * LevelNames is a projection on AccountStructureItems
-         */
-        this.before('READ', 'LevelNames', async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'id', context.allowedIds)
-                }
-                info(`Authorization: Filtering LevelNames to ${context.allowedIds.length} accessible IDs`)
             }
         })
 
@@ -150,32 +123,24 @@ export default class ManageAlertsService extends cds.ApplicationService {
             })
         })
 
-        /**
-         * Authorization: Filter ServiceAndMetricNames by user access
-         * Only show services/metrics that have measures in accessible accounts
-         */
+        // Filter ServiceAndMetricNames by user access
         this.before('READ', 'ServiceAndMetricNames', async req => {
             const context = await getUserAccessContext(req)
             if (!context.isUnrestricted) {
                 if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                    addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                 } else {
-                    // Get accessible service IDs
                     const accessibleServiceIds = await getAccessibleServiceIds(context.allowedIds)
                     if (accessibleServiceIds.length === 0) {
-                        addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                        addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                     } else {
-                        // Build list of allowed IDs for the union query
-                        // ServiceAndMetricNames uses 'service_<serviceId>', 'cmetric_<measureId>', 'tmetric_<measureId>'
+                        // Build list of allowed IDs (service_<id>, cmetric_<id>, tmetric_<id>)
                         const allowedIds = accessibleServiceIds.map(id => `service_${id}`)
-                        // For metrics, we need to also allow metrics from accessible services
-                        // Since metrics are tied to services, we query them
                         const accessibleMetricIds = await getAccessibleMetricIds(context.allowedIds)
                         allowedIds.push(...accessibleMetricIds)
                         addInFilter(req.query, 'id', allowedIds)
                     }
                 }
-                info(`Authorization: Filtering ServiceAndMetricNames for viewer`)
             }
         })
 

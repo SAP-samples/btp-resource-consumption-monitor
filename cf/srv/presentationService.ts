@@ -14,7 +14,10 @@ import {
     addInFilter,
     getAccessibleServiceKeys,
     getAccessibleServiceIds,
-    addServiceKeyFilter
+    addServiceKeyFilter,
+    createBasicIdFilter,
+    NO_ACCESS_VALUE,
+    AGGREGATED_LEVELS
 } from './authorizationHelper'
 
 import {
@@ -74,26 +77,49 @@ enum statusMap { Good = 3, Warning = 2, Error = 1, Neutral = 0 }
 enum multipliers { Normal = 100, WarningMax = 125, ErrorMax = 150 }
 enum deltaThresholds { Normal = 3, WarningMax = 10 }
 
+// ============================================================================
+// MEASURE FIELD CONSTANTS
+// These define the OData association field names for nested measures
+// ============================================================================
+
+/**
+ * Fields containing aggregated-level measures (Customer, Global Account, Directory)
+ * These must be cleared for restricted users as they contain data from all children
+ */
+const AGGREGATED_MEASURE_FIELDS = [
+    'cmByCustomer', 'tmByCustomer',
+    'cmByGlobalAccount', 'tmByGlobalAccount',
+    'cmByDirectory', 'tmByDirectory',
+    'cmByMetricByGlobalAccount', 'tmByMetricByGlobalAccount',
+    'cmByMetricByDirectory', 'tmByMetricByDirectory'
+] as const
+
+/**
+ * Fields containing filterable measures (SubAccount and lower levels)
+ * These can be filtered by AccountStructureItem ID
+ */
+const FILTERABLE_MEASURE_FIELDS = [
+    // Commercial measure associations
+    'cmBySubAccount',
+    'cmByDatacenter', 'cmBySpace', 'cmByInstance', 'cmByApplication',
+    'cmByMetricBySubAccount',
+    'cmByMetricByDatacenter', 'cmByMetricBySpace', 'cmByMetricByInstance', 'cmByMetricByApplication',
+    'cmHistoryByMetricAll', 'cmHistoryByMetricDaily', 'cmHistoryByMetricMonthly',
+    // Technical measure associations
+    'tmBySubAccount',
+    'tmByDatacenter', 'tmBySpace', 'tmByInstance', 'tmByApplication',
+    'tmByMetricBySubAccount',
+    'tmByMetricByDatacenter', 'tmByMetricBySpace', 'tmByMetricByInstance', 'tmByMetricByApplication'
+] as const
+
 export default class PresentationService extends cds.ApplicationService {
     async init() {
 
         // Connect to Retrieval Service to send triggers
         const retrievalService = await cds.connect.to(RetrievalService)
 
-        /**
-         * Authorization: Filter AccountStructureItems by user access
-         */
-        this.before('READ', 'AccountStructureItems', async req => {
-            const context = await getUserAccessContext(req)
-            if (!context.isUnrestricted) {
-                if (context.allowedIds.length === 0) {
-                    // No access - return empty result
-                    addInFilter(req.query, 'ID', ['__NO_ACCESS__'])
-                } else {
-                    addInFilter(req.query, 'ID', context.allowedIds)
-                }
-            }
-        })
+        // Authorization: Filter AccountStructureItems by user access
+        this.before('READ', 'AccountStructureItems', createBasicIdFilter('ID'))
 
         /**
          * Handlers for BTPServices
@@ -329,7 +355,7 @@ export default class PresentationService extends cds.ApplicationService {
                 } else {
                     // Restricted users see Sub Account level (only their accessible subaccounts)
                     if (context.allowedIds.length === 0) {
-                        addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                        addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                     } else {
                         addInFilter(req.query, 'id', context.allowedIds)
                         addInFilter(req.query, 'level', ['Sub Account'])
@@ -342,13 +368,13 @@ export default class PresentationService extends cds.ApplicationService {
                 // No additional ID filtering needed - the breakdown shows distribution across dimensions
                 // that the user has access to via the parent service
                 if (!context.isUnrestricted && context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                    addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                 }
             } else {
                 // For direct queries, apply the standard access control
                 if (!context.isUnrestricted) {
                     if (context.allowedIds.length === 0) {
-                        addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                        addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                     } else {
                         addInFilter(req.query, 'id', context.allowedIds)
                         // Block aggregated levels - they contain data from all children
@@ -466,13 +492,13 @@ export default class PresentationService extends cds.ApplicationService {
                 // For breakdown navigations, the data is already scoped to the parent BTPServices record
                 // No additional ID filtering needed
                 if (!context.isUnrestricted && context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                    addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                 }
             } else {
                 // For direct queries, apply the standard access control
                 if (!context.isUnrestricted) {
                     if (context.allowedIds.length === 0) {
-                        addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                        addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                     } else {
                         addInFilter(req.query, 'id', context.allowedIds)
                         // Block aggregated levels - they contain data from all children
@@ -492,7 +518,7 @@ export default class PresentationService extends cds.ApplicationService {
             const context = await getUserAccessContext(req)
             if (!context.isUnrestricted) {
                 // Block access - this card shows Customer-level aggregated data
-                addInFilter(req.query, 'serviceId', ['__NO_ACCESS__'])
+                addInFilter(req.query, 'serviceId', [NO_ACCESS_VALUE])
             }
         })
         this.after('READ', Card_HighestForecastServices, (items) => {
@@ -518,7 +544,7 @@ export default class PresentationService extends cds.ApplicationService {
             const context = await getUserAccessContext(req)
             if (!context.isUnrestricted) {
                 // Block access - this card shows Customer-level aggregated data
-                addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
             }
         })
 
@@ -530,7 +556,7 @@ export default class PresentationService extends cds.ApplicationService {
             const context = await getUserAccessContext(req)
             if (!context.isUnrestricted) {
                 if (context.allowedIds.length === 0) {
-                    addInFilter(req.query, 'id', ['__NO_ACCESS__'])
+                    addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
                 } else {
                     addInFilter(req.query, 'id', context.allowedIds)
                 }
@@ -546,7 +572,7 @@ export default class PresentationService extends cds.ApplicationService {
             if (!context.isUnrestricted) {
                 const accessibleServiceIds = await getAccessibleServiceIds(context.allowedIds)
                 if (accessibleServiceIds.length === 0) {
-                    addInFilter(req.query, 'serviceId', ['__NO_ACCESS__'])
+                    addInFilter(req.query, 'serviceId', [NO_ACCESS_VALUE])
                 } else {
                     addInFilter(req.query, 'serviceId', accessibleServiceIds)
                 }
@@ -562,7 +588,7 @@ export default class PresentationService extends cds.ApplicationService {
             if (!context.isUnrestricted) {
                 const accessibleServiceIds = await getAccessibleServiceIds(context.allowedIds)
                 if (accessibleServiceIds.length === 0) {
-                    addInFilter(req.query, 'serviceId', ['__NO_ACCESS__'])
+                    addInFilter(req.query, 'serviceId', [NO_ACCESS_VALUE])
                 } else {
                     addInFilter(req.query, 'serviceId', accessibleServiceIds)
                 }
@@ -987,46 +1013,18 @@ function getDeltaCriticality(value?: number | null): number {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function filterNestedMeasures(item: any, allowedIds: string[]): boolean {
-    // Customer-level measures aggregate ALL subaccounts, so they must be cleared
-    // for restricted users (they contain data from inaccessible subaccounts)
-    // Also clear Directory and GlobalAccount levels - they aggregate data from all children,
-    // including subaccounts the user doesn't have access to
-    const aggregatedLevelFields = [
-        'cmByCustomer', 'tmByCustomer',
-        'cmByGlobalAccount', 'tmByGlobalAccount',
-        'cmByDirectory', 'tmByDirectory',
-        'cmByMetricByGlobalAccount', 'tmByMetricByGlobalAccount',
-        'cmByMetricByDirectory', 'tmByMetricByDirectory'
-    ]
-
-    // Fields that can be filtered by ID - only subaccount and lower levels
-    // These represent individual resources where the ID directly corresponds to the accessible item
-    const measureFields = [
-        // Commercial measure associations (SubAccount and lower levels only)
-        'cmBySubAccount',
-        'cmByDatacenter', 'cmBySpace', 'cmByInstance', 'cmByApplication',
-        'cmByMetricBySubAccount',
-        'cmByMetricByDatacenter', 'cmByMetricBySpace', 'cmByMetricByInstance', 'cmByMetricByApplication',
-        // History associations (level is filtered dynamically in handler based on user access)
-        'cmHistoryByMetricAll', 'cmHistoryByMetricDaily', 'cmHistoryByMetricMonthly',
-        // Technical measure associations (SubAccount and lower levels only)
-        'tmBySubAccount',
-        'tmByDatacenter', 'tmBySpace', 'tmByInstance', 'tmByApplication',
-        'tmByMetricBySubAccount',
-        'tmByMetricByDatacenter', 'tmByMetricBySpace', 'tmByMetricByInstance', 'tmByMetricByApplication'
-    ]
-
     let hasAccessibleMeasures = false
 
     // Clear aggregated-level measures for restricted users
     // These aggregate data from all children (including inaccessible subaccounts) and can't be filtered
-    for (const field of aggregatedLevelFields) {
+    for (const field of AGGREGATED_MEASURE_FIELDS) {
         if (item[field] !== undefined && item[field] !== null) {
             item[field] = null
         }
     }
 
-    for (const field of measureFields) {
+    // Filter measures at SubAccount level and below by ID
+    for (const field of FILTERABLE_MEASURE_FIELDS) {
         const value = item[field]
         if (value === undefined || value === null) continue
 

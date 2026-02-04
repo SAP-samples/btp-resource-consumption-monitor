@@ -16,7 +16,7 @@
           {
             "id": "page_viewer-11",
             "columnConfig": {
-              "columnWidth": 12
+              "columnWidth": 16
             },
             "cells": [
               {
@@ -27,6 +27,13 @@
                     "id": "page_viewer-1111",
                     "viz": {
                       "appId": "saas_approuter_btprcreport",
+                      "vizId": "tile"
+                    }
+                  },
+                  {
+                    "id": "page_viewer-1112",
+                    "viz": {
+                      "appId": "saas_approuter_managealerts",
                       "vizId": "tile"
                     }
                   }
@@ -55,27 +62,6 @@
                     "viz": {
                       "appId": "cards.breakdownbylevel.app",
                       "vizId": "cards.breakdownbylevel.viz"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "page_viewer-22",
-            "columnConfig": {
-              "columnWidth": 16
-            },
-            "cells": [
-              {
-                "id": "page_viewer-221",
-                "cellConfig": {},
-                "widgets": [
-                  {
-                    "id": "page_viewer-2211",
-                    "viz": {
-                      "appId": "cards.historictrend.app",
-                      "vizId": "cards.historictrend.viz"
                     }
                   }
                 ]
