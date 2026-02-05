@@ -91,6 +91,9 @@
                         "saasApprouter": "true"
                     }
                 }
+            },
+            "sap.platform.cf": {
+                "isSaasApprouter": true
             }
         },
         "systemAlias": {
