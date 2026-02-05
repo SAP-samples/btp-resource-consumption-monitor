@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Changed
 - Support for CDS 9.6
 
+## Version 2.3.1 - 2026-02-05
+
+Hot fix related to Work Zone package only: updated application definitions in CDM to match updated Work Zone requirements
+
 ## Version 2.3.0 - 2025-12-11
 ### Added
 
