@@ -411,7 +411,9 @@ To do so:
 
 ### For Cloud Foundry deployments:
 - In the Global Account where the application is deployed, create a new `User Provided Service` in which you paste the service key contents. The *name* of this user provided service has to contain `uas` (use e.g. `btprc-uas-ups-account2`).
-- Adapt the `cf/mta.yaml` on lines 37, 40 and 269, 276 to swap/add the bound standard service instance for the user-provided instance.
+- Adapt the `cf/mta.yaml`:
+    - To **add** an additional Global Account, uncomment/activate lines 40 and 276-277 and update their `name`s to match the name of your `User Provided Service`. If more than 1 additional Global Account is needed, duplicate these lines for each additional Global Account.
+    - To **remove** the default Global Account in which the application is deployed, comment/de-activate lines 37 and 269-275.
 
 ### For Kyma deployments:
 - In the Global Account where the application is deployed, create a new `Secret` in which you paste the service key contents. The *name* of this user provided service has to contain `uas` (use e.g. `btprc-uas-ups-account2`). You can use this [template file](./cf/kyma/template-additional-UAS.yaml) to create the secret.
