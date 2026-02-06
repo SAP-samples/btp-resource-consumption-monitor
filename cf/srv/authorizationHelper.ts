@@ -1,6 +1,6 @@
 import cds from '@sap/cds'
 import { Request, Query } from '@sap/cds'
-import { AccountStructureItems } from '#cds-models/db'
+import { AccountStructureItems, AlertLevelItems, Alerts as DBAlerts } from '#cds-models/db'
 
 const info = cds.log('authorizationHelper').info
 
@@ -117,7 +117,9 @@ export function createWriteProtection(
         const context = await getUserAccessContext(req)
         if (!context.isUnrestricted) {
             const id = getIdFromData(req.data as Record<string, unknown>)
-            if (id && !isIdAccessible(id, context)) {
+            if (!id) {
+                req.reject(400, `Cannot determine ${entityName} ID for authorization check`)
+            } else if (!isIdAccessible(id, context)) {
                 req.reject(403, `Access denied: You do not have permission to modify ${entityName} ${id}`)
             }
         }
@@ -125,22 +127,27 @@ export function createWriteProtection(
 }
 
 /**
- * Creates a BEFORE handler for action protection that validates the user
- * has access to the target item from request params.
+ * Creates a guard function for bound action protection that validates the user
+ * has access to the target item from request params. Rejects (throws) on access denial.
+ * On success, returns the resolved context and extracted ID for use by the caller.
  *
  * @param paramIndex - Index of the param containing the ID (usually 0)
  * @param idField - Name of the ID field in params (usually 'ID')
  * @param actionName - Name of the action for error messages
- * @returns A handler function for use with this.on()
+ * @returns An async guard function that resolves to { context, id } on success
  *
  * @example
- * this.on(AccountStructureItem.actions.copyTags, createActionProtection(0, 'ID', 'copy tags from'))
+ * const checkAccess = createActionProtection(0, 'ID', 'manage tags for')
+ * this.on(AccountStructureItem.actions.copyTags, async req => {
+ *     const { id } = await checkAccess(req)
+ *     // ... business logic using id
+ * })
  */
 export function createActionProtection(
     paramIndex: number,
     idField: string,
     actionName: string
-): (req: Request) => Promise<{ allowed: boolean; context: UserAccessContext; id: string }> {
+): (req: Request) => Promise<{ context: UserAccessContext; id: string }> {
     return async (req: Request) => {
         const params = req.params[paramIndex] as Record<string, string>
         const id = params[idField]
@@ -148,10 +155,9 @@ export function createActionProtection(
 
         if (!context.isUnrestricted && !isIdAccessible(id, context)) {
             req.reject(403, `Access denied: You do not have permission to ${actionName} item ${id}`)
-            return { allowed: false, context, id }
         }
 
-        return { allowed: true, context, id }
+        return { context, id }
     }
 }
 
@@ -519,6 +525,132 @@ export function filterAccessibleItems<T extends Record<string, unknown>>(
 }
 
 /**
+ * Creates a BEFORE handler for CREATE/UPDATE that rejects the request
+ * if the viewer has no accessible accounts at all.
+ *
+ * @param message - The rejection message
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before(['CREATE', 'UPDATE'], Alerts, createNoAccessGuard('You do not have access to any accounts'))
+ */
+export function createNoAccessGuard(message: string): BeforeHandler {
+    return async (req: Request) => {
+        const context = await getUserAccessContext(req)
+        if (!context.isUnrestricted && context.allowedIds.length === 0) {
+            req.reject(403, message)
+        }
+    }
+}
+
+/**
+ * Creates a BEFORE SAVE handler that validates all child items
+ * are within the viewer's accessible accounts.
+ *
+ * @param getItems - Function to extract the child items array from req.data
+ * @param getItemId - Function to extract the ID from each child item
+ * @param entityName - Name for error messages (e.g., 'alerts', 'tags')
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before('SAVE', Alerts, createChildItemsValidator(
+ *     data => (data as Alert).levelItems,
+ *     item => item.itemID!,
+ *     'alerts'
+ * ))
+ */
+export function createChildItemsValidator<T>(
+    getItems: (data: unknown) => T[] | undefined | null,
+    getItemId: (item: T) => string,
+    entityName: string
+): BeforeHandler {
+    return async (req: Request) => {
+        const context = await getUserAccessContext(req)
+        if (!context.isUnrestricted && req.data) {
+            const items = getItems(req.data)
+            if (items && items.length > 0) {
+                const invalidItems = items.filter(
+                    item => !context.allowedIds.includes(getItemId(item))
+                )
+                if (invalidItems.length > 0) {
+                    req.reject(403, `You cannot create ${entityName} for accounts you do not have access to: ${invalidItems.map(getItemId).join(', ')}`)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Creates a BEFORE DELETE handler that validates access using an async lookup
+ * of accessible entity IDs. Use when the entity's access is not a direct ID match
+ * but requires a query (e.g., Alerts accessible via their levelItems or createdBy).
+ *
+ * @param getEntityId - Function to extract the entity ID from req.data
+ * @param getAccessibleIds - Async function returning the list of accessible entity IDs
+ * @param entityName - Name for error messages
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before('DELETE', Alerts, createDeleteProtection(
+ *     data => data.ID,
+ *     async (ctx, req) => getAccessibleAlertIds(ctx.allowedIds, req.user?.id || ''),
+ *     'alert'
+ * ))
+ */
+export function createDeleteProtection(
+    getEntityId: (data: Record<string, unknown>) => string | undefined,
+    getAccessibleIds: (context: UserAccessContext, req: Request) => Promise<string[]>,
+    entityName: string
+): BeforeHandler {
+    return async (req: Request) => {
+        const context = await getUserAccessContext(req)
+        if (!context.isUnrestricted) {
+            const id = getEntityId(req.data as Record<string, unknown>)
+            if (!id) {
+                req.reject(400, `Cannot determine ${entityName} ID for authorization check`)
+            } else {
+                const accessibleIds = await getAccessibleIds(context, req)
+                if (!accessibleIds.includes(id)) {
+                    req.reject(403, `You do not have permission to delete this ${entityName}`)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Creates a BEFORE READ handler that filters entities using an async lookup
+ * of accessible entity IDs. Use when the entity's access requires a custom query
+ * rather than a direct ID match.
+ *
+ * @param fieldName - The field to filter on (e.g., 'ID')
+ * @param getAccessibleIds - Async function returning the list of accessible entity IDs
+ * @param logLabel - Label for logging (e.g., 'Alerts')
+ * @returns A BEFORE handler function
+ *
+ * @example
+ * this.before('READ', Alerts, createCustomReadFilter(
+ *     'ID',
+ *     async (ctx, req) => getAccessibleAlertIds(ctx.allowedIds, req.user?.id || ''),
+ *     'Alerts'
+ * ))
+ */
+export function createCustomReadFilter(
+    fieldName: string,
+    getAccessibleIds: (context: UserAccessContext, req: Request) => Promise<string[]>,
+    logLabel: string
+): BeforeHandler {
+    return async (req: Request) => {
+        const context = await getUserAccessContext(req)
+        if (!context.isUnrestricted) {
+            const accessibleIds = await getAccessibleIds(context, req)
+            addInFilter(req.query, fieldName, accessibleIds.length > 0 ? accessibleIds : [NO_ACCESS_VALUE])
+            info(`Authorization: Filtering ${logLabel} for viewer ${req.user?.id} with ${context.allowedIds.length} accessible account IDs`)
+        }
+    }
+}
+
+/**
  * Gets the list of allowed IDs filtered to only include non-aggregated levels.
  * This excludes Customer, Global Account, and Directory levels which contain
  * aggregated data from all their children (including inaccessible subaccounts).
@@ -545,4 +677,87 @@ export async function getSubAccountLevelIds(allowedIds: string[]): Promise<strin
     }
 
     return filteredIds
+}
+
+/**
+ * Gets the list of Alert IDs that the viewer has access to.
+ * A viewer can see alerts that:
+ * 1. Target accounts in their allowedIds (subaccounts they have access to)
+ * 2. Were created by the viewer themselves (based on createdBy field)
+ *
+ * @param allowedIds - Array of accessible AccountStructureItem IDs
+ * @param userId - The current user's ID to check for alerts they created
+ * @returns Array of Alert IDs that the viewer has access to
+ */
+export async function getAccessibleAlertIds(allowedIds: string[], userId: string): Promise<string[]> {
+    const alertIdSet = new Set<string>()
+
+    // 1. Get alerts that target the viewer's accessible subaccounts
+    if (allowedIds.length > 0) {
+        const alertLevelItems = await SELECT.distinct
+            .from(AlertLevelItems)
+            .columns('toAlert_ID')
+            .where({ itemID: { in: allowedIds } })
+
+        for (const item of alertLevelItems) {
+            if (typeof item.toAlert_ID === 'string' && item.toAlert_ID.length > 0) {
+                alertIdSet.add(item.toAlert_ID)
+            }
+        }
+    }
+
+    // 2. Get alerts created by the viewer themselves
+    if (userId) {
+        const userAlerts = await SELECT.distinct
+            .from(DBAlerts)
+            .columns('ID')
+            .where({ createdBy: userId })
+
+        for (const alert of userAlerts) {
+            if (typeof alert.ID === 'string' && alert.ID.length > 0) {
+                alertIdSet.add(alert.ID)
+            }
+        }
+    }
+
+    return Array.from(alertIdSet)
+}
+
+/**
+ * Gets the list of metric IDs (in ServiceAndMetricNames format) that the viewer has access to.
+ * Format: 'cmetric_<measureId>' for commercial metrics, 'tmetric_<measureId>' for technical metrics
+ *
+ * @param allowedIds - Array of accessible AccountStructureItem IDs
+ * @returns Array of metric IDs in the format used by ServiceAndMetricNames
+ */
+export async function getAccessibleMetricIds(allowedIds: string[]): Promise<string[]> {
+    if (allowedIds.length === 0) {
+        return []
+    }
+
+    // Query CommercialMeasures to find distinct metric IDs that have measures in accessible accounts
+    const commercialMetrics = await SELECT.distinct
+        .from('db.CommercialMeasures')
+        .columns('toMetric.measureId as measureId')
+        .where({ id: { in: allowedIds } })
+
+    const commercialIds = commercialMetrics
+        .map((m: { measureId: string }) => m.measureId)
+        .filter(Boolean)
+        .map((id: string) => `cmetric_${id}`)
+        .filter((id: string) => !id.endsWith('_combined_'))
+
+    // Query TechnicalMeasures to find distinct metric IDs that have measures in accessible accounts
+    const technicalMetrics = await SELECT.distinct
+        .from('db.TechnicalMeasures')
+        .columns('toMetric.measureId as measureId')
+        .where({ id: { in: allowedIds } })
+
+    const technicalIds = technicalMetrics
+        .map((m: { measureId: string }) => m.measureId)
+        .filter(Boolean)
+        .map((id: string) => `tmetric_${id}`)
+        .filter((id: string) => !id.endsWith('_combined_'))
+
+    return [...commercialIds, ...technicalIds]
 }

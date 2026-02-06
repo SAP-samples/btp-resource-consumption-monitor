@@ -3,8 +3,7 @@ import { Settings } from './settings'
 import {
     createBasicIdFilter,
     createWriteProtection,
-    getUserAccessContext,
-    isIdAccessible
+    createActionProtection
 } from './authorizationHelper'
 import {
     AccountStructureItem,
@@ -74,18 +73,13 @@ export default class ManageTagsService extends cds.ApplicationService {
         })
 
         let copyClipboards: Record<string, tagsClipboard> = {}
+        const checkTagActionAccess = createActionProtection(0, 'ID', 'manage tags for')
         this.on(getPasteTagsDefaultValue, () => { return { mode: TPasteMode.Both } })
         this.on(AccountStructureItem.actions.copyTags, async req => {
             //@ts-expect-error
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
-                const { ID } = req.params[0] as { ID: string }
-
-                // Authorization: Check if user has access to this item
-                const context = await getUserAccessContext(req)
-                if (!context.isUnrestricted && !isIdAccessible(ID, context)) {
-                    return req.reject(403, `Access denied: You do not have permission to copy tags from item ${ID}`)
-                }
+                const { id: ID } = await checkTagActionAccess(req)
 
                 info(`Copying tags for item ${ID}...`)
 
@@ -116,13 +110,7 @@ export default class ManageTagsService extends cds.ApplicationService {
                 return req.reject(400, `Nothing in clipboard yet for user ${req.user.id}.`)
             }
             if (requestor == 'ManageTagsService.AccountStructureItems') {
-                const { ID } = req.params[0] as { ID: string }
-
-                // Authorization: Check if user has access to this item
-                const context = await getUserAccessContext(req)
-                if (!context.isUnrestricted && !isIdAccessible(ID, context)) {
-                    return req.reject(403, `Access denied: You do not have permission to paste tags to item ${ID}`)
-                }
+                const { id: ID } = await checkTagActionAccess(req)
 
                 info(`Pasting tags in mode ${mode} to item ${ID}...`)
 
@@ -163,13 +151,7 @@ export default class ManageTagsService extends cds.ApplicationService {
             //@ts-expect-error
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
-                const { ID } = req.params[0] as { ID: string }
-
-                // Authorization: Check if user has access to this item
-                const context = await getUserAccessContext(req)
-                if (!context.isUnrestricted && !isIdAccessible(ID, context)) {
-                    return req.reject(403, `Access denied: You do not have permission to delete tags from item ${ID}`)
-                }
+                const { id: ID } = await checkTagActionAccess(req)
 
                 info(`Deleting tags in mode ${mode} from item ${ID}...`)
 
