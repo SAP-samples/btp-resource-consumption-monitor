@@ -99,7 +99,7 @@ export const Settings = {
          * For newly retrieved Services, or when Forecast Settings are reset, this default values are used
          */
         forecastSetting: {
-            method: 'TimeDegressive',
+            method: 'Excluded',
             degressionFactor: 0.75
         },
         noNameErrorValue: 'ERR - no value',
