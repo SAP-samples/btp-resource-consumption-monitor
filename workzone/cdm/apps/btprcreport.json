@@ -87,11 +87,13 @@
                 "urlTemplateParams": {
                     "appId": "btprcreport",
                     "query": {
-                        "siteId": "${SITE_ID}",
                         "subaccountId": "${SUBACCOUNT_ID}",
                         "saasApprouter": "true"
                     }
                 }
+            },
+            "sap.platform.cf": {
+                "isSaasApprouter": true
             }
         },
         "systemAlias": {
