@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixed
 
 ### Changed
-- Support for CDS 9.6
+- Support for CDS 9.7
 
 ## Version 2.3.1 - 2026-02-05
 
