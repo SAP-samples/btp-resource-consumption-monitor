@@ -158,7 +158,6 @@ export default class RetrievalService extends cds.ApplicationService {
                 } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
             })
 
-            //@ts-expect-error
             return req.messages
         })
 
@@ -198,7 +197,6 @@ export default class RetrievalService extends cds.ApplicationService {
                 } catch (e) { warn(String(e)); status.push(String(e)); req.warn(400, status.join('\r\n')) }
             })
 
-            //@ts-expect-error
             return req.messages
         })
 
@@ -908,7 +906,7 @@ async function updateCommercialMetricForecasts(serviceId?: string) {
             USING (SELECT * FROM ${prepareCommercialMeasureMetricForecasts.name.replace('.', '_')}${where}) AS sourceTable
             ON ${onClause} WHEN MATCHED THEN UPDATE SET ${updateClause}`
         const rows = await db.run(sql)
-        status = `${rows} forecasts updated in the database (hana optimized).`
+        status = `${rows.changes ?? rows} forecasts updated in the database (hana optimized).`
     } else {
         // Fallback approach which routes the data via the application layer (slower)
         let forecasted: CommercialMeasures = []
@@ -961,7 +959,7 @@ async function updateCommercialServiceForecasts(serviceId?: string) {
         const where = serviceId ? ` WHERE (toMetric_toService_serviceId = '${serviceId}')` : ''
         const sql = `UPSERT ${CommercialMeasures.name.replace('.', '_')} SELECT * FROM ${prepareCommercialMeasureServiceForecasts.name.replace('.', '_')}${where}`
         const rows = await db.run(sql)
-        status = `${rows} data points updated in the database (hana optimized).`
+        status = `${rows.changes ?? rows} data points updated in the database (hana optimized).`
     } else {
         // Fallback approach which routes the data via the application layer (slower)
         const data = await SELECT.from(prepareCommercialMeasureServiceForecasts).where(serviceId && { toMetric_toService_serviceId: serviceId } || {})
@@ -1039,15 +1037,15 @@ async function updateDeltaMeasures(interval: TInterval) {
 
         let technicalRows = 0
         if (interval == TInterval.Daily)
-            technicalRows += await db.run(
+            technicalRows += (await db.run(
                 `MERGE INTO ${TechnicalMeasures.name.replace('.', '_')} AS targetTable
                 USING (SELECT ${keyColumnsSQL}, ${technicalDeltaColumnsSelectSQLDaily} FROM ${TechnicalMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
-                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`)
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`)).changes
         if (interval == TInterval.Monthly)
-            technicalRows += await db.run(
+            technicalRows += (await db.run(
                 `MERGE INTO ${TechnicalMeasures.name.replace('.', '_')} AS targetTable
                 USING (SELECT ${keyColumnsSQL}, ${technicalDeltaColumnsSelectSQLMonthly} FROM ${TechnicalMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Monthly')) AS sourceTable
-                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`)
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${technicalDeltaColumnsUpdateSQL}`)).changes
 
         // Commercial deltas
         const commercialDeltaColumnsSelectSQLDaily = commercialDeltaColumns.map(x => `${x}, ${x} - LAG(${x}) ${overPartitionSQLDaily} AS delta_${x}`).join(', ')
@@ -1059,15 +1057,15 @@ async function updateDeltaMeasures(interval: TInterval) {
 
         let commercialRows = 0
         if (interval == TInterval.Daily)
-            commercialRows += await db.run(
+            commercialRows += (await db.run(
                 `MERGE INTO ${CommercialMeasures.name.replace('.', '_')} AS targetTable
                 USING (SELECT ${keyColumnsSQL}, ${commercialDeltaColumnsSelectSQLDaily} FROM ${CommercialMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Daily')) AS sourceTable
-                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`)
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`)).changes
         if (interval == TInterval.Monthly)
-            commercialRows += await db.run(
+            commercialRows += (await db.run(
                 `MERGE INTO ${CommercialMeasures.name.replace('.', '_')} AS targetTable
                 USING (SELECT ${keyColumnsSQL}, ${commercialDeltaColumnsSelectSQLMonthly} FROM ${CommercialMeasures.name.replace('.', '_')} WHERE (toMetric_toService_interval = 'Monthly')) AS sourceTable
-                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`)
+                ON ${joinClauseSQL} WHEN MATCHED THEN UPDATE SET ${commercialDeltaColumnsUpdateSQL}`)).changes
 
         status = `${technicalRows} technical and ${commercialRows} commercial ${interval} deltas updated (hana optimized).`
     } else {
