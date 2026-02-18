@@ -217,8 +217,16 @@ service RetrievalService {
             toItem
         };
 
-    function downloadMeasuresForToday()                                 returns String;
-    function downloadMeasuresForPastMonths(fromDate : Integer)          returns String;
+    function downloadMeasuresForToday()                                returns many {
+        message         : String;
+        numericSeverity : Integer;
+    };
+
+    function downloadMeasuresForPastMonths(fromDate: Integer)          returns many {
+        message         : String;
+        numericSeverity : Integer;
+    };
+    
     function resetForecastSettings()                                    returns String;
     function resetTechnicalAllocations()                                returns String;
     function calculateCommercialForecasts()                             returns String;

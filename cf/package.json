@@ -11,25 +11,24 @@
   },
   "dependencies": {
     "@cap-js-community/odata-v2-adapter": "^1.15",
-    "@cap-js/hana": "~2.5",
-    "@sap-cloud-sdk/connectivity": "^4.3",
-    "@sap-cloud-sdk/openapi": "^4.3",
-    "@sap/cds": "~9.6",
-    "@sap/xsenv": "^6.0",
-    "@sap/xssec": "^4.12",
-    "express": "^4.22"
+    "@cap-js/hana": "~2.6",
+    "@sap-cloud-sdk/connectivity": "^4.4",
+    "@sap-cloud-sdk/openapi": "^4.4",
+    "@sap/cds": "~9.7",
+    "@sap/xsenv": "^6.1",
+    "@sap/xssec": "^4.12"
   },
   "devDependencies": {
     "@cap-js/cds-typer": "~0.38",
-    "@cap-js/cds-types": "~0.15",
+    "@cap-js/cds-types": "~0.16",
     "@cap-js/sqlite": "~2.1",
     "@sap-cloud-sdk/openapi-generator": "^4",
-    "@sap/cds-dk": "~9.6",
+    "@sap/cds-dk": "~9.7",
     "@sap/eslint-plugin-cds": "^4.1",
-    "@sap/ux-specification": "^1.139",
     "@types/node": "^25",
     "@types/sap__xsenv": "^3",
     "eslint": "^9",
+    "mbt": "^1",
     "rimraf": "^6",
     "ts-node": "^10.9",
     "typescript": "^5"
@@ -37,6 +36,8 @@
   "scripts": {
     "start": "cds-serve",
     "watch":"cds-ts watch --profile hybrid",
+    "clean:apps": "rimraf app/**/node_modules app/**/dist app/**/package-lock.json",
+    "clean:kyma": "rimraf kyma/**/node_modules kyma/**/package-lock.json",
     "npmu:apps": "npm update --prefix ./app/billingdifferences && npm update --prefix ./app/btprcreport && npm update --prefix ./app/managealerts && npm update --prefix ./app/managetags && npm update --prefix ./app/measuresbytags && npm update --prefix ./app/measuresforyearbytags && npm update --prefix ./app/measuresforyears && npm update --prefix ./app/measurestotal",
     "npmu:kyma": "npm update --prefix ./kyma/ui-deployer",
     "build:cf": "rimraf @cds-models resources mta_archives gen && cds-ts build --production",
