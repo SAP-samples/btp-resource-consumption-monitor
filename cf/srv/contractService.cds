@@ -2,7 +2,7 @@ using db from '../db/schema';
 using AnalyticsService from './analyticsService';
 
 @requires: ['Viewer']
-service ContractsService {
+service ContractService {
 
     @readonly
     entity unique_globalAccountNames  as

@@ -9,6 +9,18 @@ import {
 } from './functions'
 
 import {
+    getUserAccessContext,
+    UserAccessContext,
+    addInFilter,
+    getAccessibleServiceKeys,
+    getAccessibleServiceIds,
+    addServiceKeyFilter,
+    createBasicIdFilter,
+    NO_ACCESS_VALUE,
+    AGGREGATED_LEVELS
+} from './authorizationHelper'
+
+import {
     AggregatedCommercialMeasures
 } from '#cds-models/AnalyticsService';
 
@@ -31,7 +43,11 @@ import {
     SetBulkTechnicalAllocations,
     SetBulkForecastSettings,
     Card_HighestForecastServices,
-    proxy_deleteStructureAndTagData
+    Card_HistoricTrends,
+    Card_TodaysMeasuresByLevels,
+    proxy_deleteStructureAndTagData,
+    BulkTechnicalAllocations,
+    BulkForecastSettings
 } from '#cds-models/PresentationService'
 
 import RetrievalService from '#cds-models/RetrievalService'
@@ -48,15 +64,53 @@ import {
     AllocationSetting,
     AllocationSettings,
     ForecastSetting,
-    ForecastSettings,
+    ForecastSettings
 } from '#cds-models/db'
 import { Settings } from './settings'
 
 const info = cds.log('presentationService').info
 
+// Store user access context per request for use across handlers
+const requestContextMap = new WeakMap<object, UserAccessContext>()
+
 enum statusMap { Good = 3, Warning = 2, Error = 1, Neutral = 0 }
 enum multipliers { Normal = 100, WarningMax = 125, ErrorMax = 150 }
 enum deltaThresholds { Normal = 3, WarningMax = 10 }
+
+// ============================================================================
+// MEASURE FIELD CONSTANTS
+// These define the OData association field names for nested measures
+// ============================================================================
+
+/**
+ * Fields containing aggregated-level measures (Customer, Global Account, Directory)
+ * These must be cleared for restricted users as they contain data from all children
+ */
+const AGGREGATED_MEASURE_FIELDS = [
+    'cmByCustomer', 'tmByCustomer',
+    'cmByGlobalAccount', 'tmByGlobalAccount',
+    'cmByDirectory', 'tmByDirectory',
+    'cmByMetricByGlobalAccount', 'tmByMetricByGlobalAccount',
+    'cmByMetricByDirectory', 'tmByMetricByDirectory'
+] as const
+
+/**
+ * Fields containing filterable measures (SubAccount and lower levels)
+ * These can be filtered by AccountStructureItem ID
+ */
+const FILTERABLE_MEASURE_FIELDS = [
+    // Commercial measure associations
+    'cmBySubAccount',
+    'cmByDatacenter', 'cmBySpace', 'cmByInstance', 'cmByApplication',
+    'cmByMetricBySubAccount',
+    'cmByMetricByDatacenter', 'cmByMetricBySpace', 'cmByMetricByInstance', 'cmByMetricByApplication',
+    'cmHistoryByMetricAll', 'cmHistoryByMetricDaily', 'cmHistoryByMetricMonthly',
+    // Technical measure associations
+    'tmBySubAccount',
+    'tmByDatacenter', 'tmBySpace', 'tmByInstance', 'tmByApplication',
+    'tmByMetricBySubAccount',
+    'tmByMetricByDatacenter', 'tmByMetricBySpace', 'tmByMetricByInstance', 'tmByMetricByApplication'
+] as const
 
 export default class PresentationService extends cds.ApplicationService {
     async init() {
@@ -64,26 +118,113 @@ export default class PresentationService extends cds.ApplicationService {
         // Connect to Retrieval Service to send triggers
         const retrievalService = await cds.connect.to(RetrievalService)
 
+        // Authorization: Filter AccountStructureItems by user access
+        this.before('READ', 'AccountStructureItems', createBasicIdFilter('ID'))
+
         /**
          * Handlers for BTPServices
          */
-        this.before('READ', BTPServices, req => {
-            addRequiredMeasureColumns<BTPService>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+        this.before('READ', BTPServices, async req => {
+            // Get and store user access context for use in AFTER handler
+            const context = await getUserAccessContext(req)
+            requestContextMap.set(req, context)
+
+            // Authorization: Filter services that have accessible measures
+            if (!context.isUnrestricted) {
+                const accessibleKeys = await getAccessibleServiceKeys(context.allowedIds)
+                addServiceKeyFilter(req.query, accessibleKeys)
+
+                // For restricted users: Switch from Customer-level to SubAccount-level measures
+                // Customer-level measures aggregate ALL subaccounts (unauthorized data exposure)
+                switchCustomerToSubAccountExpand(req.query, 'cmByCustomer', 'cmBySubAccount')
+                switchCustomerToSubAccountExpand(req.query, 'tmByCustomer', 'tmBySubAccount')
+
+            }
+
+            // Add required columns based on user access level
+            if (context.isUnrestricted) {
+                addRequiredMeasureColumns<BTPService>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            } else {
+                addRequiredMeasureColumns<BTPService>(req.query, 'cmBySubAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            }
             addSortMeasureColumns<BTPService>(req.query, 'cmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<BTPService>(req.query, 'cmByDirectory', 'measure_cost', true)
             addSortMeasureColumns<BTPService>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
-        this.after('READ', BTPServices, items => {
+        this.after('READ', BTPServices, async (items, req) => {
+            // Get user access context from BEFORE handler
+            const context = requestContextMap.get(req)
+
+            // Authorization: Filter out services with no accessible measures
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                // Filter in place by marking items to remove
+                const indicesToRemove: number[] = []
+                items.forEach((each, index) => {
+                    const hasAccess = filterNestedMeasures(each, context.allowedIds)
+                    if (!hasAccess) {
+                        indicesToRemove.push(index)
+                    }
+                })
+                // Remove items in reverse order to maintain indices
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    items.splice(indicesToRemove[i], 1)
+                }
+            }
+
+            // For restricted users: Query SubAccount-level measures and aggregate them for cmByCustomer
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                for (const each of items) {
+                    const btpService = each as BTPService
+
+                    // If cmBySubAccount is empty/missing and cmByCustomer is also empty,
+                    // query the SubAccount-level measures directly
+                    let subAccountMeasures = btpService.cmBySubAccount
+
+                    if ((!subAccountMeasures || (Array.isArray(subAccountMeasures) && subAccountMeasures.length === 0)) && !btpService.cmByCustomer) {
+                        // Query SubAccount-level measures directly and filter to allowed IDs
+                        try {
+                            const allSubAccountMeasures = await SELECT.from('db.CommercialMeasures')
+                                .where({
+                                    toMetric_toService_reportYearMonth: btpService.reportYearMonth,
+                                    toMetric_toService_serviceId: btpService.serviceId,
+                                    toMetric_toService_retrieved: btpService.retrieved,
+                                    toMetric_toService_interval: btpService.interval,
+                                    toMetric_measureId: '_combined_',
+                                    level: 'Sub Account'
+                                })
+
+                            // Filter to only allowed IDs
+                            const measures = allSubAccountMeasures.filter((m: any) => context.allowedIds.includes(m.id))
+
+                            if (measures.length > 0) {
+                                subAccountMeasures = measures
+                                btpService.cmBySubAccount = measures
+                            }
+                        } catch (err) {
+                            // Silently ignore errors - service will just not have measure data
+                        }
+                    }
+
+                    // Aggregate the SubAccount measures into cmByCustomer for UI compatibility
+                    if (subAccountMeasures && !btpService.cmByCustomer) {
+                        if (Array.isArray(subAccountMeasures) && subAccountMeasures.length > 0) {
+                            btpService.cmByCustomer = aggregateCommercialMeasures(subAccountMeasures)
+                        } else if (!Array.isArray(subAccountMeasures)) {
+                            btpService.cmByCustomer = subAccountMeasures
+                        }
+                    }
+                }
+            }
+
             items?.forEach(each => {
-                const measure = (each as BTPService).cmByCustomer
+                const btpService = each as BTPService
+
+                const measure = btpService.cmByCustomer
                 if (measure) {
                     addBulletChartValues(measure)
                     measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                     measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
-                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    // if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
@@ -99,23 +240,71 @@ export default class PresentationService extends cds.ApplicationService {
         /**
          * Handlers for CommercialMetrics
          */
-        this.before('READ', CommercialMetrics, req => {
-            addRequiredMeasureColumns<CommercialMetric>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+        this.before('READ', CommercialMetrics, async req => {
+            // Get and store user access context for use in AFTER handler
+            const context = await getUserAccessContext(req)
+            requestContextMap.set(req, context)
+
+            // Authorization: Filter metrics that have accessible measures
+            if (!context.isUnrestricted) {
+                const accessibleKeys = await getAccessibleServiceKeys(context.allowedIds)
+                addServiceKeyFilter(req.query, accessibleKeys, 'toService_')
+
+                // For restricted users: Switch from Customer-level to SubAccount-level measures
+                switchCustomerToSubAccountExpand(req.query, 'cmByCustomer', 'cmBySubAccount')
+            }
+
+            // Add required columns based on user access level
+            if (context.isUnrestricted) {
+                addRequiredMeasureColumns<CommercialMetric>(req.query, 'cmByCustomer', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            } else {
+                addRequiredMeasureColumns<CommercialMetric>(req.query, 'cmBySubAccount', ['max_cost', 'measure_cost', 'forecast_cost', 'forecastPct'])
+            }
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmByDirectory', 'measure_cost', true)
             addSortMeasureColumns<CommercialMetric>(req.query, 'cmBySubAccount', 'measure_cost', true)
         })
-        this.after('READ', CommercialMetrics, items => {
+        this.after('READ', CommercialMetrics, (items, req) => {
+            // Get user access context from BEFORE handler
+            const context = requestContextMap.get(req)
+
+            // Authorization: Filter out metrics with no accessible measures
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                const indicesToRemove: number[] = []
+                items.forEach((each, index) => {
+                    const hasAccess = filterNestedMeasures(each, context.allowedIds)
+                    if (!hasAccess) {
+                        indicesToRemove.push(index)
+                    }
+                })
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    items.splice(indicesToRemove[i], 1)
+                }
+            }
+
             items?.forEach(each => {
-                const measure = (each as CommercialMetric).cmByCustomer
+                const metric = each as CommercialMetric
+
+                // For restricted users: Map cmBySubAccount to cmByCustomer for UI compatibility
+                // We aggregate all accessible subaccount measures to show the total across the user's scope
+                if (context && !context.isUnrestricted) {
+                    const subAccountMeasures = metric.cmBySubAccount
+                    if (subAccountMeasures && !metric.cmByCustomer) {
+                        if (Array.isArray(subAccountMeasures) && subAccountMeasures.length > 0) {
+                            // Aggregate all accessible subaccount measures into a single total
+                            metric.cmByCustomer = aggregateCommercialMeasures(subAccountMeasures)
+                        } else if (!Array.isArray(subAccountMeasures)) {
+                            metric.cmByCustomer = subAccountMeasures
+                        }
+                    }
+                }
+
+                const measure = metric.cmByCustomer
                 if (measure) {
                     addBulletChartValues(measure)
                     measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                     measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
-                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    // if (measure.delta_forecast_costPct !== null) measure.deltaForecastCriticality = getDeltaCriticality(measure.delta_forecast_costPct)
                 }
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
@@ -131,21 +320,143 @@ export default class PresentationService extends cds.ApplicationService {
         })
 
         /**
+         * Authorization: Filter CommercialMeasures queries by user access
+         * Handles direct queries and navigation through various associations
+         */
+        this.before('READ', 'CommercialMeasures', async req => {
+            const context = await getUserAccessContext(req)
+
+            // Check navigation context from the FROM clause
+            // Navigation FROM clause looks like: { ref: ['BTPServices', 'cmHistoryByMetricAll'], ... }
+            const fromRef = req.query.SELECT?.from?.ref
+            const getNavigationAssociation = (): string | undefined => {
+                if (!fromRef || !Array.isArray(fromRef)) return undefined
+                for (const part of fromRef) {
+                    if (typeof part === 'string' && part.startsWith('cm')) {
+                        return part
+                    }
+                }
+                return undefined
+            }
+            const navigationAssoc = getNavigationAssociation()
+
+            // History associations need dynamic level filtering
+            const isHistoryNavigation = navigationAssoc?.startsWith('cmHistoryByMetric')
+
+            // Breakdown associations (cmByMetricByDatacenter, cmByMetricBySpace, etc.)
+            // These are already scoped by the parent BTPServices navigation
+            const isBreakdownNavigation = navigationAssoc?.startsWith('cmByMetricBy')
+
+            if (isHistoryNavigation) {
+                // For history chart navigation, add level filter based on user access
+                if (context.isUnrestricted) {
+                    // Unrestricted users see Global Account level (aggregated across all subaccounts)
+                    addInFilter(req.query, 'level', ['Global Account'])
+                } else {
+                    // Restricted users see Sub Account level (only their accessible subaccounts)
+                    if (context.allowedIds.length === 0) {
+                        addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
+                    } else {
+                        addInFilter(req.query, 'id', context.allowedIds)
+                        addInFilter(req.query, 'level', ['Sub Account'])
+                    }
+                }
+            } else if (isBreakdownNavigation) {
+                // For breakdown navigations (cmByMetricByDatacenter, cmByMetricBySpace, etc.)
+                // The data is already scoped to the parent BTPServices record which was verified as accessible
+                // The level filter is applied by the association projection
+                // No additional ID filtering needed - the breakdown shows distribution across dimensions
+                // that the user has access to via the parent service
+                if (!context.isUnrestricted && context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
+                }
+            } else {
+                // For direct queries, apply the standard access control
+                if (!context.isUnrestricted) {
+                    if (context.allowedIds.length === 0) {
+                        addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
+                    } else {
+                        addInFilter(req.query, 'id', context.allowedIds)
+                        // Block aggregated levels - they contain data from all children
+                        // Allow: Sub Account, Space, Instance, Application, Datacenter, Service, Service (alloc.)
+                        addInFilter(req.query, 'level', ['Sub Account', 'Space', 'Instance', 'Application', 'Datacenter', 'Service', 'Service (alloc.)'])
+                    }
+                }
+            }
+        })
+
+        /**
          * Handlers for TechnicalMetrics
          */
-        this.before('READ', TechnicalMetrics, req => {
+        this.before('READ', TechnicalMetrics, async req => {
+            // Get and store user access context for use in AFTER handler
+            const context = await getUserAccessContext(req)
+            requestContextMap.set(req, context)
+
+            // Check navigation context from the FROM clause
+            const fromRef = req.query.SELECT?.from?.ref
+            const isHistoryNavigation = fromRef && Array.isArray(fromRef) &&
+                fromRef.some((part: unknown) =>
+                    typeof part === 'string' && part === 'technicalMetricsHistory'
+                )
+
+            // Authorization: Filter metrics that have accessible measures
+            if (!context.isUnrestricted) {
+                // For history navigation, the parent BTPServices has already been verified as accessible
+                // No additional service key filtering needed
+                if (!isHistoryNavigation) {
+                    const accessibleKeys = await getAccessibleServiceKeys(context.allowedIds)
+                    addServiceKeyFilter(req.query, accessibleKeys, 'toService_')
+                }
+
+                // For restricted users: Switch from Customer-level to SubAccount-level measures
+                switchCustomerToSubAccountExpand(req.query, 'tmByCustomer', 'tmBySubAccount')
+            }
+
             addRequiredColumns<TechnicalMetric>(req.query, ['tags'])
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmByGlobalAccount', 'measure_usage', true)
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmByDirectory', 'measure_usage', true)
             addSortMeasureColumns<TechnicalMetric>(req.query, 'tmBySubAccount', 'measure_usage', true)
         })
-        this.after('READ', TechnicalMetrics, items => {
+        this.after('READ', TechnicalMetrics, (items, req) => {
+            // Get user access context from BEFORE handler
+            const context = requestContextMap.get(req)
+
+            // Authorization: Filter out metrics with no accessible measures
+            if (context && !context.isUnrestricted && Array.isArray(items)) {
+                const indicesToRemove: number[] = []
+                items.forEach((each, index) => {
+                    const hasAccess = filterNestedMeasures(each, context.allowedIds)
+                    if (!hasAccess) {
+                        indicesToRemove.push(index)
+                    }
+                })
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    items.splice(indicesToRemove[i], 1)
+                }
+            }
+
             items?.forEach(each => {
                 each.tagStrings = each.tags ? formatTags(each.tags) : '(none)'
-                const measure = (each as TechnicalMetric).tmByCustomer
+                const metric = each as TechnicalMetric
+
+                // For restricted users: Map tmBySubAccount to tmByCustomer for UI compatibility
+                // We aggregate all accessible subaccount measures to show the total across the user's scope
+                if (context && !context.isUnrestricted) {
+                    const subAccountMeasures = metric.tmBySubAccount
+                    if (subAccountMeasures && !metric.tmByCustomer) {
+                        if (Array.isArray(subAccountMeasures) && subAccountMeasures.length > 0) {
+                            // Aggregate all accessible subaccount measures into a single total
+                            metric.tmByCustomer = aggregateTechnicalMeasures(subAccountMeasures)
+                        } else if (!Array.isArray(subAccountMeasures)) {
+                            metric.tmByCustomer = subAccountMeasures
+                        }
+                    }
+                }
+
+                const measure = metric.tmByCustomer
                 if (measure) {
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
-                    // if (measure.delta_measure_usagePct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_usagePct)
                 }
                 each.hideGlobalAccountDistribution = !Settings.appConfiguration.multiGlobalAccountMode
                 each.hideServiceInstanceDistribution = !Settings.appConfiguration.serviceInstancesCreationList.includes(each.toService_serviceId!)
@@ -154,21 +465,134 @@ export default class PresentationService extends cds.ApplicationService {
         })
 
         /**
-         * Handlers for Work Zone cards
+         * Authorization: Filter TechnicalMeasures queries by user access
+         * Handles direct queries and navigation through various associations
          */
-        this.after('READ', Card_HighestForecastServices, items => {
+        this.before('READ', 'TechnicalMeasures', async req => {
+            const context = await getUserAccessContext(req)
+
+            // Check navigation context from the FROM clause
+            const fromRef = req.query.SELECT?.from?.ref
+            const getNavigationAssociation = (): string | undefined => {
+                if (!fromRef || !Array.isArray(fromRef)) return undefined
+                for (const part of fromRef) {
+                    if (typeof part === 'string' && part.startsWith('tm')) {
+                        return part
+                    }
+                }
+                return undefined
+            }
+            const navigationAssoc = getNavigationAssociation()
+
+            // Breakdown associations (tmByMetricByDatacenter, tmByMetricBySpace, etc.)
+            // These are already scoped by the parent BTPServices navigation
+            const isBreakdownNavigation = navigationAssoc?.startsWith('tmByMetricBy')
+
+            if (isBreakdownNavigation) {
+                // For breakdown navigations, the data is already scoped to the parent BTPServices record
+                // No additional ID filtering needed
+                if (!context.isUnrestricted && context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
+                }
+            } else {
+                // For direct queries, apply the standard access control
+                if (!context.isUnrestricted) {
+                    if (context.allowedIds.length === 0) {
+                        addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
+                    } else {
+                        addInFilter(req.query, 'id', context.allowedIds)
+                        // Block aggregated levels - they contain data from all children
+                        // Allow: Sub Account, Space, Instance, Application, Datacenter, Service, Service (alloc.)
+                        addInFilter(req.query, 'level', ['Sub Account', 'Space', 'Instance', 'Application', 'Datacenter', 'Service', 'Service (alloc.)'])
+                    }
+                }
+            }
+        })
+
+        /**
+         * Handlers for Work Zone cards
+         * Card_HighestForecastServices shows Customer-level aggregated data (cmByCustomer)
+         * Block entirely for non-admin users
+         */
+        this.before('READ', Card_HighestForecastServices, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                // Block access - this card shows Customer-level aggregated data
+                addInFilter(req.query, 'serviceId', [NO_ACCESS_VALUE])
+            }
+        })
+        this.after('READ', Card_HighestForecastServices, (items) => {
             items?.forEach(each => {
-                const measure = (each as BTPService).cmByCustomer
+                const btpService = each as BTPService
+                const measure = btpService.cmByCustomer
                 if (measure) {
                     measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
                     measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
-                    // if (measure.forecastPct !== null) measure.forecastPctCriticality = getForecastCriticality(measure.forecastPct)
-                    // if (measure.delta_measure_costPct !== null) measure.deltaActualsCriticality = getDeltaCriticality(measure.delta_measure_costPct)
                 }
                 if (each.namesCommercialMetrics) {
                     each.namesCommercialMetrics = [...new Set(each.namesCommercialMetrics.split('__'))].join(' - ')
                 }
             })
+        })
+
+        /**
+         * Authorization: Block Card_HistoricTrends for non-admin users
+         * This card shows Customer-level aggregated data (level = 'Customer')
+         * which cannot be filtered by subaccount
+         */
+        this.before('READ', Card_HistoricTrends, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                // Block access - this card shows Customer-level aggregated data
+                addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
+            }
+        })
+
+        /**
+         * Authorization: Filter Card_TodaysMeasuresByLevels by user access
+         * Uses 'id' field which corresponds to AccountStructureItem.ID
+         */
+        this.before('READ', Card_TodaysMeasuresByLevels, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                if (context.allowedIds.length === 0) {
+                    addInFilter(req.query, 'id', [NO_ACCESS_VALUE])
+                } else {
+                    addInFilter(req.query, 'id', context.allowedIds)
+                }
+            }
+        })
+
+        /**
+         * Authorization: Filter BulkTechnicalAllocations by user access
+         * Only show services that have measures in accessible account structure items
+         */
+        this.before('READ', BulkTechnicalAllocations, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                const accessibleServiceIds = await getAccessibleServiceIds(context.allowedIds)
+                if (accessibleServiceIds.length === 0) {
+                    addInFilter(req.query, 'serviceId', [NO_ACCESS_VALUE])
+                } else {
+                    addInFilter(req.query, 'serviceId', accessibleServiceIds)
+                }
+            }
+        })
+
+        /**
+         * Authorization: Filter BulkForecastSettings by user access
+         * Only show services that have measures in accessible account structure items
+         */
+        this.before('READ', BulkForecastSettings, async req => {
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                const accessibleServiceIds = await getAccessibleServiceIds(context.allowedIds)
+                if (accessibleServiceIds.length === 0) {
+                    addInFilter(req.query, 'serviceId', [NO_ACCESS_VALUE])
+                } else {
+                    addInFilter(req.query, 'serviceId', accessibleServiceIds)
+                }
+            }
         })
 
         this.on(proxy_downloadMeasuresForToday, async (req) => {
@@ -331,6 +755,12 @@ export default class PresentationService extends cds.ApplicationService {
         })
 
         this.on(getLatestBTPAccountMeasure, async req => {
+            // Block for non-admin users - this returns Customer-level aggregated data
+            const context = await getUserAccessContext(req)
+            if (!context.isUnrestricted) {
+                return null
+            }
+
             const data = await SELECT.one
                 .from(AggregatedCommercialMeasures)
                 .where({
@@ -345,7 +775,27 @@ export default class PresentationService extends cds.ApplicationService {
         // Received from Work Zone to display Tile information
         this.on(getTileInfo, async (req) => {
             const thisMonth = dateToYearMonth()
-            const info = await SELECT.one
+            const context = await getUserAccessContext(req)
+
+            // For non-admin users, return tile without Customer-level aggregated data
+            if (!context.isUnrestricted) {
+                const tile: TDynamicAppLauncher = {
+                    title: 'BTP Resource Consumption',
+                    subtitle: 'Report',
+                    icon: 'sap-icon://money-bills',
+                    info: '',
+                    infoState: '',
+                    number: 0,
+                    numberDigits: 0,
+                    numberFactor: '',
+                    numberState: 'Neutral',
+                    numberUnit: '',
+                    stateArrow: ''
+                }
+                return tile
+            }
+
+            const tileInfo = await SELECT.one
                 .from(AggregatedCommercialMeasures)
                 .where({
                     interval: TInterval.Daily,
@@ -358,7 +808,7 @@ export default class PresentationService extends cds.ApplicationService {
                 icon: 'sap-icon://money-bills',
                 info: '',
                 infoState: '',
-                number: info?.forecast_cost || 0,
+                number: tileInfo?.forecast_cost || 0,
                 numberDigits: 2,
                 numberFactor: '',
                 numberState: 'Neutral',
@@ -392,13 +842,62 @@ export default class PresentationService extends cds.ApplicationService {
  *       Need to add:
  *          { ref: ['requiredColumn'] }
  */
+/**
+ * For restricted users, switch from Customer-level expansion to SubAccount-level expansion.
+ * Customer-level measures aggregate ALL subaccounts and would expose unauthorized data.
+ *
+ * NOTE: We don't add a WHERE clause to the expand here because:
+ * 1. The CQN WHERE on expand doesn't always work reliably with complex associations
+ * 2. The AFTER handler (filterNestedMeasures) will filter the data by allowedIds
+ * 3. This ensures consistent filtering regardless of how the data is fetched
+ *
+ * @param query The CQN query object
+ * @param customerEntity The Customer-level entity to replace (e.g., 'cmByCustomer')
+ * @param subAccountEntity The SubAccount-level entity to use instead (e.g., 'cmBySubAccount')
+ */
+function switchCustomerToSubAccountExpand(
+    query: Partial<cds.SELECT>,
+    customerEntity: string,
+    subAccountEntity: string
+): void {
+    const columns = query.SELECT?.columns
+    if (!columns) return
+
+    // Find the Customer-level expand
+    const customerExpandIndex = columns.findIndex(c => c.ref?.toString() === customerEntity)
+
+    if (customerExpandIndex >= 0) {
+        const customerExpand = columns[customerExpandIndex]
+
+        // Check if SubAccount expand already exists
+        let subAccountExpand = columns.find(c => c.ref?.toString() === subAccountEntity)
+
+        if (!subAccountExpand) {
+            // Create SubAccount expand with same columns as Customer expand
+            // Also add 'id' column which is needed for filtering in AFTER handler
+            const expandColumns = customerExpand.expand ? [...customerExpand.expand] : [{ ref: ['*'] }]
+            // Ensure 'id' is included for filtering
+            if (!expandColumns.some((c: any) => c.ref?.includes('id') || c === '*' || c.ref?.includes('*'))) {
+                expandColumns.push({ ref: ['id'] })
+            }
+            subAccountExpand = {
+                ref: [subAccountEntity],
+                expand: expandColumns
+            }
+            columns.push(subAccountExpand)
+        }
+
+        // Remove Customer-level expand (it aggregates all subaccounts)
+        columns.splice(customerExpandIndex, 1)
+    }
+}
+
 function addRequiredMeasureColumns<T>(query: Partial<cds.SELECT>, entity: keyof T, requiredColumns: string[]): void {
     const refColumns = query.SELECT?.columns?.find(x => x.ref?.toString() == entity)?.expand
     if (refColumns) {
         for (const requiredColumn of requiredColumns) {
             if (!refColumns.find(expand => typeof expand == 'string' || expand.ref && expand.ref.find(x => x == requiredColumn))) {
                 refColumns.push({ ref: [requiredColumn] })
-                info(`!! Added column ${requiredColumn} manually to query`)
             }
         }
     }
@@ -436,7 +935,6 @@ function addSortMeasureColumns<T>(query: Partial<cds.SELECT>, entity: keyof T, s
                 { ref: [sortColumn], sort: descending ? 'desc' : 'asc' }
             ]
         })
-        info(`!! Added sorting manually in ${entity.toString()} query for ${sortColumn} column`)
     }
 }
 
@@ -500,4 +998,241 @@ function getDeltaCriticality(value?: number | null): number {
         else criticality = statusMap.Error
     }
     return criticality
+}
+
+/**
+ * Filter nested measure arrays in BTPServices, CommercialMetrics, TechnicalMetrics
+ * to only include measures for accessible AccountStructureItems.
+ *
+ * The cmByLevel and tmByLevel associations contain arrays of measures where
+ * each measure has an 'id' field that corresponds to an AccountStructureItem.ID
+ *
+ * @param item The service/metric item containing nested measure associations
+ * @param allowedIds Array of accessible AccountStructureItem IDs
+ * @returns true if the item has at least one accessible measure, false otherwise
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function filterNestedMeasures(item: any, allowedIds: string[]): boolean {
+    let hasAccessibleMeasures = false
+
+    // Clear aggregated-level measures for restricted users
+    // These aggregate data from all children (including inaccessible subaccounts) and can't be filtered
+    for (const field of AGGREGATED_MEASURE_FIELDS) {
+        if (item[field] !== undefined && item[field] !== null) {
+            item[field] = null
+        }
+    }
+
+    // Filter measures at SubAccount level and below by ID
+    for (const field of FILTERABLE_MEASURE_FIELDS) {
+        const value = item[field]
+        if (value === undefined || value === null) continue
+
+        if (Array.isArray(value)) {
+            // Filter array of measures
+            const filtered = value.filter((measure: Record<string, unknown>) => {
+                const id = measure.id
+                return typeof id === 'string' && allowedIds.includes(id)
+            })
+            item[field] = filtered
+            if (filtered.length > 0) {
+                hasAccessibleMeasures = true
+            }
+        } else if (typeof value === 'object') {
+            // Single measure object
+            const measure = value as Record<string, unknown>
+            const id = measure.id
+            if (typeof id === 'string' && !allowedIds.includes(id)) {
+                // User doesn't have access to this measure, clear it
+                item[field] = null
+            } else if (typeof id === 'string') {
+                hasAccessibleMeasures = true
+            }
+        }
+    }
+
+    // If service exists in user's accessible services (based on BEFORE filter),
+    // consider it accessible even if no sub-measures are expanded
+    // This allows showing the service list while measures are loaded via expand
+    if (!hasAccessibleMeasures) {
+        // Check if the service itself is accessible (serviceId is in an allowed space/instance ID pattern)
+        const serviceId = item.serviceId
+        if (serviceId) {
+            // User's allowedIds contain patterns like 'subaccountId_serviceId'
+            // Check if any allowedId ends with the serviceId
+            hasAccessibleMeasures = allowedIds.some(id =>
+                id.endsWith(`_${serviceId}`) || id.includes(`_${serviceId}_`)
+            )
+        }
+    }
+
+    return hasAccessibleMeasures
+}
+
+/**
+ * Aggregate multiple CommercialMeasures into a single aggregated measure.
+ * This is used for restricted users who have access to multiple subaccounts,
+ * so they see the total cost across all their accessible subaccounts.
+ *
+ * @param measures Array of CommercialMeasure objects to aggregate
+ * @returns A single aggregated CommercialMeasure object
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function aggregateCommercialMeasures(measures: any[]): any {
+    if (!measures || measures.length === 0) {
+        return null
+    }
+    if (measures.length === 1) {
+        return measures[0]
+    }
+
+    // Start with a copy of the first measure as base
+    const aggregated = { ...measures[0] }
+
+    // Set aggregated identifier
+    aggregated.id = '_aggregated_'
+    aggregated.name = 'Total (Viewer Scope)'
+    aggregated.level = 'Viewer Scope'
+
+    // Fields to sum
+    const sumFields = [
+        'measure_cost', 'measure_usage', 'measure_actualUsage', 'measure_chargedBlocks',
+        'measure_paygCost', 'measure_cloudCreditsCost',
+        'forecast_cost', 'forecast_usage', 'forecast_actualUsage', 'forecast_chargedBlocks',
+        'delta_measure_cost', 'delta_measure_usage', 'delta_measure_actualUsage', 'delta_measure_chargedBlocks',
+        'delta_forecast_cost', 'delta_forecast_usage', 'delta_forecast_actualUsage', 'delta_forecast_chargedBlocks',
+        'max_cost'
+    ]
+
+    // Initialize sum fields to 0 and sum across all measures
+    for (const field of sumFields) {
+        aggregated[field] = 0
+        for (const measure of measures) {
+            const value = measure[field]
+            if (value != null) {
+                // Handle both number and string values (database may return decimals as strings)
+                const numValue = typeof value === 'number' ? value : parseFloat(value)
+                if (!isNaN(numValue)) {
+                    aggregated[field] += numValue
+                }
+            }
+        }
+        // Convert 0 to null if all source values were null
+        if (aggregated[field] === 0) {
+            const hasAnyValue = measures.some(m => m[field] != null && m[field] !== 0 && m[field] !== '0' && m[field] !== '0.00')
+            if (!hasAnyValue) {
+                aggregated[field] = null
+            }
+        }
+    }
+
+    // Recalculate percentage fields based on aggregated values
+    // forecastPct = forecast_cost / max_cost * 100
+    if (aggregated.max_cost && aggregated.max_cost > 0 && aggregated.forecast_cost != null) {
+        aggregated.forecastPct = Math.round(aggregated.forecast_cost / aggregated.max_cost * 100)
+    } else {
+        aggregated.forecastPct = null
+    }
+
+    // delta_measure_costPct = delta_measure_cost / (measure_cost - delta_measure_cost) * 100
+    if (aggregated.measure_cost != null && aggregated.delta_measure_cost != null) {
+        const previousCost = aggregated.measure_cost - aggregated.delta_measure_cost
+        if (previousCost !== 0) {
+            aggregated.delta_measure_costPct = Math.round(aggregated.delta_measure_cost / previousCost * 100)
+        } else {
+            aggregated.delta_measure_costPct = null
+        }
+    }
+
+    // delta_measure_usagePct
+    if (aggregated.measure_usage != null && aggregated.delta_measure_usage != null) {
+        const previousUsage = aggregated.measure_usage - aggregated.delta_measure_usage
+        if (previousUsage !== 0) {
+            aggregated.delta_measure_usagePct = Math.round(aggregated.delta_measure_usage / previousUsage * 100)
+        } else {
+            aggregated.delta_measure_usagePct = null
+        }
+    }
+
+    // delta_forecast_costPct
+    if (aggregated.forecast_cost != null && aggregated.delta_forecast_cost != null) {
+        const previousForecast = aggregated.forecast_cost - aggregated.delta_forecast_cost
+        if (previousForecast !== 0) {
+            aggregated.delta_forecast_costPct = Math.round(aggregated.delta_forecast_cost / previousForecast * 100)
+        } else {
+            aggregated.delta_forecast_costPct = null
+        }
+    }
+
+    // delta_forecast_usagePct
+    if (aggregated.forecast_usage != null && aggregated.delta_forecast_usage != null) {
+        const previousForecastUsage = aggregated.forecast_usage - aggregated.delta_forecast_usage
+        if (previousForecastUsage !== 0) {
+            aggregated.delta_forecast_usagePct = Math.round(aggregated.delta_forecast_usage / previousForecastUsage * 100)
+        } else {
+            aggregated.delta_forecast_usagePct = null
+        }
+    }
+
+    return aggregated
+}
+
+/**
+ * Aggregate multiple TechnicalMeasures into a single aggregated measure.
+ * This is used for restricted users who have access to multiple subaccounts,
+ * so they see the total usage across all their accessible subaccounts.
+ *
+ * @param measures Array of TechnicalMeasure objects to aggregate
+ * @returns A single aggregated TechnicalMeasure object
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function aggregateTechnicalMeasures(measures: any[]): any {
+    if (!measures || measures.length === 0) return null
+    if (measures.length === 1) return measures[0]
+
+    // Start with a copy of the first measure as base
+    const aggregated = { ...measures[0] }
+
+    // Set aggregated identifier
+    aggregated.id = '_aggregated_'
+    aggregated.name = 'Total (Viewer Scope)'
+    aggregated.level = 'Viewer Scope'
+
+    // Fields to sum
+    const sumFields = ['measure_usage', 'delta_measure_usage']
+
+    // Initialize sum fields to 0 and sum across all measures
+    for (const field of sumFields) {
+        aggregated[field] = 0
+        for (const measure of measures) {
+            const value = measure[field]
+            if (value != null) {
+                // Handle both number and string values (database may return decimals as strings)
+                const numValue = typeof value === 'number' ? value : parseFloat(value)
+                if (!isNaN(numValue)) {
+                    aggregated[field] += numValue
+                }
+            }
+        }
+        // Convert 0 to null if all source values were null
+        if (aggregated[field] === 0) {
+            const hasAnyValue = measures.some(m => m[field] != null && m[field] !== 0 && m[field] !== '0' && m[field] !== '0.00')
+            if (!hasAnyValue) {
+                aggregated[field] = null
+            }
+        }
+    }
+
+    // Recalculate percentage fields based on aggregated values
+    // delta_measure_usagePct = delta_measure_usage / (measure_usage - delta_measure_usage) * 100
+    if (aggregated.measure_usage != null && aggregated.delta_measure_usage != null) {
+        const previousUsage = aggregated.measure_usage - aggregated.delta_measure_usage
+        if (previousUsage !== 0) {
+            aggregated.delta_measure_usagePct = Math.round(aggregated.delta_measure_usage / previousUsage * 100)
+        } else {
+            aggregated.delta_measure_usagePct = null
+        }
+    }
+
+    return aggregated
 }

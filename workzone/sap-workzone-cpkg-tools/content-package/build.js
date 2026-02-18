@@ -7,6 +7,41 @@ module.exports.build = function (dir) {
     propertiesReader = require("properties-reader"),
     businessHubBuild = process.argv.slice(2)[0] === "-b";
 
+  // Load environment variables from .env file
+  const dotenv = require("dotenv");
+  const envPath = path.join(dir, util.relativeDir(dir), ".env");
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    console.log("Loaded environment variables from .env file");
+  } else {
+    console.log("Warning: No .env file found at " + envPath + ". Environment variables will not be replaced.");
+  }
+
+  // Function to replace ${VAR_NAME} placeholders with environment variables
+  function replaceEnvVariables(obj) {
+    if (typeof obj === "string") {
+      return obj.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+        const value = process.env[varName];
+        if (value === undefined) {
+          console.log("Warning: Environment variable " + varName + " is not defined");
+          return match;
+        }
+        return value;
+      });
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => replaceEnvVariables(item));
+    }
+    if (obj !== null && typeof obj === "object") {
+      const result = {};
+      for (const key in obj) {
+        result[key] = replaceEnvVariables(obj[key]);
+      }
+      return result;
+    }
+    return obj;
+  }
+
   var validTypes = ["card", "workflow", "workspace-template", "workspace", "homepage", "workpage", "space", "role", "businessapp", "urltemplate", "catalog"];
 
   function getJSONPathValue(sPath, o) {
@@ -194,7 +229,7 @@ module.exports.build = function (dir) {
       config.type === "urltemplate") {
       var contentPath = path.join(root, config.src.from, config.src.content);
       var i18nPath = path.join(root, config.src.from, "i18n");
-      var content = util.json.fromFile(contentPath);
+      var content = replaceEnvVariables(util.json.fromFile(contentPath));
       var app = appConfigs[name];
       if (config.type === "businessapp" && app.appConfig && app.cardConfig) {
         content.payload = content.payload || {};

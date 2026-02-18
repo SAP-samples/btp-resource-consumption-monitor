@@ -1,20 +1,43 @@
 import cds from '@sap/cds'
 
-import { Settings } from './settings'
 import { addRequiredColumns } from './functions'
+import {
+    createBasicIdFilter,
+    createSubAccountLevelFilter
+} from './authorizationHelper'
 
 import {
     CommercialMeasure,
     CommercialMeasures,
     CommercialMeasuresByTags,
+    CommercialMeasuresByTagsWInheritances,
     CommercialMeasuresForYears,
-    CommercialMeasuresForYearByTags
+    CommercialMeasuresForYearByTags,
+    CommercialMeasuresForYearByTagsWInheritances,
+    CloudCreditConsumptions,
+    CombinedTags
 } from '#cds-models/AnalyticsService'
-
-const info = cds.log('analyticsService').info
 
 export default class AnalyticsService extends cds.ApplicationService {
     async init() {
+
+        // ====================================================================
+        // AUTHORIZATION HANDLERS
+        // ====================================================================
+
+        // Basic ID filtering (full hierarchy access)
+        this.before('READ', 'AccountStructureItems', createBasicIdFilter('ID'))
+        this.before('READ', CloudCreditConsumptions, createBasicIdFilter('globalAccountId'))
+        this.before('READ', CombinedTags, createBasicIdFilter('toAccountStructureItem_ID'))
+
+        // SubAccount level filtering (excludes aggregated parent levels)
+        this.before('READ', 'AggregatedCommercialMeasures', createSubAccountLevelFilter('id'))
+        this.before('READ', CommercialMeasures, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresByTags, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresForYears, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresForYearByTags, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresByTagsWInheritances, createSubAccountLevelFilter('AccountStructureItem_ID'))
+        this.before('READ', CommercialMeasuresForYearByTagsWInheritances, createSubAccountLevelFilter('AccountStructureItem_ID'))
 
         const deltaColumns: (keyof CommercialMeasure)[] = [
             'Measures_delta_measure_cost',
