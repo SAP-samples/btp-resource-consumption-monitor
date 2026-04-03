@@ -1,0 +1,19 @@
+{
+  "_version": "3.1.0",
+  "identification": {
+    "id": "space_viewer",
+    "title": "Consumption Overview",
+    "entityType": "space"
+  },
+  "payload": {
+    "spaceConfig": {
+      "sortNumber": 100
+    },
+    "contentNodes": [
+      {
+        "type": "workpage",
+        "id": "page_viewer"
+      }
+    ]
+  }
+}
