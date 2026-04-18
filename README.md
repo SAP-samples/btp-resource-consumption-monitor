@@ -218,16 +218,8 @@ Due to the export/import process of SAC, there might be misalignments between ou
 
 ### 3. Work Zone Content
 
-***Important - First change the following code lines before continuing:***
-- Configure your **subaccount id** in business app configuration files of the multiple ui5 applications by searching for "<YOUR_SUBACCOUNT_GUID>" in each of the below files. Doing a search-and-replace should give you 8 matches:
-    1. [Billing Differences app](./workzone/cdm/apps/billingdifferences.json#L85)
-    2. [BTPRC Report app](./workzone/cdm/apps/btprcreport.json#L90)
-    3. [Manage Alerts app](./workzone/cdm/apps/managealerts.json#L90)
-    4. [Manage Tags app](./workzone/cdm/apps/managetags.json#L85)
-    5. [Measures by Tags app](./workzone/cdm/apps/measuresbytags.json#L85)
-    6. [Measures for Year by Tags app](./workzone/cdm/apps/measuresforyearbytags.json#L85)
-    7. [Measures for Years app](./workzone/cdm/apps/measuresforyears.json#L85)
-    8. [Measures Total app](./workzone/cdm/apps/measurestotal.json#L85)
+***Important - First change the following before continuing:***
+- Configure your **subaccount id** in the [.env](./workzone/.env) file (copy from [.env.example](./workzone/.env.example) if it does not exist yet). Set `SUBACCOUNT_ID` to the GUID of the subaccount where your apps are deployed. The build step will automatically replace the `${SUBACCOUNT_ID}` placeholders across all app configuration files.
 - *(Only if you are activating the SAC content)* Configure your **SAC Story url** in SAC card configuration files of the multiple widgets by searching for "<YOUR_SAC_STORY_URL>" in each of the below files. Doing a search-and-replace should give you 4 matches. The resulting SAC URL **deviates slightly** from the URL shown in SAC, so be careful in composing it correctly. Your final URL (which is the same for all 4 files) should be: `https://<YOUR_HOST>.sapanalytics.cloud/sap/fpa/ui/tenants/<YOUR_TENANT>/app.html#/story2?shellMode=embed&/s2/<YOUR_STORY>/?url_api=true&pageBar=disable&view_id=story2`. Files to be changed:
     1. [SAC Measures by Tags](./workzone/cdm/cards/sac.measuresbytags/src/manifest.json#L33)
     2. [SAC Measures for Year by Tags](./workzone/cdm/cards/sac.measuresforyearbytags/src/manifest.json#L33)
@@ -242,7 +234,7 @@ npm install
 npm run build
 ```
 
-This will create a `/workzone/package.zip` file which you can download to your local machine to use in step 2 below.
+This will create a `/workzone/package.zip` file which you can download to your local machine to use in step 2 below. The build process reads the `.env` file and replaces all `${...}` placeholders in the app configuration files with the configured values.
 
 #### Step 2. Deploy the package
 In the **Work Zone Site Manager**, open the `Channel Manager` and:
@@ -257,23 +249,56 @@ In the **Work Zone Site Manager**, open the `Site Directory` and:
 2. (optionally) Configure an alias by clicking on the 3-dots icon and select `Manage Site Alias`
 3. Click on the *gear icon* to open the `Site Settings`, and click on `Edit`
 4. In the `Display` section, change the `View Mode` to `Spaces and Pages - New Experience`
-5. In the right-hand side `Assignments` panel, make sure that the following 2 roles are enabled by clicking on their `+ icon`:
+5. In the right-hand side `Assignments` panel, make sure that the following roles are enabled by clicking on their `+ icon`:
     - BTP Resource Consumption Role
-    - BTP Resource Consumption SAC add-on
+    - BTP Resource Consumption Viewer
+    - BTP Resource Consumption SAC add-on *(only if you activated the SAC content)*
 6. Save and close
 
 **For Kyma deployments:** Note: the destination used in the Work Zone package (`btprc-srv`) is created when the backend application starts for the first time, and is populated with the credentials from the xsuaa instance at that point in time. In case of redeployments, the xsuaa credentials will be regenerated, but the destination will not be updated with these new credentials. In order to synchronize the credentials again, remove the destination via the BTP Cockpit and delete the `btprc-srv` pod in Kyma so it restarts and can recreate the destination during its startup.
 
 
 ## Role Assignments
-In the **BTP Cockpit**, go to the Security settings of your subaccount and assign the below 3 `Role Collections` to your user:
-- `~btprc.cpkg_access_role` to access the Work Zone content (front-end)
-- (optional) `~btprc.cpkg_sac_role` to access the SAC add-on Work Zone content (front-end)
-- `BTPResourceConsumption Viewer` to access the CF Application (back-end)
+
+The application uses two levels of authorization: **backend** (CAP/XSUAA) roles that control data access, and **Work Zone** roles that control which spaces and pages are visible.
+
+### Backend Roles (BTP Cockpit)
+
+Two role collections are available for the backend application:
+
+| Role Collection | Description |
+|---|---|
+| `BTPResourceConsumption Admin` | Full, unrestricted access to all data across all subaccounts, directories and global accounts. Intended for central FinOps administrators. |
+| `BTPResourceConsumption Viewer` | Restricted access based on the `SubaccountAccess` attribute. Users only see data for the subaccount(s)/directory(ies) assigned to them. |
+
+The **Viewer** role template includes a `SubaccountAccess` attribute. When creating or assigning the role, you must specify one or more account structure GUIDs (subaccount, directory or global account) the user is allowed to access. Users assigned a directory will automatically see all child subaccounts. Users without any attribute value will see no data.
+
+### Work Zone Roles (Site Manager)
+
+In the **Work Zone Site Manager**, open the `Site Settings` and assign the following roles:
+
+| Work Zone Role | Description |
+|---|---|
+| `BTP Resource Consumption Role` | Full access to all spaces and pages (Overview, Billing Verification, Cost Breakdown, Credit Expenditure, Cross Charging, Monitoring & Alerting, Optimization). Assign to users with the **Admin** backend role. |
+| `BTP Resource Consumption Viewer` | Access to a single *Consumption Overview* space with a dedicated page containing the Report tile, Manage Alerts tile and a Breakdown by Level card. Assign to users with the **Viewer** backend role. |
+| `BTP Resource Consumption SAC add-on` | *(optional)* Access to the SAC-powered cards and pages. |
+
+### Assigning Roles
+
+In the **BTP Cockpit**, go to the `Security` settings of your subaccount and assign the appropriate `Role Collections` to your users:
+
+**For admin users:**
+- `BTPResourceConsumption Admin` (back-end)
+- `~btprc.cpkg_access_role` — *BTP Resource Consumption Role* (Work Zone front-end)
+- *(optional)* `~btprc.cpkg_sac_role` — *BTP Resource Consumption SAC add-on* (Work Zone front-end)
+
+**For viewer users:**
+- `BTPResourceConsumption Viewer` (back-end) — make sure to configure the `SubaccountAccess` attribute with the relevant GUIDs
+- `~btprc.cpkg_access_role_viewer` — *BTP Resource Consumption Viewer* (Work Zone front-end)
 
 In case you activated the SAC content as well, make sure that each user that will be using the solution also has a SAC user.
 
-User who would *only* use the SAC interface do not need any of the role assignments and can access the SAC story directly.
+Users who would *only* use the SAC interface do not need any of the role assignments and can access the SAC story directly.
 
 ## Access the application
 In the **Work Zone Site Manager**, open the `Site Directory` and click on the *Go To Site icon* to open your site.

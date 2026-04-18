@@ -1,0 +1,75 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "page_viewer",
+    "entityType": "workpage"
+  },
+  "payload": {
+    "workpageConfig": {
+      "title": ""
+    },
+    "rows": [
+      {
+        "id": "page_viewer-1",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_viewer-11",
+            "columnConfig": {
+              "columnWidth": 16
+            },
+            "cells": [
+              {
+                "id": "page_viewer-111",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_viewer-1111",
+                    "viz": {
+                      "appId": "saas_approuter_btprcreport",
+                      "vizId": "tile"
+                    }
+                  },
+                  {
+                    "id": "page_viewer-1112",
+                    "viz": {
+                      "appId": "saas_approuter_managealerts",
+                      "vizId": "tile"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "page_viewer-2",
+        "rowConfig": {},
+        "columns": [
+          {
+            "id": "page_viewer-21",
+            "columnConfig": {
+              "columnWidth": 8
+            },
+            "cells": [
+              {
+                "id": "page_viewer-211",
+                "cellConfig": {},
+                "widgets": [
+                  {
+                    "id": "page_viewer-2111",
+                    "viz": {
+                      "appId": "cards.breakdownbylevel.app",
+                      "vizId": "cards.breakdownbylevel.viz"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

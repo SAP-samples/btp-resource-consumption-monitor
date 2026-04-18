@@ -10,14 +10,36 @@
     {
       "name": "$XSAPPNAME.Viewer",
       "description": "Viewer"
+    },
+    {
+      "name": "$XSAPPNAME.Admin",
+      "description": "Full admin access to all data"
     }
   ],
-  "attributes": [],
+  "attributes": [
+    {
+      "name": "SubaccountAccess",
+      "description": "Account structure IDs (subaccount/directory/global account GUIDs) the user can access",
+      "valueType": "string"
+    }
+  ],
   "role-templates": [
     {
       "name": "Viewer",
-      "description": "Role to access the application",
+      "description": "Role to access the application with restricted data access",
       "scope-references": [
+        "$XSAPPNAME.Viewer",
+        "uaa.user"
+      ],
+      "attribute-references": [
+        "SubaccountAccess"
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Full access to all data without restrictions",
+      "scope-references": [
+        "$XSAPPNAME.Admin",
         "$XSAPPNAME.Viewer",
         "uaa.user"
       ],
@@ -27,9 +49,16 @@
   "role-collections": [
     {
       "name": "BTPResourceConsumption Viewer",
-      "description": "View the BTP Global Account credits report",
+      "description": "View BTP consumption data for assigned subaccounts only",
       "role-template-references": [
         "$XSAPPNAME.Viewer"
+      ]
+    },
+    {
+      "name": "BTPResourceConsumption Admin",
+      "description": "Full admin access to all BTP consumption data",
+      "role-template-references": [
+        "$XSAPPNAME.Admin"
       ]
     }
   ]

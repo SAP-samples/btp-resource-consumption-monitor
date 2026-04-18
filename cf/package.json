@@ -35,6 +35,7 @@
   },
   "scripts": {
     "start": "cds-serve",
+    "watch":"cds-ts watch --profile hybrid",
     "clean:apps": "rimraf app/**/node_modules app/**/dist app/**/package-lock.json",
     "clean:kyma": "rimraf kyma/**/node_modules kyma/**/package-lock.json",
     "npmu:apps": "npm update --prefix ./app/billingdifferences && npm update --prefix ./app/btprcreport && npm update --prefix ./app/managealerts && npm update --prefix ./app/managetags && npm update --prefix ./app/measuresbytags && npm update --prefix ./app/measuresforyearbytags && npm update --prefix ./app/measuresforyears && npm update --prefix ./app/measurestotal",
