@@ -15,6 +15,7 @@
     "@sap-cloud-sdk/connectivity": "^4.5",
     "@sap-cloud-sdk/openapi": "^4.5",
     "@sap/cds": "~9.8",
+    "@sap/hana-client": "^2.28.20",
     "@sap/xsenv": "^6.1",
     "@sap/xssec": "^4.13"
   },
