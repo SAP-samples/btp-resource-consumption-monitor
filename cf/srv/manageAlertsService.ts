@@ -1,6 +1,16 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
 import { flattenObject } from './functions'
+import {
+    createBasicIdFilter,
+    createNoAccessGuard,
+    createChildItemsValidator,
+    createDeleteProtection,
+    createCustomReadFilter,
+    getAccessibleServiceIds,
+    getAccessibleAlertIds,
+    getAccessibleMetricIds
+} from './authorizationHelper'
 
 import {
     Alert,
@@ -16,6 +26,37 @@ export default class ManageAlertsService extends cds.ApplicationService {
 
         // Connect to Retrieval Service to send triggers
         const retrievalService = await cds.connect.to(RetrievalService)
+
+        // ====================================================================
+        // AUTHORIZATION HANDLERS
+        // ====================================================================
+
+        // Basic ID filtering for LevelNames
+        this.before('READ', 'LevelNames', createBasicIdFilter('id'))
+
+        // Complex alert filtering (user can see alerts targeting their accounts OR created by them)
+        this.before('READ', Alerts, createCustomReadFilter(
+            'ID',
+            async (ctx, req) => getAccessibleAlertIds(ctx.allowedIds, req.user?.id || ''),
+            'Alerts'
+        ))
+
+        // Validate viewer has at least some account access for create/update
+        this.before(['CREATE', 'UPDATE'], Alerts, createNoAccessGuard('You do not have access to any accounts to create alerts for'))
+
+        // Validate levelItems are within viewer's access on draft activation
+        this.before('SAVE', Alerts, createChildItemsValidator(
+            data => (data as Alert).levelItems,
+            item => item.itemID!,
+            'alerts'
+        ))
+
+        // Prevent viewers from deleting alerts outside their scope
+        this.before('DELETE', Alerts, createDeleteProtection(
+            data => data.ID as string | undefined,
+            async (ctx, req) => getAccessibleAlertIds(ctx.allowedIds, req.user?.id || ''),
+            'alert'
+        ))
 
         this.on('READ', Alert, async (req, next) => {
             const columns = req.query.SELECT?.columns?.map(x => x.ref ? x.ref[0] : '')
@@ -57,6 +98,18 @@ export default class ManageAlertsService extends cds.ApplicationService {
             })
         })
 
+        // Filter ServiceAndMetricNames by user access
+        this.before('READ', 'ServiceAndMetricNames', createCustomReadFilter(
+            'id',
+            async (ctx) => {
+                const serviceIds = await getAccessibleServiceIds(ctx.allowedIds)
+                if (serviceIds.length === 0) return []
+                const metricIds = await getAccessibleMetricIds(ctx.allowedIds)
+                return [...serviceIds.map(id => `service_${id}`), ...metricIds]
+            },
+            'ServiceAndMetricNames'
+        ))
+
         return super.init()
     }
 }
@@ -81,3 +134,4 @@ function replacer(match: string, pIndent: string, pKey: string, pVal: string, pE
         r = r + (pVal[0] == '"' ? str : val) + pVal + '</span>'
     return r + (pEnd || '')
 }
+

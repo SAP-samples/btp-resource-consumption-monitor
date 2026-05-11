@@ -13,6 +13,20 @@
       "content": "role.SAC.json"
     }
   },
+  "role.viewer": {
+    "type": "role",
+    "src": {
+      "from": "cdm",
+      "content": "role.viewer.json"
+    }
+  },
+  "space_viewer": {
+    "type": "space",
+    "src": {
+      "from": "cdm/spaces",
+      "content": "viewer.json"
+    }
+  },
   "space_overview": {
     "type": "space",
     "src": {
@@ -67,6 +81,13 @@
     "src": {
       "from": "cdm/pages",
       "content": "overview.json"
+    }
+  },
+  "page-viewer": {
+    "type": "workpage",
+    "src": {
+      "from": "cdm/pages",
+      "content": "viewer.json"
     }
   },
   "page-app.btprcreport": {

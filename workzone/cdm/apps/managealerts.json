@@ -87,7 +87,7 @@
                 "urlTemplateParams": {
                     "appId": "managealerts",
                     "query": {
-                        "subaccountId": "<YOUR_SUBACCOUNT_GUID>",
+                        "subaccountId": "${SUBACCOUNT_ID}",
                         "saasApprouter": "true"
                     }
                 }

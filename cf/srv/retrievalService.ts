@@ -13,6 +13,7 @@ import {
     getNextMonth,
     getServiceDestination
 } from './functions'
+import { getUserAccessContext } from './authorizationHelper'
 
 import {
     api_monthlyUsage,
@@ -279,6 +280,14 @@ export default class RetrievalService extends cds.ApplicationService {
                 let measures: any[] = []
                 try {
                     measures = await request.req
+
+                    // Authorization: Filter simulation results by user access
+                    const context = await getUserAccessContext(req)
+                    if (!context.isUnrestricted) {
+                        // Filter measures to only include those the user has access to
+                        measures = measures.filter(m => context.allowedIds.includes(m.id))
+                    }
+
                     measures.forEach(m => {
                         m.metricName = m.toMetric_measureId == '_combined_' ? 'Multiple' : (m.toMetric_measureId || m.metricName)
                         m.serviceName = m.toMetric_toService_serviceName || m.toMetric_toService_serviceName

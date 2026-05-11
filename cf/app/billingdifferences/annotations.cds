@@ -1,4 +1,4 @@
-using ContractsService as service from '../../srv/contractService';
+using ContractService as service from '../../srv/contractService';
 
 annotate service.unique_globalAccountNames with {
     ID  @Common.Text: name  @Common.TextArrangement: #TextOnly;

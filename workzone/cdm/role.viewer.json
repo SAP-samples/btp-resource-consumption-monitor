@@ -1,0 +1,30 @@
+{
+  "_version": "3.2.0",
+  "identification": {
+    "id": "access_role_viewer",
+    "title": "{{role_viewer_title}}",
+    "description": "{{role_viewer_description}}",
+    "entityType": "role"
+  },
+  "payload": {
+    "spaces": [
+      {
+        "id": "space_viewer"
+      }
+    ],
+    "apps": [
+      {
+        "id": "cards.breakdownbylevel.app"
+      },
+      {
+        "id": "saas_approuter_btprcreport"
+      },
+      {
+        "id": "saas_approuter_managealerts"
+      },
+      {
+        "id": "cards.app.managealerts.app"
+      }
+    ]
+  }
+}
