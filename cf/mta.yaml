@@ -262,7 +262,7 @@ resources:
     type: org.cloudfoundry.managed-service
     parameters:
       service: alert-notification
-      service-plan: standard
+      service-plan: free
       service-keys:
         - name: btprc-notif-key
 

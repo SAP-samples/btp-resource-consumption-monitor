@@ -1,6 +1,6 @@
 {
   "name": "btpresourceconsumption.cpkg",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "author": "SAP SE",
   "repository": {
     "type": "git",
@@ -13,6 +13,7 @@
   "devDependencies": {
     "@ui5/cli": "^4",
     "bestzip": "^2",
+    "dotenv": "^16",
     "fs-extra": "^11",
     "glob": "^13",
     "handlebars": "^4",

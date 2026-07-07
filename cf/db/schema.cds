@@ -47,20 +47,17 @@ entity BTPServices {
                                                       on  technicalMetricsHistory.toService.serviceId =  serviceId
                                                       and technicalMetricsHistory.measureId           <> '_combined_';
 
-        // Used in timeline chart in Object Page:
+        // Used in timeline chart in Object Page (level filter added dynamically based on user access):
         cmHistoryByMetricAll                    : Association to many CommercialMeasures
                                                       on  cmHistoryByMetricAll.toMetric.toService.serviceId =  serviceId
-                                                      and cmHistoryByMetricAll.level                        =  'Global Account'
                                                       and cmHistoryByMetricAll.toMetric.measureId           <> '_combined_';
         cmHistoryByMetricDaily                  : Association to many CommercialMeasures
                                                       on  cmHistoryByMetricDaily.toMetric.toService.serviceId =  serviceId
                                                       and cmHistoryByMetricDaily.toMetric.toService.interval  =  'Daily'
-                                                      and cmHistoryByMetricDaily.level                        =  'Global Account'
                                                       and cmHistoryByMetricDaily.toMetric.measureId           <> '_combined_';
         cmHistoryByMetricMonthly                : Association to many CommercialMeasures
                                                       on  cmHistoryByMetricMonthly.toMetric.toService.serviceId =  serviceId
                                                       and cmHistoryByMetricMonthly.toMetric.toService.interval  =  'Monthly'
-                                                      and cmHistoryByMetricMonthly.level                        =  'Global Account'
                                                       and cmHistoryByMetricMonthly.toMetric.measureId           <> '_combined_';
 
         // Used to display the breakdowns per level on the Object Page:
@@ -272,6 +269,7 @@ entity Alerts {
 
         thresholds                : Composition of many AlertThresholds
                                         on thresholds.toAlert = $self @title        : 'Thresholds';
+        createdBy                 : String(255)                       @cds.on.insert: $user                         @title: 'Created By';
         modifiedAt                : Timestamp                         @cds.on.insert: $now   @cds.on.update: $now   @title: 'Changed On';
         modifiedBy                : String(255)                       @cds.on.insert: $user  @cds.on.update: $user  @title: 'Changed By';
         virtual simulation        : types.TAlertSimulation;

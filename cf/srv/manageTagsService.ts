@@ -1,6 +1,11 @@
 import cds from '@sap/cds'
 import { Settings } from './settings'
 import {
+    createBasicIdFilter,
+    createWriteProtection,
+    createActionProtection
+} from './authorizationHelper'
+import {
     AccountStructureItem,
     AccountStructureItems,
     CustomTags,
@@ -23,6 +28,16 @@ type tagsClipboard = {
 
 export default class ManageTagsService extends cds.ApplicationService {
     async init() {
+
+        // ====================================================================
+        // AUTHORIZATION HANDLERS
+        // ====================================================================
+
+        this.before('READ', AccountStructureItems, createBasicIdFilter('ID'))
+        this.before('SAVE', AccountStructureItem, createWriteProtection(
+            data => data.ID as string | undefined,
+            'account structure item'
+        ))
 
         this.after('READ', AccountStructureItems, items => {
             items?.forEach(each => {
@@ -58,12 +73,14 @@ export default class ManageTagsService extends cds.ApplicationService {
         })
 
         let copyClipboards: Record<string, tagsClipboard> = {}
+        const checkTagActionAccess = createActionProtection(0, 'ID', 'manage tags for')
         this.on(getPasteTagsDefaultValue, () => { return { mode: TPasteMode.Both } })
         this.on(AccountStructureItem.actions.copyTags, async req => {
             //@ts-expect-error
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
-                const { ID } = req.params[0] as { ID: string }
+                const { id: ID } = await checkTagActionAccess(req)
+
                 info(`Copying tags for item ${ID}...`)
 
                 const tags = await SELECT.from(AccountStructureItems, ID)
@@ -93,7 +110,8 @@ export default class ManageTagsService extends cds.ApplicationService {
                 return req.reject(400, `Nothing in clipboard yet for user ${req.user.id}.`)
             }
             if (requestor == 'ManageTagsService.AccountStructureItems') {
-                const { ID } = req.params[0] as { ID: string }
+                const { id: ID } = await checkTagActionAccess(req)
+
                 info(`Pasting tags in mode ${mode} to item ${ID}...`)
 
                 const existingTags = await SELECT.from(AccountStructureItems, ID)
@@ -133,7 +151,8 @@ export default class ManageTagsService extends cds.ApplicationService {
             //@ts-expect-error
             const requestor = req.subject?.ref && req.subject.ref[0]?.id
             if (requestor == 'ManageTagsService.AccountStructureItems') {
-                const { ID } = req.params[0] as { ID: string }
+                const { id: ID } = await checkTagActionAccess(req)
+
                 info(`Deleting tags in mode ${mode} from item ${ID}...`)
 
                 let nCustomTags = 0
