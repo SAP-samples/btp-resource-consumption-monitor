@@ -4,7 +4,7 @@
        xmlns="sap.m">
        <Dialog id="commentsDialog" title="Documentation" contentWidth="40rem">
               <content>
-                     <l:VerticalLayout id="commentsLayout" width="100%" class="sapUiSmallMargin">
+                     <l:VerticalLayout id="commentsLayout" width="100%" class="sapUiSmallMarginTop">
                             <TextArea id="commentsText"
                                    placeholder="Enter resolution notes..."
                                    rows="8"
