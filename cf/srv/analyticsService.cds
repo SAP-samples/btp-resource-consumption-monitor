@@ -703,7 +703,9 @@ service AnalyticsService {
                 Measures.Measures_measure_cloudCreditsCost                                                                                                                   as Measures_cloudCreditsCost,
                 AVG(Measures.Measures_measure_cost) over(partition by Credits.toParent.globalAccountId order by Credits.yearMonth rows between 2 preceding and current row)  as Measures_cost_SMA3        : Decimal(20, 2),
                 AVG(Measures.Measures_measure_cost) over(partition by Credits.toParent.globalAccountId order by Credits.yearMonth rows between 5 preceding and current row)  as Measures_cost_SMA6        : Decimal(20, 2),
-                AVG(Measures.Measures_measure_cost) over(partition by Credits.toParent.globalAccountId order by Credits.yearMonth rows between 11 preceding and current row) as Measures_cost_SMA12       : Decimal(20, 2)
+                AVG(Measures.Measures_measure_cost) over(partition by Credits.toParent.globalAccountId order by Credits.yearMonth rows between 11 preceding and current row) as Measures_cost_SMA12       : Decimal(20, 2),
+                Resolutions.comment                                                                                                                                          as Resolution_comment        : LargeString,
+                Resolutions.resolved                                                                                                                                         as Resolution_resolved       : Boolean
         from db.ContractCreditValues as Credits
         full outer join (
             select
@@ -737,7 +739,10 @@ service AnalyticsService {
                 )
         ) as LatestMeasures
             on  LatestMeasures.id = Credits.toParent.globalAccountId
-            and Credits.status    = 'Projection';
+            and Credits.status    = 'Projection'
+        left outer join db.BillingResolutions as Resolutions
+            on  Resolutions.reportYearMonth         = coalesce(Measures.reportYearMonth, Credits.yearMonth)
+            and Resolutions.AccountStructureItem_ID = coalesce(Measures.AccountStructureItem_ID, Credits.toParent.globalAccountId);
 
 
 // function getSACStoryUrl() returns {

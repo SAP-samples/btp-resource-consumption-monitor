@@ -129,8 +129,8 @@
                   },
                   "columns": {
                     "contactSAP": {
-                      "header": "Contact SAP",
-                      "width": "8rem",
+                      "header": "Actions",
+                      "width": "10rem",
                       "importance": "High",
                       "horizontalAlign": "Center",
                       "position": {
@@ -140,7 +140,10 @@
                       "template": "billingdifferences.ext.contact",
                       "availability": "Default",
                       "properties": [
-                        "criticality"
+                        "criticality",
+                        "Resolution_resolved",
+                        "Resolution_comment",
+                        "reportYearMonthRaw"
                       ]
                     }
                   },
