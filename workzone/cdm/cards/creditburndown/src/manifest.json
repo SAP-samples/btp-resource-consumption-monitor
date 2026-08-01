@@ -67,6 +67,7 @@
                 "path": "/value"
             },
             "chartType": "stacked_combination",
+            "tooltips": true,
             "chartProperties": {
                 "title": {
                     "visible": false
@@ -75,15 +76,71 @@
                     "visible": true
                 },
                 "plotArea": {
+                    "dataPointStyle": {
+                        "rules": [
+							{
+                                "dataContext": {
+									"Balance": {
+                                        "max": 50000
+									},
+                                    "Status": "Projection"
+                                },
+								"properties": {
+									"color": "red"
+								},
+								"displayName": "Projection / Balance Warning"
+							},
+                            {
+                                "dataContext": {
+									"Balance": {
+                                        "min": 50001
+									},
+                                    "Status": "Projection"
+                                },
+								"properties": {
+									"color": "lightgreen"
+								},
+								"displayName": "Projection / Balance"
+							},
+                            {
+                                "dataContext": {
+									"measureNames": "Contract",
+                                    "Status": "Projection"
+                                },
+								"properties": {
+									"color": "lightblue",
+                                    "lineType": "solid",
+                                    "lineColor": "lightblue"
+								},
+								"displayName": "Projection / Contract"
+							},
+                            {
+                                "dataContext": {
+									"measureNames": "Contract",
+                                    "Status": "Actual"
+                                },
+								"properties": {
+									"color": "darkblue",
+                                    "lineType": "solid",
+                                    "lineColor": "darkblue"
+								},
+								"displayName": "Actual / Contract"
+							},
+                            {
+                                "dataContext": {
+									"measureNames": "Balance",
+                                    "Status": "Actual"
+                                },
+								"properties": {
+									"color": "darkgreen"
+								},
+								"displayName": "Actual / Balance"
+							}
+                        ]
+                    },
                     "dataLabel": {
                         "visible": true
-                    },
-                    "colorPalette": [
-                        "darkgreen",
-                        "darkblue",
-                        "lightgreen",
-                        "lightblue"
-                    ]
+                    }
                 },
                 "categoryAxis": {
                     "title": {
