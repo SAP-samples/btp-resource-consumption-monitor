@@ -21,7 +21,7 @@ sap.ui.define([
             // reportYearMonth is display-formatted (e.g. "July 2025") — use reportYearMonthRaw for the DB key.
             // AccountStructureItem_ID maps to globalAccountId: the BillingResolutions key uses the account ID.
             this._oCommentsContext = {
-                reportYearMonth:         oRowData.reportYearMonthRaw || oRowData.reportYearMonth,
+                reportYearMonth: oRowData.reportYearMonthRaw || oRowData.reportYearMonth,
                 AccountStructureItem_ID: oRowData.globalAccountId
             }
             this._oCommentsRowContext = oContext
@@ -46,7 +46,7 @@ sap.ui.define([
                 })
                 oDialog.setModel(oCommentsModel, 'commentsModel')
                 // Clear any leftover validation state from a previous open
-                const oTextArea = oDialog.getContent()[0].getContent()[0]
+                const oTextArea = oView.byId('commentsText')
                 oTextArea.setValueState('None')
                 oDialog.open()
             })
@@ -57,47 +57,33 @@ sap.ui.define([
             const oView = this.base.getView()
             const oKeys = this._oCommentsContext
             const oODataModel = oView.getModel()
-            const sServiceUrl = oODataModel.getServiceUrl()
 
             this._oCommentsDialog.then(function (oDialog) {
                 const oData = oDialog.getModel('commentsModel').getData()
-                // TextArea is the first child of the VerticalLayout inside the dialog content
-                const oTextArea = oDialog.getContent()[0].getContent()[0]
+                const oTextArea = oView.byId('commentsText')
 
-                // Validate: if marked resolved, a comment of at least 25 characters is required
-                if (oData.resolved && (!oData.text || oData.text.trim().length < 25)) {
+                // Validate: if marked resolved, a comment is required
+                if (oData.resolved && (!oData.text || oData.text.trim().length == 0)) {
                     oTextArea.setValueState('Error')
-                    oTextArea.setValueStateText('A comment of at least 25 characters is required when marking as resolved.')
+                    oTextArea.setValueStateText('A comment is required when marking as resolved.')
                     return
                 }
-                // Clear any previous validation error
-                oTextArea.setValueState('None')
 
-                // Fetch CSRF token first, then POST
-                fetch(sServiceUrl, {
-                    method: 'GET',
-                    headers: { 'X-CSRF-Token': 'Fetch' }
-                }).then(function (oTokenResponse) {
-                    const sCsrfToken = oTokenResponse.headers.get('X-CSRF-Token') || ''
-                    return fetch(sServiceUrl + 'BillingResolutions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': sCsrfToken
-                        },
-                        body: JSON.stringify({
-                            reportYearMonth:         oKeys.reportYearMonth,
-                            AccountStructureItem_ID: oKeys.AccountStructureItem_ID,
-                            comment:                 oData.text,
-                            resolved:                oData.resolved
-                        })
-                    })
-                }).then(function (oResponse) {
-                    if (!oResponse.ok) {
-                        return oResponse.text().then(function (sText) {
-                            throw new Error('HTTP ' + oResponse.status + ': ' + sText)
-                        })
-                    }
+                // Create via a transient list binding. The OData V4 model handles the
+                // CSRF token and batching internally, so no manual fetch/POST is needed.
+                // Uses a dedicated update group we submit explicitly.
+                const oResolutionBinding = oODataModel.bindList('/BillingResolutions', null, [], [], {
+                    $$updateGroupId: 'billingResolutions'
+                })
+                const oNewContext = oResolutionBinding.create({
+                    reportYearMonth: oKeys.reportYearMonth,
+                    AccountStructureItem_ID: oKeys.AccountStructureItem_ID,
+                    comment: oData.text,
+                    resolved: oData.resolved
+                })
+                oODataModel.submitBatch('billingResolutions')
+
+                oNewContext.created().then(function () {
                     oDialog.close()
                     // Refresh the list binding so the updated row (status/criticality) is re-fetched.
                     // We cannot refresh the row context directly: reportYearMonth is a key field that

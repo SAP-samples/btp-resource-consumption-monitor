@@ -8,7 +8,7 @@
                      press=".extension.billingdifferences.ext.contact.contactSAP"
                      visible="{= %{criticality} === 2 || %{criticality} === 5 }" />
               <!-- Documentation / Set Resolved: shown for all rows except Aligned (3) -->
-              <Button id="bComments" text="{= %{criticality} === 0 ? 'Documentation' : 'Set Resolved'}"
+              <Button id="bComments" text="{= %{criticality} === 0 ? 'Notes' : 'Set Resolved'}"
                      press=".extension.billingdifferences.ext.contact.openComments"
                      visible="{= %{criticality} !== 3 }" />
        </l:VerticalLayout>

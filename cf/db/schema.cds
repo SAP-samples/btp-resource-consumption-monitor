@@ -363,8 +363,6 @@ entity CustomTags {
 entity BillingResolutions {
     key reportYearMonth        : String       @title: 'Month';
     key AccountStructureItem_ID: String       @title: 'Account Structure Item';
-        toAccountStructureItem : Association to one AccountStructureItems
-                                     on toAccountStructureItem.ID = AccountStructureItem_ID;
         comment                : LargeString  @title: 'Documentation';
         resolved               : Boolean      @title: 'Resolved';
 }

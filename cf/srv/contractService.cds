@@ -91,9 +91,6 @@ service ContractsService {
                 )
             );
 
-    @Capabilities.Insertable
-    @Capabilities.Updatable
-    @Capabilities.Deletable
     entity BillingResolutions         as projection on db.BillingResolutions;
 
 }

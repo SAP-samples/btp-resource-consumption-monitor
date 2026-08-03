@@ -3,6 +3,7 @@ import cds from '@sap/cds'
 import { Settings } from './settings'
 import {
     BillingDifferences,
+    BillingResolutions,
     Card_CreditBurnDownHeaders,
     Card_CreditBurnDowns
 } from '#cds-models/ContractsService'
@@ -41,7 +42,7 @@ export default class ContractsService extends cds.ApplicationService {
         })
 
         // Upsert handler: update existing resolution or create a new one
-        this.on('CREATE', 'BillingResolutions', async (req) => {
+        this.on('CREATE', BillingResolutions, async (req) => {
             const { reportYearMonth, AccountStructureItem_ID, comment, resolved } = req.data
             await UPSERT.into('BillingResolutions').entries({
                 reportYearMonth,
