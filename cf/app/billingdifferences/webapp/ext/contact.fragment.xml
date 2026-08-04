@@ -3,8 +3,13 @@
        xmlns:l="sap.ui.layout"
        xmlns="sap.m">
        <l:VerticalLayout id="vl1">
+              <!-- Contact SAP: only shown for active discrepancies (Discrepancy=2, Reduced Charge=5) -->
               <Button id="bContactSAP" text="Contact SAP"
                      press=".extension.billingdifferences.ext.contact.contactSAP"
+                     visible="{= %{criticality} === 2 || %{criticality} === 5 }" />
+              <!-- Documentation / Set Resolved: shown for all rows except Aligned (3) -->
+              <Button id="bComments" text="{= %{criticality} === 0 ? 'Notes' : 'Set Resolved'}"
+                     press=".extension.billingdifferences.ext.contact.openComments"
                      visible="{= %{criticality} !== 3 }" />
        </l:VerticalLayout>
 </core:FragmentDefinition>

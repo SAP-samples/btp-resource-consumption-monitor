@@ -20,6 +20,7 @@ service ContractsService {
             key globalAccountId,
                 globalAccountName,
             key reportYearMonth,
+                reportYearMonth as reportYearMonthRaw : String, // raw DB key, before display transformation
                 currency,
                 Credits_balance_consumed,
                 Credits_phaseStartDate,
@@ -33,7 +34,10 @@ service ContractsService {
                     Measures_cloudCreditsCost, 0
                 )         as Billing_difference : Decimal(20, 2),
                 'initial' as status             : String, // will be set in the code
-                5         as criticality        : Integer // will be set in the code
+                5         as criticality        : Integer, // will be set in the code
+                5         as rowHighlight        : Integer, // mirrors criticality but resolved=3 (green) regardless
+                Resolution_comment,
+                Resolution_resolved
         }
         where
                 Credits_phaseStartDate is not null
@@ -86,5 +90,7 @@ service ContractsService {
                         Credits_status = 'Actual'
                 )
             );
+
+    entity BillingResolutions         as projection on db.BillingResolutions;
 
 }

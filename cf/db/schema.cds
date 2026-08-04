@@ -357,6 +357,18 @@ entity CustomTags {
 
 
 /**
+ * Billing Resolutions
+ */
+
+entity BillingResolutions {
+    key reportYearMonth        : String       @title: 'Month';
+    key AccountStructureItem_ID: String       @title: 'Account Structure Item';
+        comment                : LargeString  @title: 'Documentation';
+        resolved               : Boolean      @title: 'Resolved';
+}
+
+
+/**
  * Contract credits information
  */
 

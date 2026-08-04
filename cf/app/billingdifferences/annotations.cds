@@ -31,6 +31,9 @@ annotate service.BillingDifferences with {
     Credits_phaseStartDate        @title      : 'Contract Phase';
     reportYearMonth               @title      : 'Month';
     status                        @title      : 'Assessment';
+    Resolution_resolved           @title      : 'Resolved';
+    reportYearMonthRaw            @UI.Hidden  : true;
+    rowHighlight                  @UI.Hidden  : true;
 }
 
 annotate service.BillingDifferences with @(UI: {
@@ -54,7 +57,7 @@ annotate service.BillingDifferences with @(UI: {
 
     ],
     LineItem           : {
-        ![@UI.Criticality]: criticality,
+        ![@UI.Criticality]: rowHighlight,
         $value            : [
             {
                 Value                : globalAccountId,
@@ -74,7 +77,7 @@ annotate service.BillingDifferences with @(UI: {
             },
             {
                 Value                    : Measures_cloudCreditsCost,
-                Criticality              : criticality,
+                Criticality              : rowHighlight,
                 CriticalityRepresentation: #WithoutIcon,
                 ![@HTML5.CssDefaults]    : {width: '8rem'}
             },
@@ -84,19 +87,19 @@ annotate service.BillingDifferences with @(UI: {
             },
             {
                 Value                    : Credits_balance_consumed,
-                Criticality              : criticality,
+                Criticality              : rowHighlight,
                 CriticalityRepresentation: #WithoutIcon,
                 ![@HTML5.CssDefaults]    : {width: '8rem'}
             },
             {
                 Value                    : Billing_difference,
-                Criticality              : criticality,
+                Criticality              : rowHighlight,
                 CriticalityRepresentation: #WithoutIcon,
                 ![@HTML5.CssDefaults]    : {width: '8rem'}
             },
             {
                 Value                    : status,
-                Criticality              : criticality,
+                Criticality              : rowHighlight,
                 CriticalityRepresentation: #WithIcon,
                 ![@HTML5.CssDefaults]    : {width: '10rem'}
             },

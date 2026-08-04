@@ -1,0 +1,26 @@
+<core:FragmentDefinition
+       xmlns:core="sap.ui.core"
+       xmlns:l="sap.ui.layout"
+       xmlns="sap.m">
+       <Dialog id="commentsDialog" title="Notes">
+              <content>
+                     <l:VerticalLayout id="commentsLayout" width="40rem" class="sapUiSmallMargin">
+                            <TextArea id="commentsText"
+                                   placeholder="Enter resolution notes..."
+                                   rows="8"
+                                   width="100%"
+                                   value="{commentsModel>/text}" />
+                            <CheckBox id="resolvedCheckBox"
+                                   text="Mark as resolved?"
+                                   selected="{commentsModel>/resolved}" />
+                     </l:VerticalLayout>
+              </content>
+              <buttons>
+                     <Button id="commentsSaveButton" text="Save"
+                            type="Emphasized"
+                            press=".saveComments" />
+                     <Button id="commentsCancelButton" text="Cancel"
+                            press=".closeComments" />
+              </buttons>
+       </Dialog>
+</core:FragmentDefinition>
