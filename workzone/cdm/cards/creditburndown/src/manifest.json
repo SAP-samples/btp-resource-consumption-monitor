@@ -7,7 +7,7 @@
         "title": "{{title}}",
         "description": "{{description}}",
         "applicationVersion": {
-            "version": "2.0.0"
+            "version": "2.0.1"
         }
     },
     "sap.ui": {
@@ -27,30 +27,30 @@
         "header": {
             "type": "Numeric",
             "data": {
+                "name": "headerData",
                 "request": {
                     "url": "{{destinations.btprc-srv}}/odata/v4/contracts/Card_CreditBurnDownHeaders",
                     "withCredentials": true,
                     "parameters": {
                         "$filter": "globalAccountId eq '{filters>/account/selectedItem/additionalText}'"
                     }
-                },
-                "path": "/value/0"
+                }
             },
             "title": "{{title}}",
             "subTitle": "{{subtitle}}",
-            "details": "Phase start: {Credits_phaseStartDate}",
+            "details": "Phase start: {headerData>/value/0/Credits_phaseStartDate}",
             "mainIndicator": {
-                "number": "{= format.currency(${Credits_balance}, ${currency}, {currencyCode:true})}",
+                "number": "{= format.currency(${headerData>/value/0/Credits_balance}, ${headerData>/value/0/currency}, {currencyCode:true})}",
                 "state": "Good"
             },
             "sideIndicators": [
                 {
                     "title": "Contract Value",
-                    "number": "{= format.currency(${Credits_cloudCreditsForPhase}, ${currency}, {currencyCode:true})}"
+                    "number": "{= format.currency(${headerData>/value/0/Credits_cloudCreditsForPhase}, ${headerData>/value/0/currency}, {currencyCode:true})}"
                 },
                 {
                     "title": "Used in {month}",
-                    "number": "{= format.currency(${Measures_cloudCreditsCost}, ${currency}, {currencyCode:true})}"
+                    "number": "{= format.currency(${headerData>/value/0/Measures_cloudCreditsCost}, ${headerData>/value/0/currency}, {currencyCode:true})}"
                 }
             ],
             "actions": []
@@ -67,6 +67,7 @@
                 "path": "/value"
             },
             "chartType": "stacked_combination",
+            "tooltips": true,
             "chartProperties": {
                 "title": {
                     "visible": false
@@ -75,15 +76,71 @@
                     "visible": true
                 },
                 "plotArea": {
+                    "dataPointStyle": {
+                        "rules": [
+							{
+                                "dataContext": {
+									"Balance": {
+                                        "max": "{= parseFloat(${headerData>/value/0/Credits_cloudCreditsForPhase}) * ${parameters>/RemainingCreditsWarningPct/value} }"
+									},
+                                    "Status": "Projection"
+                                },
+								"properties": {
+									"color": "red"
+								},
+								"displayName": "Projection / Balance Warning"
+							},
+                            {
+                                "dataContext": {
+									"Balance": {
+                                        "min": "{= parseFloat(${headerData>/value/0/Credits_cloudCreditsForPhase}) * ${parameters>/RemainingCreditsWarningPct/value} + 0.01 }"
+									},
+                                    "Status": "Projection"
+                                },
+								"properties": {
+									"color": "lightgreen"
+								},
+								"displayName": "Projection / Balance"
+							},
+                            {
+                                "dataContext": {
+									"measureNames": "Contract",
+                                    "Status": "Projection"
+                                },
+								"properties": {
+									"color": "lightblue",
+                                    "lineType": "solid",
+                                    "lineColor": "lightblue"
+								},
+								"displayName": "Projection / Contract"
+							},
+                            {
+                                "dataContext": {
+									"measureNames": "Contract",
+                                    "Status": "Actual"
+                                },
+								"properties": {
+									"color": "darkblue",
+                                    "lineType": "solid",
+                                    "lineColor": "darkblue"
+								},
+								"displayName": "Actual / Contract"
+							},
+                            {
+                                "dataContext": {
+									"measureNames": "Balance",
+                                    "Status": "Actual"
+                                },
+								"properties": {
+									"color": "darkgreen"
+								},
+								"displayName": "Actual / Balance"
+							}
+                        ]
+                    },
                     "dataLabel": {
                         "visible": true
-                    },
-                    "colorPalette": [
-                        "darkgreen",
-                        "darkblue",
-                        "lightgreen",
-                        "lightblue"
-                    ]
+                    }
                 },
                 "categoryAxis": {
                     "title": {
@@ -172,6 +229,12 @@
                 "btprc-srv": {
                     "name": "btprc-srv",
                     "defaultUrl": "/odata/v4/contracts/Card_CreditBurnDowns"
+                }
+            },
+            "parameters": {
+                "RemainingCreditsWarningPct": {
+                    "value": 0.25,
+                    "type": "number"
                 }
             }
         }
